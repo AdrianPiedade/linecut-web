@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Como Funciona - LineCut</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/como_funciona.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'quem_somos' %}">Quem somos</a>
+            <a href="{% url 'planos' %}">Planos</a>
+            <a href="{% url 'como_funciona' %}" class="active">Como Funciona</a>
+        </div>
+        <div class="auth-buttons">
+            <a href="#" class="btn-entrar">Entrar</a>
+            <a href="#" class="btn-cadastrar">Cadastrar</a>
+        </div>
+    </nav>
+
+    <main class="como-funciona-container">
+
+        <h1>Como abrir uma loja?</h1>
+        <h2>Comece a vender em apenas 4 passos</h2>
+        <p class="intro-text">
+            Abrir sua loja no Linecut é simples e rápido. Siga os passos abaixo para configurar sua conta e começar a vender!
+        </p>
+
+        <div class="passos-container">
+            <div class="passo-card">
+                <div class="passo-header">
+                    <h3>Crie uma conta</h3>
+                </div>
+                <div class="passo-content">
+                    <p>
+                        Cadastre-se no Linecut informando seus dados pessoais e da empresa. Com a conta criada, 
+                        você terá acesso ao painel de controle para começar a montar sua loja.
+                    </p>
+                </div>
+                <div class="passo-image">
+                    <img src="{% static 'core/images/logo1_como_funciona.png' %}" alt="Criação de conta">
+                </div>
+            </div>
+
+            <div class="passo-card">
+                <div class="passo-header">
+                    <h3>Escolha o plano</h3>
+                </div>
+                <div class="passo-content">
+                    <p>
+                        Escolha o plano que melhor atende às necessidades da sua loja. Os planos variam conforme 
+                        os recursos disponíveis, como quantidade de produtos, relatórios e suporte.
+                    </p>
+                </div>
+                <div class="passo-image">
+                    <img src="{% static 'core/images/logo2_como_funciona.png' %}" alt="Escolha de plano">
+                </div>
+            </div>
+
+            <div class="passo-card">
+                <div class="passo-header">
+                    <h3>Configure sua loja</h3>
+                </div>
+                <div class="passo-content">
+                    <p>
+                        Configure sua loja adicionando nome, logo, descrição, produtos, preços e formas de pagamento. 
+                        Você também pode personalizar o visual para combinar com sua marca.
+                    </p>
+                </div>
+                <div class="passo-image">
+                    <img src="{% static 'core/images/logo3_como_funciona.png' %}" alt="Configuração da loja">
+                </div>
+            </div>
+
+            <div class="passo-card">
+                <div class="passo-header">
+                    <h3>Comece a Vender!</h3>
+                </div>
+                <div class="passo-content">
+                    <p>
+                        Após finalizar a configuração, ative sua loja e comece a receber pedidos dos seus clientes 
+                        de forma prática, rápida e organizada com o Linecut.
+                    </p>
+                </div>
+                <div class="passo-image">
+                    <img src="{% static 'core/images/logo4_como_funciona.png' %}" alt="Loja em operação">
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="red-background-band"></div>
+
+    <footer class="footer">
+        <div class="footer-logo">
+            <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
+        </div>
+        <div class="footer-links">
+            <div class="sobre">
+                <h3>Sobre</h3>
+                <a href="{% url 'quem_somos' %}">Quem somos</a>
+                <a href="{% url 'como_funciona' %}">Como funciona</a>
+            </div>
+            <div class="descubra">
+                <h3>Descubra</h3>
+                <a href="#">Cadastre seu restaurante</a>
+                <a href="#">Seja parceiro</a>
+                <a href="{% url 'planos' %}">Planos</a>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <p>© 2025 LineCut. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>

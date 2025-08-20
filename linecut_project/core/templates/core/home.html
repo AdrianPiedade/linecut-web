@@ -1,0 +1,159 @@
+{%load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LineCut - Plataforma para Lanchonetes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'quem_somos' %}">Quem somos</a>
+            <a href="{% url 'planos' %}">Planos</a>
+            <a href="{% url 'como_funciona' %}">Como Funciona</a>
+        </div>
+        <div class="auth-buttons">
+            <a href="#" class="btn-entrar">Entrar</a>
+            <a href="#" class="btn-cadastrar">Cadastrar</a>
+        </div>
+    </nav>
+
+    <!-- Banner Principal (Carrossel) -->
+    <section class="banner">
+        <div class="carousel">
+            <div class="carousel-inner">
+                <!-- Slide 1 -->
+                <div class="carousel-item active">
+                    <div class="slide-content">
+                        <h1>Chega de filas!</h1>
+                        <p>Comece a vender com mais agilidade usando o <strong>LineCut</strong></p>
+                    </div>
+                </div>
+                
+                <!-- Slide 2 -->
+                <div class="carousel-item">
+                    <div class="slide-content">
+                        <h1>Pedidos em tempo real</h1>
+                        <p>Receba pedidos diretamente no browser</p>
+                    </div>
+                </div>
+                
+                <!-- Slide 3 -->
+                <div class="carousel-item">
+                    <div class="slide-content">
+                        <h1>Aumente suas vendas</h1>
+                        <p>Atenda mais clientes sem complicação</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="carousel-control prev">‹</button>
+            <button class="carousel-control next">›</button>
+            
+            <div class="carousel-indicators">
+                <span class="indicator active"></span>
+                <span class="indicator"></span>
+                <span class="indicator"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Convite -->
+    <section class="convite">
+        <div class="convite-imagem">
+            <img src="{% static 'core/images/atendente_home.png' %}" alt="Parceiros LineCut">
+        </div>
+        <div class="convite-texto">
+            <h2>Seja um parceiro do LineCut</h2>
+            <p>
+                Gerencie seus pedidos com agilidade e aumente suas vendas. Simplifique o atendimento 
+                e ofereça uma experiência rápida e eficiente aos seus clientes!
+            </p>
+            <div class="convite-botoes">
+                <a href="#" class="btn-parceiro">Quero ser parceiro</a>
+                <a href="#" class="btn-como-funciona">Como funciona</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-logo">
+            <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
+        </div>
+        <div class="footer-links">
+            <div class="sobre">
+                <h3>Sobre</h3>
+                <a href="{% url 'quem_somos' %}">Quem somos</a>
+                <a href="{% url 'como_funciona' %}">Como Funciona</a>
+            </div>
+            <div class="descubra">
+                <h3>Descubra</h3>
+                <a href="#">Cadastre seu restaurante</a>
+                <a href="#">Seja parceiro</a>
+                <a href="{% url 'planos' %}">Planos</a>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <p>© 2025 LineCut. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const carousel = document.querySelector('.carousel-inner');
+            const items = document.querySelectorAll('.carousel-item');
+            const prevBtn = document.querySelector('.prev');
+            const nextBtn = document.querySelector('.next');
+            const indicators = document.querySelectorAll('.indicator');
+            let currentIndex = 0;
+            const totalItems = items.length;
+
+            function updateCarousel() {
+                // Remove todas as classes active
+                items.forEach(item => item.classList.remove('active'));
+                indicators.forEach(ind => ind.classList.remove('active'));
+                
+                // Atualiza posição
+                carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+                
+                // Adiciona active ao item atual
+                items[currentIndex].classList.add('active');
+                indicators[currentIndex].classList.add('active');
+            }
+
+            function goToSlide(index) {
+                currentIndex = (index + totalItems) % totalItems;
+                updateCarousel();
+            }
+
+            nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
+            prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
+            
+            // Clique nos indicadores
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => goToSlide(index));
+            });
+
+            // Auto-avanço (opcional)
+            let interval = setInterval(() => goToSlide(currentIndex + 1), 5000);
+            
+            // Pausa ao interagir
+            carousel.addEventListener('mouseenter', () => clearInterval(interval));
+            carousel.addEventListener('mouseleave', () => {
+                interval = setInterval(() => goToSlide(currentIndex + 1), 5000);
+            });
+
+            // Inicialização
+            updateCarousel();
+        });
+    </script>
+</body>
+</html>

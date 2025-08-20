@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: #FFFFFF;
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.navbar {
+    position: fixed;
+    width: 100%;
+    height: 80px;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 50px;
+    background: #FFFFFF;
+    box-shadow: 3.18px 4.24px 4.24px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+}
+
+.logo img {
+    width: 115px;
+    height: auto;
+}
+
+.nav-links {
+    display: flex;
+    gap: 40px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #7D7D7D;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: #9C0202;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-entrar {
+    padding: 5px 25px;
+    border: 1px solid #9C0202;
+    border-radius: 100px;
+    color: #9C0202;
+    text-decoration: none;
+    font-size: 15px;
+}
+
+.btn-entrar:hover {
+    background: #9C0202;
+    color: #FFFFFF;
+}
+
+.btn-cadastrar {
+    padding: 5px 25px;
+    background: #9C0202;
+    border: 1px solid #9C0202;
+    border-radius: 100px;
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 15px;
+}
+
+.btn-cadastrar:hover {
+    background: #7a0101;
+}
+
+.como-funciona-container {
+    position: relative;
+    padding: 120px 100px 50px;
+    max-width: 1440px;
+    margin: 0 auto;
+    z-index: 1;
+}
+
+.como-funciona-container h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #9C0202;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.como-funciona-container h2 {
+    font-size: 30px;
+    font-weight: 500;
+    color: #7D7D7D;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.intro-text {
+    font-size: 20px;
+    color: #7D7D7D;
+    margin-bottom: 50px;
+    line-height: 1.5;
+    max-width: 1200px;
+}
+
+.passos-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 50px;
+    position: relative;
+    z-index: 2;
+    padding: 40px 0;
+}
+
+.passo-card {
+    width: calc(25% - 30px);
+    min-height: 435px;
+    background: #FFFFFF;
+    box-shadow: 3.18px -4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 20px;
+    padding: 30px;
+    position: relative;
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.passo-card:hover {
+    transform: translateY(-10px);
+}
+
+.passo-image {
+    margin-top: auto;
+    padding: 15px;
+    text-align: center;
+}
+
+.passo-image img {
+    max-width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+.passo-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #9C0202;
+    margin-bottom: 20px;
+}
+
+.passo-content p {
+    font-size: 13px;
+    color: #7D7D7D;
+    line-height: 1.5;
+    text-align: justify;
+}
+
+.red-background-band {
+    position: absolute;
+    left: 0;
+    width: 100vw;
+    height: 500px;
+    max-height: 500px;
+    top: 500px;
+    background: #9C0202;
+    z-index: -1;
+}
+
+.footer {
+    width: 100%;
+    height: 198px;
+    border-top: 3px solid #F2EAE4;
+    padding: 30px 100px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 3;
+    background: white;
+}
+
+.footer-logo img {
+    width: 138px;
+    height: auto;
+}
+
+.footer-links {
+    display: flex;
+    gap: 100px;
+}
+
+.footer-links h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #7D7D7D;
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    display: block;
+    font-size: 13px;
+    color: #7D7D7D;
+    margin-bottom: 5px;
+    text-decoration: none;
+}
+
+.footer-copyright {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 300;
+    color: #7D7D7D;
+}
+
+@media (max-width: 1200px) {
+    .passo-card {
+        width: calc(50% - 30px);
+    }
+
+    .red-background-band {
+        height: calc(100% - 150px);
+        top: 80px;
+    }
+}
+
+@media (max-width: 768px) {
+    .como-funciona-container {
+        padding: 100px 30px 30px;
+    }
+    
+    .passo-card {
+        width: 100%;
+        min-height: auto;
+    }
+    
+    .ilustracao {
+        width: 120px;
+    }
+
+    .red-background-band {
+        height: calc(100% - 130px);
+        top: 70px;
+        clip-path: polygon(0 20px, 100% 0, 100% 100%, 0% 100%);
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar {
+        padding: 0 20px;
+    }
+    
+    .nav-links {
+        gap: 20px;
+    }
+    
+    .footer {
+        padding: 30px 20px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        height: auto;
+    }
+    
+    .footer-links {
+        flex-direction: column;
+        gap: 20px;
+        margin: 20px 0;
+    }
+
+    .red-background-band {
+        height: calc(100% - 120px);
+        top: 60px;
+    }
+}
