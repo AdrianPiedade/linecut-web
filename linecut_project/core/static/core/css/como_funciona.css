@@ -203,6 +203,10 @@ body {
     gap: 100px;
 }
 
+.footer-links a:hover {
+    color: #9C0202;
+}
+
 .footer-links h3 {
     font-size: 15px;
     font-weight: 600;

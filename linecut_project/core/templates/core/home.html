@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="logo">
             <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
@@ -26,11 +25,9 @@
         </div>
     </nav>
 
-    <!-- Banner Principal (Carrossel) -->
     <section class="banner">
         <div class="carousel">
             <div class="carousel-inner">
-                <!-- Slide 1 -->
                 <div class="carousel-item active">
                     <div class="slide-content">
                         <h1>Chega de filas!</h1>
@@ -38,7 +35,6 @@
                     </div>
                 </div>
                 
-                <!-- Slide 2 -->
                 <div class="carousel-item">
                     <div class="slide-content">
                         <h1>Pedidos em tempo real</h1>
@@ -46,7 +42,6 @@
                     </div>
                 </div>
                 
-                <!-- Slide 3 -->
                 <div class="carousel-item">
                     <div class="slide-content">
                         <h1>Aumente suas vendas</h1>
@@ -66,7 +61,6 @@
         </div>
     </section>
 
-    <!-- Seção Convite -->
     <section class="convite">
         <div class="convite-imagem">
             <img src="{% static 'core/images/atendente_home.png' %}" alt="Parceiros LineCut">
@@ -84,7 +78,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="footer-logo">
             <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
@@ -117,14 +110,12 @@
             const totalItems = items.length;
 
             function updateCarousel() {
-                // Remove todas as classes active
+ 
                 items.forEach(item => item.classList.remove('active'));
                 indicators.forEach(ind => ind.classList.remove('active'));
                 
-                // Atualiza posição
                 carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
                 
-                // Adiciona active ao item atual
                 items[currentIndex].classList.add('active');
                 indicators[currentIndex].classList.add('active');
             }
@@ -137,21 +128,17 @@
             nextBtn.addEventListener('click', () => goToSlide(currentIndex + 1));
             prevBtn.addEventListener('click', () => goToSlide(currentIndex - 1));
             
-            // Clique nos indicadores
             indicators.forEach((indicator, index) => {
                 indicator.addEventListener('click', () => goToSlide(index));
             });
 
-            // Auto-avanço (opcional)
             let interval = setInterval(() => goToSlide(currentIndex + 1), 5000);
             
-            // Pausa ao interagir
             carousel.addEventListener('mouseenter', () => clearInterval(interval));
             carousel.addEventListener('mouseleave', () => {
                 interval = setInterval(() => goToSlide(currentIndex + 1), 5000);
             });
 
-            // Inicialização
             updateCarousel();
         });
     </script>
