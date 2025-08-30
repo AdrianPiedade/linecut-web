@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="{% static 'core/css/planos.css' %}">
 </head>
 <body>
-    <!-- Navbar (mantido igual) -->
     <nav class="navbar">
         <div class="logo">
             <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
@@ -22,12 +21,11 @@
             <a href="{% url 'como_funciona' %}">Como Funciona</a>
         </div>
         <div class="auth-buttons">
-            <a href="login.html" class="btn-entrar">Entrar</a>
-            <a href="cadastro.html" class="btn-cadastrar">Cadastrar</a>
+            <a href="{% url 'login' %}" class="btn-entrar">Entrar</a>
+            <a href="{% url 'cadastro' %}" class="btn-cadastrar">Cadastrar</a>
         </div>
     </nav>
 
-    <!-- Conteúdo Principal -->
     <main class="main-content">
         <div class="plans-header">
             <h1>Planos flexíveis para cada tipo de negócio</h1>
@@ -35,11 +33,10 @@
             <p>Do essencial ao completo. Veja as opções disponíveis e encontre o pacote que melhor atende às suas necessidades.</p>
         </div>
 
-        <!-- Faixa vermelha de fundo -->
         <div class="plans-background"></div>
 
         <div class="plans-container">
-            <!-- Plano Trial -->
+
             <div class="plan-card">
                 <div class="plan-icon">
                     <i class="fas fa-puzzle-piece"></i>
@@ -54,10 +51,9 @@
                 </ul>
                 <p class="plan-price">30 dias gratuito!</p>
                 <p class="plan-details">Após o período de teste, escolha o plano ideal</p>
-                <a href="ativar-plano.html?plano=trial" class="btn-activate">Ativar plano</a>
+                <a href="{% url 'cadastro' %}?plano=trial" class="btn-activate">Ativar plano</a>
             </div>
 
-            <!-- Plano Basic -->
             <div class="plan-card">
                 <div class="plan-icon">
                     <i class="fas fa-briefcase"></i>
@@ -72,10 +68,9 @@
                 </ul>
                 <p class="plan-price">Plano ilimitado!</p>
                 <p class="plan-details">7% de comissão sobre cada venda</p>
-                <a href="ativar-plano.html?plano=basic" class="btn-activate">Ativar plano</a>
+                <a href="{% url 'cadastro' %}?plano=basic" class="btn-activate">Ativar plano</a>
             </div>
 
-            <!-- Plano Premium -->
             <div class="plan-card">
                 <div class="plan-icon">
                     <i class="fas fa-crown"></i>
@@ -91,12 +86,11 @@
                 </ul>
                 <p class="plan-price">Plano sem limites!</p>
                 <p class="plan-details">10% de comissão sobre cada venda</p>
-                <a href="ativar-plano.html?plano=premium" class="btn-activate">Ativar plano</a>
+                <a href="{% url 'cadastro' %}?plano=premium" class="btn-activate">Ativar plano</a>
             </div>
         </div>
     </main>
 
-    <!-- Footer (mantido igual) -->
     <footer class="footer">
         <div class="footer-logo">
             <img src="{% static 'core/images/logo_home.png' %}" alt="LineCut Logo">
@@ -110,8 +104,8 @@
             </div>
             <div>
                 <h3>Descubra</h3>
-                <a href="cadastro-restaurante.html">Cadastre seu restaurante</a>
-                <a href="seja-parceiro.html">Seja parceiro</a>
+                <a href="{% url 'cadastro' %}">Cadastre seu restaurante</a>
+                <a href="{% url 'login' %}">Seja parceiro</a>
             </div>
         </div>
         <div class="footer-copyright">

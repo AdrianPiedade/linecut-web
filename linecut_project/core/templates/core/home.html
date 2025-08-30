@@ -20,8 +20,8 @@
             <a href="{% url 'como_funciona' %}">Como Funciona</a>
         </div>
         <div class="auth-buttons">
-            <a href="#" class="btn-entrar">Entrar</a>
-            <a href="#" class="btn-cadastrar">Cadastrar</a>
+            <a href="{% url 'login' %}" class="btn-entrar">Entrar</a>
+            <a href="{% url 'cadastro' %}" class="btn-cadastrar">Cadastrar</a>
         </div>
     </nav>
 
@@ -72,8 +72,8 @@
                 e ofereça uma experiência rápida e eficiente aos seus clientes!
             </p>
             <div class="convite-botoes">
-                <a href="#" class="btn-parceiro">Quero ser parceiro</a>
-                <a href="#" class="btn-como-funciona">Como funciona</a>
+                <a href="{% url 'cadastro' %}" class="btn-parceiro">Quero ser parceiro</a>
+                <a href="{% url 'como_funciona' %}" class="btn-como-funciona">Como funciona</a>
             </div>
         </div>
     </section>
@@ -90,8 +90,8 @@
             </div>
             <div class="descubra">
                 <h3>Descubra</h3>
-                <a href="#">Cadastre seu restaurante</a>
-                <a href="#">Seja parceiro</a>
+                <a href="{% url 'cadastro' %}">Cadastre seu restaurante</a>
+                <a href="{% url 'login' %}">Seja parceiro</a>
                 <a href="{% url 'planos' %}">Planos</a>
             </div>
         </div>

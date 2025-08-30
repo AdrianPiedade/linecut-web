@@ -21,8 +21,8 @@
             <a href="{% url 'como_funciona' %}">Como Funciona</a>
         </div>
         <div class="auth-buttons">
-            <a href="#" class="btn-entrar">Entrar</a>
-            <a href="#" class="btn-cadastrar">Cadastrar</a>
+            <a href="{% url 'login' %}" class="btn-entrar">Entrar</a>
+            <a href="{% url 'cadastro' %}" class="btn-cadastrar">Cadastrar</a>
         </div>
     </nav>
 
@@ -89,7 +89,7 @@
             
             <div class="vantagens-cta">
                 <p>Seja parceiro do LineCut e leve sua lanchonete para o próximo nível!</p>
-                <button class="btn-cadastrar-loja">Cadastrar minha loja</button>
+                <a href="{% url 'cadastro' %}" class="btn-cadastrar-loja">Cadastrar minha loja</a>
             </div>
         </section>
     </main>
@@ -113,8 +113,8 @@
                 <div class="footer-column descubra">
                     <h4>Descubra</h4>
                     <ul>
-                        <li><a href="#">Cadastre seu restaurante</a></li>
-                        <li><a href="#">Seja parceiro</a></li>
+                        <li><a href="{% url 'cadastro' %}">Cadastre seu restaurante</a></li>
+                        <li><a href="{% url 'login' %}">Seja parceiro</a></li>
                         <li><a href="{% url 'planos' %}">Planos</a></li>
                     </ul>
                 </div>
