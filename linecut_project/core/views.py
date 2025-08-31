@@ -5,9 +5,12 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.urls import reverse
 import requests
 from .forms import CadastroForm
+from .firebase_services import FirebaseService
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +24,7 @@ def planos(request):
 def cadastro(request):
     return render(request, 'core/cadastro.html')
 
-def login(request):
+def login_page(request):
     return render(request, 'core/login.html')
 
 def quem_somos(request):
@@ -37,31 +40,103 @@ def cadastro(request):
     if request.method == 'POST':
         form = CadastroForm(request.POST)
         if form.is_valid():
-            # Processar os dados do formulário
-            # Salvar no banco de dados
-            # Redirecionar para página de sucesso
-            messages.success(request, 'Cadastro realizado com sucesso!')
-            return redirect('home')
+            try:
+                print("✅ Formulário válido, processando cadastro...")
+                
+                dados = form.cleaned_data
+                
+                if FirebaseService.verificar_email_existe(dados['email']):
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'errors': {'email': [{'message': 'Este email já está cadastrado.'}]}
+                        }, status=400)
+                    messages.error(request, 'Este email já está cadastrado.')
+                    return render(request, 'core/cadastro.html', {'form': form})
+                
+                email = dados['email']
+                senha = dados['senha']
+                
+                dados_empresa = {
+                    'nome_fantasia': dados['nome_fantasia'],
+                    'razao_social': dados['razao_social'],
+                    'cnpj': dados['cnpj'],
+                    'telefone': dados['telefone'],
+                    'endereco': dados['endereco'],
+                    'cep': dados['cep'],
+                    'numero': dados['numero'],
+                    'polo': dados['polo'],
+                    'plano': dados['plano'],
+                    'termos_condicoes': dados['termos_condicoes'],
+                    'politica_privacidade': dados['politica_privacidade'],
+                    'status': 'ativo',
+                    'data_cadastro': datetime.now().isoformat()
+                }
+                
+                user = FirebaseService.criar_usuario(email, senha, dados_empresa)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Cadastro realizado com sucesso!',
+                        'redirect_url': reverse('home')
+                    })
+                
+                messages.success(request, 'Cadastro realizado com sucesso!')
+                return redirect('home')
+                
+            except Exception as e:
+                print(f"❌ ERRO NO CADASTRO: {str(e)}")
+                logger.error(f"Erro no cadastro: {e}")
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Erro ao realizar cadastro: {str(e)}'
+                    }, status=500)
+                
+                messages.error(request, f'Erro ao realizar cadastro: {str(e)}')
         else:
+            print("❌ Formulário inválido")
+            print(f"Erros: {form.errors}")
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Por favor, corrija os erros abaixo.',
+                    'errors': form.errors.get_json_data()
+                }, status=400)
+            
             messages.error(request, 'Por favor, corrija os erros abaixo.')
     else:
         form = CadastroForm()
+        print("📋 Formulário de cadastro carregado (GET)")
     
     return render(request, 'core/cadastro.html', {'form': form})
 
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            return redirect('pagina_inicial')  # Redirecionar para a página inicial após login
+def cadastro_submit(request):
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        form = CadastroForm(request.POST)
+        if form.is_valid():
+            try:
+                return JsonResponse({
+                    'success': True,
+                    'redirect_url': reverse('home'),
+                    'message': 'Cadastro realizado com sucesso!'
+                })
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Erro ao realizar cadastro.'
+                })
         else:
-            messages.error(request, 'E-mail ou senha incorretos.')
-    
-    return render(request, 'login.html')
+            return JsonResponse({
+                'success': False,
+                'message': 'Por favor, corrija os erros no formulário.',
+                'errors': form.errors.get_json_data()
+            })
+
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 
 class CEPService:
@@ -206,17 +281,3 @@ def consultar_cnpj(request):
     except Exception as e:
         logger.error(f"Erro interno ao consultar CNPJ: {str(e)}")
         return JsonResponse({'erro': 'Erro interno ao processar a consulta'}, status=500)
-
-def cadastro(request):
-    if request.method == 'POST':
-        form = CadastroForm(request.POST)
-        if form.is_valid():
-
-            messages.success(request, 'Cadastro realizado com sucesso!')
-            return redirect('home')
-        else:
-            messages.error(request, 'Por favor, corrija os erros abaixo.')
-    else:
-        form = CadastroForm()
-    
-    return render(request, 'core/cadastro.html', {'form': form})

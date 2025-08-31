@@ -25,12 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         if (data.erro) {
-                            alert('CNPJ não encontrado ou inválido: ' + data.erro);
+                            notificacoes.erro('CNPJ não encontrado ou inválido: ' + data.erro);
                         
                             document.getElementById('nome_fantasia').removeAttribute('readonly');
                             document.getElementById('razao_social').removeAttribute('readonly');
                         } else {
-                
                             document.getElementById('nome_fantasia').value = data.nome_fantasia || '';
                             document.getElementById('razao_social').value = data.razao_social || '';
                             
@@ -43,11 +42,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (data.email) {
                                 document.getElementById('email').value = data.email;
                             }
+                            
+                            notificacoes.sucesso('CNPJ validado com sucesso!');
                         }
                     })
                     .catch(error => {
                         console.error('Erro ao consultar CNPJ:', error);
-                        alert('Erro ao consultar CNPJ: ' + error.message);
+                        notificacoes.erro('Erro ao consultar CNPJ: ' + error.message);
 
                         document.getElementById('nome_fantasia').removeAttribute('readonly');
                         document.getElementById('razao_social').removeAttribute('readonly');
@@ -59,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
             } else if (cnpj.length > 0) {
-                alert('CNPJ deve ter 14 dígitos. Digite um CNPJ válido.');
+                notificacoes.erro('CNPJ deve ter 14 dígitos. Digite um CNPJ válido.');
             }
         });
     }

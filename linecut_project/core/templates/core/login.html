@@ -36,15 +36,16 @@
             <h3 class="portal-title">Portal do LineCut</h3>
             <p class="portal-description">Gerencie sua loja com facilidade e agilidade.</p>
             
-            <form class="login-form">
+            <form method="post" action="{% url 'login_submit' %}" class="login-form">
+                {% csrf_token %}
                 <div class="form-group">
                     <label for="email">E-mail</label>
-                    <input type="email" id="email" placeholder="name@email.com.br">
+                    <input type="email" id="email" name="email" placeholder="name@email.com.br">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Senha</label>
-                    <input type="password" id="password" placeholder="**********">
+                    <input type="password" id="password" name="password" placeholder="**********">
                 </div>
                 
                 <button type="submit" class="btn-login">Entrar</button>

@@ -1,0 +1,234 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LineCut - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+</head>
+<body>
+    <aside class="menu-lateral">
+        <div class="logo">
+            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+        </div>
+        
+        <div class="restaurant-info">
+            <h3>Meu Restaurante</h3>
+            <div class="status-loja">
+                <div class="status-indicator"></div>
+                <span>Loja Aberta</span>
+            </div>
+        </div>
+        
+        <nav class="menu-nav">
+            <div class="menu-item selected">
+                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
+                <span>Início</span>
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
+                <span>Pedidos</span>
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
+                <span>Produtos</span>
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
+                <span>Estoque</span>
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                <span>Dashboard</span>
+                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
+                <span>Avaliações</span>
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
+                <span>Notificações</span>
+            </div>
+            <div class="menu-item">
+                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
+                <span>Configurações</span>
+            </div>
+        </nav>
+        
+        <div class="menu-sair">
+            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
+            <span>Sair</span>
+        </div>
+    </aside>
+
+    <main class="conteudo-principal">
+        <header class="cabecalho">
+            <h1>Bem-vindo!</h1>
+            <p>Olá, Burger Queen! Aqui está o resumo do seu dia até agora</p>
+        </header>
+
+        <div class="info-cards">
+            <div class="info-card dados-lanchonete">
+                <div class="lanchonete-imagem">
+                    <img src="{% static 'dashboard/images/burger_queen_logo.png' %}" alt="Logo Lanchonete">
+                </div>
+                <div class="lanchonete-info">
+                    <h2>Burger Queen</h2>
+                    <p class="categoria">Lanches e Salgados</p>
+                    <p class="endereco">Praça 3 - Senac</p>
+                </div>
+                <div class="editar-icon">
+                    <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                </div>
+            </div>
+
+            <div class="info-card horario-funcionamento">
+                <h3>Horário de funcionamento</h3>
+                <div class="dias-semana">
+                    <div class="dia-item">
+                        <p class="dia-nome">Seg</p>
+                        <div class="horario-box">
+                            <span>18:00 - 23:00</span>
+                        </div>
+                    </div>
+                    <div class="dia-item">
+                        <p class="dia-nome">Ter</p>
+                        <div class="horario-box">
+                            <span>18:00 - 23:00</span>
+                        </div>
+                    </div>
+                    <div class="dia-item">
+                        <p class="dia-nome">Qua</p>
+                        <div class="horario-box">
+                            <span>18:00 - 23:00</span>
+                        </div>
+                    </div>
+                    <div class="dia-item">
+                        <p class="dia-nome">Qui</p>
+                        <div class="horario-box">
+                            <span>18:00 - 23:00</span>
+                        </div>
+                    </div>
+                    <div class="dia-item">
+                        <p class="dia-nome">Sex</p>
+                        <div class="horario-box">
+                            <span>18:00 - 23:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="desempenho-diario">
+            <h2>Desempenho diário</h2>
+            <div class="metricas-container">
+                <div class="metrica">
+                    <h3>Pedidos recebidos hoje</h3>
+                    <p class="valor">15</p>
+                </div>
+                <div class="separador"></div>
+                <div class="metrica">
+                    <h3>Total em vendas</h3>
+                    <p class="valor">R$ 812,50</p>
+                </div>
+                <div class="separador"></div>
+                <div class="metrica">
+                    <h3>Avaliação média</h3>
+                    <div class="avaliacao-container">
+                        <img src="{% static 'dashboard/images/icone_estrela_hd.png' %}" alt="Avaliação" class="estrela-icon-hd">
+                        <p class="valor">4,7</p>
+                    </div>
+                    <p class="total-avaliacoes">(360 avaliações)</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="ultimos-pedidos">
+            <h2>Últimos pedidos realizados</h2>
+            <div class="tabela-pedidos">
+                <div class="cabecalho-tabela">
+                    <span class="col-status">Status</span>
+                    <span class="col-numero">Número pedido</span>
+                    <span class="col-valor">Valor</span>
+                    <span class="col-data">Data</span>
+                    <span class="col-acao">Detalhes</span>
+                </div>
+                
+                <div class="linha-pedido">
+                    <div class="col-status">
+                        <div class="status-indicator em-andamento"></div>
+                        <span>Em andamento</span>
+                    </div>
+                    <div class="col-numero">#1200</div>
+                    <div class="col-valor">R$ 20,00</div>
+                    <div class="col-data">24/04/2025</div>
+                    <div class="col-acao">
+                        <a href="#" class="ver-detalhes">Ver detalhes</a>
+                    </div>
+                </div>
+                
+                <div class="linha-pedido">
+                    <div class="col-status">
+                        <div class="status-indicator em-andamento"></div>
+                        <span>Em andamento</span>
+                    </div>
+                    <div class="col-numero">#1199</div>
+                    <div class="col-valor">R$ 20,00</div>
+                    <div class="col-data">24/04/2025</div>
+                    <div class="col-acao">
+                        <a href="#" class="ver-detalhes">Ver detalhes</a>
+                    </div>
+                </div>
+                
+                <div class="linha-pedido">
+                    <div class="col-status">
+                        <div class="status-indicator concluido"></div>
+                        <span>Pedido concluído</span>
+                    </div>
+                    <div class="col-numero">#1198</div>
+                    <div class="col-valor">R$ 20,00</div>
+                    <div class="col-data">24/04/2025</div>
+                    <div class="col-acao">
+                        <a href="#" class="ver-detalhes">Ver detalhes</a>
+                    </div>
+                </div>
+                
+                <div class="linha-pedido">
+                    <div class="col-status">
+                        <div class="status-indicator concluido"></div>
+                        <span>Pedido concluído</span>
+                    </div>
+                    <div class="col-numero">#1197</div>
+                    <div class="col-valor">R$ 20,00</div>
+                    <div class="col-data">24/04/2025</div>
+                    <div class="col-acao">
+                        <a href="#" class="ver-detalhes">Ver detalhes</a>
+                    </div>
+                </div>
+                
+                <div class="linha-pedido">
+                    <div class="col-status">
+                        <div class="status-indicator concluido"></div>
+                        <span>Pedido concluído</span>
+                    </div>
+                    <div class="col-numero">#1196</div>
+                    <div class="col-valor">R$ 20,00</div>
+                    <div class="col-data">24/04/2025</div>
+                    <div class="col-acao">
+                        <a href="#" class="ver-detalhes">Ver detalhes</a>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-ver-pedidos">Ver Pedidos</button>
+        </section>
+    </main>
+
+    <script src="{% static 'dashboard/js/script.js' %}"></script>
+</body>
+</html>

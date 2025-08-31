@@ -17,16 +17,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(data => {
                         if (data.erro) {
-                            alert('CEP não encontrado. Por favor, verifique o CEP digitado.');
+                            notificacoes.erro('CEP não encontrado. Por favor, verifique o CEP digitado.');
                             document.getElementById('endereco').value = '';
                         } else {
                             const endereco = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
                             document.getElementById('endereco').value = endereco;
+                            notificacoes.sucesso('CEP encontrado! Endereço preenchido automaticamente.');
                         }
                     })
                     .catch(error => {
                         console.error('Erro ao consultar CEP:', error);
-                        alert('Erro ao consultar CEP. Tente novamente.');
+                        notificacoes.erro('Erro ao consultar CEP. Tente novamente.');
                     })
                     .finally(() => {
                         document.getElementById('cep-loading').style.display = 'none';

@@ -6,5 +6,5 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
-        from core.firebase_auth import initialize_firebase
+        from linecut_project.firebase_config import initialize_firebase
         initialize_firebase()

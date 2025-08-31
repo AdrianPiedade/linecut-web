@@ -1,4 +1,3 @@
-// Gerenciamento dos termos e política de privacidade
 document.addEventListener('DOMContentLoaded', function() {
     const linkTermos = document.getElementById('link-termos');
     const linkPolitica = document.getElementById('link-politica');
@@ -82,12 +81,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function verificarEstadoBotoes() {
         if (checkboxTermos.checked && checkboxPolitica.checked) {
             btnCadastrar.disabled = false;
+            btnCadastrar.style.opacity = '1';
+            btnCadastrar.style.cursor = 'pointer';
+            btnCadastrar.title = '';
             termoInstruction.style.display = 'none';
         } else {
-            btnCadastrar.disabled = true;
+            btnCadastrar.disabled = false;
+            btnCadastrar.style.opacity = '0.6';
+            btnCadastrar.style.cursor = 'not-allowed';
+            btnCadastrar.title = 'Aceite os termos e política para cadastrar';
             termoInstruction.style.display = 'block';
         }
-    }
+}
     
     checkboxTermos.addEventListener('change', verificarEstadoBotoes);
     checkboxPolitica.addEventListener('change', verificarEstadoBotoes);
@@ -96,8 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') {
             const modaisAbertos = document.querySelectorAll('.modal[style="display: flex;"]');
             if (modaisAbertos.length > 0) {
-                e.preventDefault(); // Previne fechamento
-                // Opcional: mostrar mensagem educativa
+                e.preventDefault();
                 const indicator = modaisAbertos[0].querySelector('.scroll-indicator');
                 if (indicator) {
                     const originalText = indicator.innerHTML;

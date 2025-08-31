@@ -30,12 +30,11 @@
     <main class="cadastro-container">
         <h1>Cadastrar</h1>
         
-        <form method="POST" class="cadastro-form" id="cadastroForm">
+        <form method="POST" class="cadastro-form" id="cadastroForm" onsubmit="return false;">
             {% csrf_token %}
             
             <div class="form-columns">
                 <div class="form-column">
-                    <!-- CNPJ AGORA É O PRIMEIRO CAMPO -->
                     <div class="form-group">
                         <label for="cnpj">CNPJ</label>
                         <input type="text" id="cnpj" name="cnpj" placeholder="00.000.000/0000-00" required>
@@ -115,7 +114,6 @@
                         </div>
                     </div>
                     
-                    <!-- CAMPO DE SENHA ATUALIZADO -->
                     <div class="form-group password-group">
                         <label for="senha">Senha</label>
                         <div class="password-input-container">
@@ -125,7 +123,6 @@
                             </button>
                         </div>
                         
-                        <!-- Validação de senha -->
                         <div id="senha-validacao" class="senha-validacao" style="display: none;">
                             <p class="senha-titulo">A senha deve conter:</p>
                             <ul class="senha-requisitos">
@@ -172,11 +169,10 @@
                 </p>
             </div>
             
-            <button type="submit" class="btn-cadastrar-form" id="btn-cadastrar" disabled>Cadastrar</button>
+            <button type="submit" class="btn-cadastrar-form" id="btn-cadastrar" >Cadastrar</button>
         </form>
     </main>
 
-    <!-- Pop-up Termos e Condições -->
     <div id="modal-termos" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -237,7 +233,6 @@
         </div>
     </div>
 
-    <!-- Pop-up Política de Privacidade -->
     <div id="modal-politica" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -318,12 +313,25 @@
         </div>
     </footer>
 
+    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="text-align: center;">
+            <div class="spinner-border text-danger" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Processando cadastro...</p>
+        </div>
+    </div>
+
+    <div id="error-message" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 10000;" class="alert alert-danger"></div>
+
     <script src="{% static 'core/js/mascaras.js' %}"></script>
+    <script src="{% static 'core/js/notificacoes.js' %}"></script>
     <script src="{% static 'core/js/cep.js' %}"></script>
     <script src="{% static 'core/js/cnpj.js' %}"></script>
     <script src="{% static 'core/js/senha.js' %}"></script>
     <script src="{% static 'core/js/termos.js' %}"></script>
     <script src="{% static 'core/js/plano.js' %}"></script>
+    <script src="{% static 'core/js/cadastro_submit.js' %}"></script>
     
 </body>
 </html>

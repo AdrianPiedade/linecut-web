@@ -1,6 +1,7 @@
 from django import forms
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from .firebase_services import FirebaseService
 import re
 
 class CadastroForm(forms.Form):
@@ -17,6 +18,14 @@ class CadastroForm(forms.Form):
     termos_condicoes = forms.BooleanField(required=True)
     politica_privacidade = forms.BooleanField(required=True)
     plano = forms.CharField(max_length=20, required=True)
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        
+        if FirebaseService.verificar_email_existe(email):
+            raise ValidationError('Este email já está cadastrado.')
+        
+        return email
 
     def clean_cnpj(self):
         cnpj = self.cleaned_data['cnpj']
