@@ -247,6 +247,60 @@ body {
     text-decoration: underline;
 }
 
+.alert-container {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    border-left: 4px solid;
+}
+
+.alert.error {
+    background-color: #fee;
+    border-color: #c33;
+    color: #c33;
+}
+
+.alert.success {
+    background-color: #efe;
+    border-color: #363;
+    color: #363;
+}
+
+.alert.warning {
+    background-color: #ffd;
+    border-color: #963;
+    color: #963;
+}
+
+.alert.info {
+    background-color: #eef;
+    border-color: #336;
+    color: #336;
+}
+
+/* Estilos para campos com erro */
+.form-group input.error {
+    border-color: #9C0202;
+    background-color: #fff5f5;
+}
+
+.error-message {
+    color: #9C0202;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+
 @media (max-width: 1200px) {
     .login-content {
         width: 500px;

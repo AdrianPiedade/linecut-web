@@ -1,0 +1,158 @@
+/* core/static/core/css/toast.css */
+/* Estilos para mensagens toast */
+.toast-container {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    min-width: 300px;
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+    border-left-color: #189F4C;
+    background: #f0f9f0;
+}
+
+.toast.error {
+    border-left-color: #9C0202;
+    background: #fef0f0;
+}
+
+.toast.warning {
+    border-left-color: #F2C12E;
+    background: #fffaf0;
+}
+
+.toast.info {
+    border-left-color: #2196F3;
+    background: #f0f8ff;
+}
+
+.toast-icon {
+    margin-right: 12px;
+    font-size: 20px;
+}
+
+.toast.success .toast-icon {
+    color: #189F4C;
+}
+
+.toast.error .toast-icon {
+    color: #9C0202;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.toast-message {
+    font-size: 13px;
+    color: #666;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #999;
+    margin-left: 10px;
+}
+
+.toast-close:hover {
+    color: #666;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Estilos para mensagens de erro do formulário */
+.alert-container {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.alert.error {
+    background-color: #fee;
+    border: 1px solid #fcc;
+    color: #c33;
+}
+
+.alert.success {
+    background-color: #efe;
+    border: 1px solid #cfc;
+    color: #363;
+}
+
+.alert.warning {
+    background-color: #ffd;
+    border: 1px solid #ffc;
+    color: #963;
+}
+
+.alert.info {
+    background-color: #eef;
+    border: 1px solid #ccf;
+    color: #336;
+}
+
+.error-message {
+    color: #9C0202;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+.form-group input.error {
+    border-color: #9C0202;
+    background-color: #fff5f5;
+}

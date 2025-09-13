@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as django_login
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 import requests
 from .forms import CadastroForm
@@ -79,11 +81,11 @@ def cadastro(request):
                     return JsonResponse({
                         'success': True,
                         'message': 'Cadastro realizado com sucesso!',
-                        'redirect_url': reverse('home')
+                        'redirect_url': reverse('login_page')
                     })
                 
                 messages.success(request, 'Cadastro realizado com sucesso!')
-                return redirect('home')
+                return redirect('login_page')
                 
             except Exception as e:
                 print(f"❌ ERRO NO CADASTRO: {str(e)}")
@@ -121,7 +123,7 @@ def cadastro_submit(request):
             try:
                 return JsonResponse({
                     'success': True,
-                    'redirect_url': reverse('home'),
+                    'redirect_url': reverse('login_page'),
                     'message': 'Cadastro realizado com sucesso!'
                 })
             except Exception as e:
@@ -137,6 +139,85 @@ def cadastro_submit(request):
             })
 
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+def login_submit(request):
+    if request.method == 'POST':
+        try:
+            email = request.POST.get('email', '').strip()
+            senha = request.POST.get('password', '').strip()
+            
+            print(f"📧 Tentativa de login: {email}")
+            
+            # Validação básica
+            if not email or not senha:
+                messages.error(request, 'Por favor, preencha todos os campos.')
+                return render(request, 'core/login.html', {'email': email})
+            
+            try:
+                # Autentica com Firebase
+                user_data = FirebaseService.autenticar_usuario(email, senha)
+                
+                # Obtém dados do usuário do Realtime Database
+                user_profile = FirebaseService.obter_dados_usuario(user_data)
+                
+                if user_profile:
+                    # Armazena dados na sessão
+                    request.session['firebase_uid'] = user_data['uid']
+                    request.session['user_email'] = email
+                    request.session['user_profile'] = user_profile
+                    request.session['logged_in'] = True
+                    request.session['id_token'] = user_data['idToken']
+                    request.session['refresh_token'] = user_data['refreshToken']
+                    
+                    print(f"✅ Login bem-sucedido para: {email}")
+                    messages.success(request, 'Login realizado com sucesso!')
+                    
+                    return redirect('dashboard:index')
+                    
+                else:
+                    messages.error(request, 'Perfil de usuário não encontrado.')
+                    return render(request, 'core/login.html', {'email': email})
+                    
+            except Exception as e:
+                error_message = str(e)
+                print(f"❌ Erro no login: {error_message}")
+                
+                # Passa o email de volta para manter no formulário
+                context = {'email': email}
+                
+                if "Email não cadastrado" in error_message:
+                    messages.error(request, 'Este email não está cadastrado.')
+                elif "Senha incorreta" in error_message:
+                    messages.error(request, 'Senha incorreta. Tente novamente.')
+                elif "Usuário desabilitado" in error_message:
+                    messages.error(request, 'Esta conta foi desativada.')
+                elif "Erro na autenticação" in error_message:
+                    messages.error(request, 'Erro ao fazer login. Tente novamente.')
+                else:
+                    messages.error(request, error_message)
+                
+                return render(request, 'core/login.html', context)
+                
+        except Exception as e:
+            print(f"❌ Erro geral no login: {str(e)}")
+            messages.error(request, 'Erro ao processar login. Tente novamente.')
+            return render(request, 'core/login.html', {'email': request.POST.get('email', '')})
+    
+    return redirect('login_page')
+
+def logout(request):
+
+    if 'firebase_uid' in request.session:
+        del request.session['firebase_uid']
+    if 'user_email' in request.session:
+        del request.session['user_email']
+    if 'user_profile' in request.session:
+        del request.session['user_profile']
+    if 'logged_in' in request.session:
+        del request.session['logged_in']
+    
+    messages.success(request, 'Logout realizado com sucesso!')
+    return redirect('home')
 
 
 class CEPService:

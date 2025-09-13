@@ -1,3 +1,4 @@
+/* CSS - Removido z-index desnecessário do footer e ajustado posicionamento */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
 * {
@@ -14,6 +15,8 @@ body {
     min-height: 100vh;
     padding-top: 80px;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .red-background {
@@ -104,7 +107,7 @@ body {
     box-shadow: 5.4px 7.19px 7.19px rgba(0, 0, 0, 0.25);
     border-radius: 18px;
     position: relative;
-    z-index: 1;
+    flex: 1;
 }
 
 .cadastro-container h1 {
@@ -131,6 +134,7 @@ body {
 
 .form-group {
     position: relative;
+    margin-bottom: 20px;
 }
 
 .form-group .field-error {
@@ -389,7 +393,6 @@ body {
     position: relative;
     margin-top: 60px;
     background: #FFFFFF;
-    z-index: 2;
 }
 
 .footer-logo img {
@@ -462,7 +465,6 @@ body {
     width: 20px;
     height: 20px;
 }
-
 
 .loading-spinner .bi-arrow-repeat {
     animation: spin 1s linear infinite;

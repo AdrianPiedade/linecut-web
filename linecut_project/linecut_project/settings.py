@@ -7,6 +7,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Firebase
 FIREBASE_CONFIG = os.path.join(BASE_DIR, 'firebase', 'serviceAccountKey.json')
 FIREBASE_DB_URL = 'https://linecut-3bf2b-default-rtdb.firebaseio.com/'
+FIREBASE_API_KEY = "AIzaSyB14a_rxVSb5CtVQt2EJU4NByHeiMPpLOc"
+FIREBASE_STORAGE_BUCKET = "linecut-3bf2b.firebasestorage.app"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -41,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dashboard.middleware.DashboardAuthMiddleware',
 ]
 
 ROOT_URLCONF = 'linecut_project.urls'

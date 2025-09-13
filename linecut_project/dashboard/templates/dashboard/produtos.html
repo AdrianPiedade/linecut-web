@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LineCut - Produtos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/produtos.css' %}">
+</head>
+<body>
+    <aside class="menu-lateral">
+        <div class="logo">
+            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+        </div>
+        
+        <div class="restaurant-info">
+            <h3>Meu Restaurante</h3>
+            <div class="status-loja">
+                <div class="status-indicator"></div>
+                <span>Loja Aberta</span>
+            </div>
+        </div>
+        
+        <nav class="menu-nav">
+            <a href="{% url 'dashboard:index' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
+                <span>Início</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
+                <span>Pedidos</span>
+            </a>
+            <a href="{% url 'dashboard:produtos' %}" class="menu-item selected">
+                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
+                <span>Produtos</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
+                <span>Estoque</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                <span>Dashboard</span>
+                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
+                <span>Avaliações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
+                <span>Notificações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
+                <span>Configurações</span>
+            </a>
+        </nav>
+        
+        <div class="menu-sair">
+            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
+            <span>Sair</span>
+        </div>
+    </aside>
+
+    <main class="conteudo-principal">
+        <header class="cabecalho-produtos">
+            <div class="titulos">
+                <h1 class="titulo-ativo">Produtos</h1>
+                <h1 class="titulo-inativo btn-cadastrar-texto" onclick="abrirModal()">Cadastrar</h1>
+            </div>
+        </header>
+
+        <div class="filtros">
+            <div class="filtro-group">
+                <label>Buscar produto</label>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Digite o nome do produto...">
+                </div>
+            </div>
+            
+            <div class="filtro-group">
+                <label>Categoria</label>
+                <select id="categoria-filter">
+                    <option value="">Todas as categorias</option>
+                    <option value="Lanches">Lanches</option>
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Sobremesas">Sobremesas</option>
+                    <option value="Acompanhamentos">Acompanhamentos</option>
+                </select>
+            </div>
+            
+            <div class="filtro-group">
+                <label>Status</label>
+                <select id="status-filter">
+                    <option value="">Todos</option>
+                    <option value="disponivel">Disponível</option>
+                    <option value="indisponivel">Indisponível</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tabela-container">
+            <div class="cabecalho-tabela">
+                <span class="col-id">ID</span>
+                <span class="col-nome">Produto</span>
+                <span class="col-descricao">Descrição</span>
+                <span class="col-preco">Preço</span>
+                <span class="col-quantidade">Qtd.</span>
+                <span class="col-status">Status</span>
+                <span class="col-acoes">Editar</span>
+            </div>
+            
+            <div class="corpo-tabela" id="produtos-lista">
+                {% for product in products %}
+                <div class="linha-produto"
+                    data-product-id="{{ product.id|default:'N/A' }}" 
+                    data-category="{{ product.category }}" 
+                    data-status="{% if product.is_available %}disponivel{% else %}indisponivel{% endif %}"
+                    data-image-url="{{ product.image_url|default_if_none:'' }}">
+                    <div class="col-id">{{ product.id|default:"N/A" }}</div>
+                    <div class="col-nome">{{ product.name }}</div>
+                    <div class="col-descricao">{{ product.description|truncatewords:10 }}</div>
+                    <div class="col-preco">R$ {{ product.price|floatformat:2 }}</div>
+                    <div class="col-quantidade">{{ product.quantity|default:0 }}</div>
+                    <div class="col-status">
+                        <span class="status-badge {% if product.is_available %}disponivel{% else %}indisponivel{% endif %}">
+                            {% if product.is_available %}Disponível{% else %}Indisponível{% endif %}
+                        </span>
+                    </div>
+                    <div class="col-acoes">
+                        <button class="btn-editar" onclick="editarProduto('{{ product.id }}')">
+                            <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                            Editar
+                        </button>
+                        <button class="btn-excluir" onclick="excluirProduto('{{ product.id }}', '{{ product.name }}')">
+                            Excluir
+                        </button>
+                        <button class="btn-status {% if product.is_available %}desativar{% else %}ativar{% endif %}" 
+                                onclick="toggleStatus('{{ product.id }}', this, {% if product.is_available %}true{% else %}false{% endif %})">
+                            {% if product.is_available %}Desativar{% else %}Ativar{% endif %}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="paginacao">
+            <button class="btn-pagina anterior">Anterior</button>
+            <span class="numeros-pagina">
+                <button class="btn-pagina ativo">1</button>
+                <button class="btn-pagina">2</button>
+                <button class="btn-pagina">3</button>
+            </span>
+            <button class="btn-pagina proximo">Próximo</button>
+        </div>
+    </main>
+
+    <!-- Modal para adicionar/editar produto -->
+    <div id="modal-produto" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2 id="modal-titulo">Adicionar Produto</h2>
+                <span class="fechar-modal" onclick="fecharModal()">&times;</span>
+            </div>
+            
+            <form id="form-produto" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="produto-id" name="produto_id">
+                <input type="hidden" id="modo-edicao" name="modo_edicao" value="false">
+                
+                <div class="modal-corpo">
+                    <div class="coluna-esquerda">
+                        <div class="upload-imagem">
+                            <div class="imagem-preview" id="imagem-preview">
+                                <img src="" alt="Preview" id="preview-img" style="display: none;">
+                                <div id="placeholder-text">+ Adicionar foto</div>
+                            </div>
+                            <input type="file" id="imagem-input" name="image" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-upload" onclick="document.getElementById('imagem-input').click()">
+                                Selecionar imagem
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="coluna-direita">
+                        <div class="form-group">
+                            <label for="nome">Nome do Produto *</label>
+                            <input type="text" id="nome" name="name" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="categoria">Categoria *</label>
+                                <select id="categoria" name="category" required>
+                                    <option value="">Selecione uma categoria</option>
+                                    <option value="Lanches">Lanches</option>
+                                    <option value="Bebidas">Bebidas</option>
+                                    <option value="Sobremesas">Sobremesas</option>
+                                    <option value="Acompanhamentos">Acompanhamentos</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="preco">Preço (R$) *</label>
+                                <input type="number" id="preco" name="price" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quantidade">Quantidade *</label>
+                                <input type="number" id="quantidade" name="quantity" min="0" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select id="status" name="is_available">
+                                    <option value="true">Disponível</option>
+                                    <option value="false">Indisponível</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descricao">Descrição</label>
+                            <textarea id="descricao" name="description" rows="4" placeholder="Descreva o produto..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-rodape">
+                    <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-salvar" id="btn-salvar-produto">
+                        <span id="btn-text">Salvar Produto</span>
+                        <div id="btn-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <span id="loading-text">Salvando...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação -->
+    <div id="modal-confirmacao" class="modal">
+        <div class="modal-conteudo confirmacao">
+            <h3 id="confirmacao-titulo">Confirmar exclusão</h3>
+            <p id="confirmacao-mensagem">Tem certeza que deseja excluir este produto?</p>
+            <div class="botoes-confirmacao">
+                <button class="btn-cancelar" onclick="fecharConfirmacao()">Cancelar</button>
+                <button class="btn-confirmar" id="btn-confirmar-acao">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'dashboard/js/produtos.js' %}"></script>
+</body>
+</html>

@@ -33,10 +33,10 @@
                 <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
                 <span>Pedidos</span>
             </div>
-            <div class="menu-item">
+            <a href="{% url 'dashboard:produtos' %}" class="menu-item">
                 <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
                 <span>Produtos</span>
-            </div>
+            </a>
             <div class="menu-item">
                 <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
                 <span>Estoque</span>
@@ -61,9 +61,11 @@
         </nav>
         
         <div class="menu-sair">
+            <a href="{% url 'dashboard:logout' %}" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
             <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
             <span>Sair</span>
-        </div>
+        </a>
+</div>
     </aside>
 
     <main class="conteudo-principal">
