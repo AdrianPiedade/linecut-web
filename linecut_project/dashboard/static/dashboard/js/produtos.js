@@ -203,14 +203,12 @@ function limparFormulario() {
 
 function salvarProduto() {
     const btnSalvar = document.getElementById('btn-salvar-produto');
-    const btnText = document.getElementById('btn-text');
-    const btnLoading = document.getElementById('btn-loading');
     const modoEdicao = document.getElementById('modo-edicao').value === 'true';
     const produtoId = document.getElementById('produto-id').value;
     
-    btnText.style.display = 'none';
-    btnLoading.style.display = 'flex';
-    btnSalvar.disabled = true;
+    // Usar o novo sistema de loading
+    setButtonLoading(btnSalvar, true);
+    const loading = showLoading(modoEdicao ? 'Atualizando produto...' : 'Salvando produto...');
     
     const form = document.getElementById('form-produto');
     const formData = new FormData(form);
@@ -231,20 +229,21 @@ function salvarProduto() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            showSuccessToast(data.message);
             fecharModal();
-            location.reload();
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         } else {
-            alert('Erro: ' + data.message);
+            showErrorToast('Erro: ' + data.message);
         }
     })
     .catch(error => {
-        alert('Erro ao salvar produto: ' + error.message);
+        showErrorToast('Erro ao salvar produto: ' + error.message);
     })
     .finally(() => {
-        btnText.style.display = 'flex';
-        btnLoading.style.display = 'none';
-        btnSalvar.disabled = false;
+        setButtonLoading(btnSalvar, false);
+        hideLoading();
     });
 }
 
@@ -263,20 +262,13 @@ function excluirProduto(produtoId, produtoNome) {
     const titulo = document.getElementById('confirmacao-titulo');
     const mensagem = document.getElementById('confirmacao-mensagem');
     const btnConfirmar = document.getElementById('btn-confirmar-acao');
-    const botoesContainer = document.querySelector('.botoes-confirmacao');
     
     titulo.textContent = 'Confirmar Exclusão';
     mensagem.textContent = `Tem certeza que deseja excluir o produto "${produtoNome}"? Esta ação não pode ser desfeita.`;
     
-    btnConfirmar.classList.remove('loading');
-    btnConfirmar.disabled = false;
-    botoesContainer.classList.remove('loading');
-    btnConfirmar.textContent = 'Sim';
-    
     btnConfirmar.onclick = function() {
-        btnConfirmar.classList.add('loading');
-        btnConfirmar.disabled = true;
-        botoesContainer.classList.add('loading');
+        // Usar o novo sistema de loading
+        setButtonLoading(btnConfirmar, true);
         
         const linhaProduto = encontrarLinhaPorId(produtoId);
         const imagemUrl = linhaProduto ? linhaProduto.getAttribute('data-image-url') : null;
@@ -294,6 +286,7 @@ function excluirProduto(produtoId, produtoNome) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                showSuccessToast('Produto excluído com sucesso!');
                 fecharConfirmacao();
                 if (linhaProduto) {
                     linhaProduto.remove();
@@ -301,18 +294,19 @@ function excluirProduto(produtoId, produtoNome) {
                     if (produtosRestantes === 0) {
                         mostrarLinhaVazia();
                     }
-                    mostrarMensagemSucesso('Produto excluído com sucesso!');
                 } else {
-                    location.reload();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 }
             } else {
-                alert('Erro: ' + data.message);
-                reativarBotoesConfirmacao();
+                showErrorToast('Erro: ' + data.message);
+                setButtonLoading(btnConfirmar, false);
             }
         })
         .catch(error => {
-            alert('Erro ao excluir produto: ' + error.message);
-            reativarBotoesConfirmacao();
+            showErrorToast('Erro ao excluir produto: ' + error.message);
+            setButtonLoading(btnConfirmar, false);
         });
     };
     
@@ -376,8 +370,9 @@ function mostrarLinhaVazia() {
 
 function toggleStatus(produtoId, buttonElement, currentStatus) {
     const originalText = buttonElement.textContent;
-    buttonElement.textContent = 'Processando...';
-    buttonElement.disabled = true;
+    
+    // Usar o novo sistema de loading
+    setButtonLoading(buttonElement, true);
     
     fetch(`/dashboard/produtos/toggle-status/${produtoId}/`, {
         method: 'POST',
@@ -391,18 +386,18 @@ function toggleStatus(produtoId, buttonElement, currentStatus) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            showSuccessToast(data.message);
             atualizarInterfaceStatus(produtoId, !currentStatus, buttonElement);
-            alert(data.message);
         } else {
-            alert('Erro: ' + data.message);
+            showErrorToast('Erro: ' + data.message);
             buttonElement.textContent = originalText;
-            buttonElement.disabled = false;
+            setButtonLoading(buttonElement, false);
         }
     })
     .catch(error => {
-        alert('Erro ao alterar status do produto');
+        showErrorToast('Erro ao alterar status do produto');
         buttonElement.textContent = originalText;
-        buttonElement.disabled = false;
+        setButtonLoading(buttonElement, false);
     });
 }
 
@@ -445,6 +440,117 @@ function fecharConfirmacao() {
 function getCSRFToken() {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
     return csrfToken ? csrfToken.value : '';
+}
+
+function showToast(message, type = 'success') {
+    // Criar container se não existir
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    // Criar toast
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    // Conteúdo do toast
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+    toast.appendChild(messageSpan);
+    
+    // Botão de fechar
+    const closeButton = document.createElement('button');
+    closeButton.className = 'toast-close';
+    closeButton.innerHTML = '&times;';
+    closeButton.onclick = () => removeToast(toast);
+    toast.appendChild(closeButton);
+    
+    // Adicionar ao container
+    container.appendChild(toast);
+    
+    // Remover automaticamente após 3 segundos
+    setTimeout(() => {
+        if (toast.parentNode) {
+            removeToast(toast);
+        }
+    }, 3000);
+    
+    return toast;
+}
+
+function removeToast(toast) {
+    toast.style.animation = 'fadeOut 0.5s ease forwards';
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 500);
+}
+
+// Funções auxiliares para diferentes tipos de toast
+function showSuccessToast(message) {
+    return showToast(message, 'success');
+}
+
+function showErrorToast(message) {
+    return showToast(message, 'error');
+}
+
+function showWarningToast(message) {
+    return showToast(message, 'warning');
+}
+
+function showInfoToast(message) {
+    return showToast(message, 'info');
+}
+
+function showLoading(message = 'Carregando...') {
+    // Criar overlay se não existir
+    let overlay = document.getElementById('loading-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'loading-overlay';
+        overlay.className = 'loading-overlay';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner-full';
+        
+        if (message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.color = 'white';
+            messageDiv.style.marginTop = '15px';
+            messageDiv.style.fontFamily = 'Poppins, sans-serif';
+            messageDiv.textContent = message;
+            overlay.appendChild(spinner);
+            overlay.appendChild(messageDiv);
+        } else {
+            overlay.appendChild(spinner);
+        }
+        
+        document.body.appendChild(overlay);
+    }
+    
+    return overlay;
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        button.classList.add('btn-loading');
+        button.disabled = true;
+    } else {
+        button.classList.remove('btn-loading');
+        button.disabled = false;
+    }
 }
 
 window.onclick = function(event) {
