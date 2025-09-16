@@ -120,7 +120,9 @@
                     data-product-id="{{ product.id|default:'N/A' }}" 
                     data-category="{{ product.category }}" 
                     data-status="{% if product.is_available %}disponivel{% else %}indisponivel{% endif %}"
-                    data-image-url="{{ product.image_url|default_if_none:'' }}">
+                    data-image-url="{{ product.image_url|default_if_none:'' }}"
+                    data-ideal-quantity="{{ product.ideal_quantity|default:'' }}"
+                    data-critical-quantity="{{ product.critical_quantity|default:'' }}">
                     <div class="col-id">{{ product.id|default:"N/A" }}</div>
                     <div class="col-nome">{{ product.name }}</div>
                     <div class="col-descricao">{{ product.description|truncatewords:10 }}</div>
@@ -188,7 +190,7 @@
                     </div>
                     
                     <div class="coluna-direita">
-                        <div class="form-group">
+                        <div class="form-group form-group-full-width">
                             <label for="nome">Nome do Produto *</label>
                             <input type="text" id="nome" name="name" required>
                         </div>
@@ -225,8 +227,28 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quantidade_ideal" title="Quantidade ideal para manter em estoque. Quando o estoque ficar abaixo deste valor, você receberá um alerta.">
+                                    Qtd. Ideal de Estoque 
+                                    <span style="color: #666; font-size: 12px;">(?)</span>
+                                </label>
+                                <input type="number" id="quantidade_ideal" name="ideal_quantity" min="0" 
+                                    placeholder="Opcional">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="quantidade_critica" title="Quantidade crítica de estoque. Quando o estoque chegar neste nível, você receberá uma notificação urgente para repor o produto.">
+                                    Qtd. Crítica de Estoque 
+                                    <span style="color: #666; font-size: 12px;">(?)</span>
+                                </label>
+                                <input type="number" id="quantidade_critica" name="critical_quantity" min="0" 
+                                    placeholder="Opcional">
+                            </div>
+                        </div>
                         
-                        <div class="form-group">
+                        <div class="form-group form-group-full-width">
                             <label for="descricao">Descrição</label>
                             <textarea id="descricao" name="description" rows="4" placeholder="Descreva o produto..."></textarea>
                         </div>

@@ -56,6 +56,9 @@ class ProductFirebaseService:
                     if 'image_url' in product_data:
                         product_data['image_url'] = ProductFirebaseService._process_image_url(product_data['image_url'])
                     
+                    product_data.setdefault('ideal_quantity', None)
+                    product_data.setdefault('critical_quantity', None)
+                    
                     products_list.append(product_data)
                 
                 return products_list
@@ -80,6 +83,9 @@ class ProductFirebaseService:
                 
                 if 'image_url' in product_data:
                     product_data['image_url'] = ProductFirebaseService._process_image_url(product_data['image_url'])
+                
+                product_data.setdefault('ideal_quantity', None)
+                product_data.setdefault('critical_quantity', None)
                     
                 return product_data
             return None
@@ -99,8 +105,14 @@ class ProductFirebaseService:
             product_data['created_at'] = datetime.now().isoformat()
             product_data['updated_at'] = datetime.now().isoformat()
             
+            cleaned_product_data = product_data.copy()
+            if cleaned_product_data.get('ideal_quantity') in [None, '', 0]:
+                cleaned_product_data.pop('ideal_quantity', None)
+            if cleaned_product_data.get('critical_quantity') in [None, '', 0]:
+                cleaned_product_data.pop('critical_quantity', None)
+            
             products_ref = restaurant_ref.child('products')
-            products_ref.child(product_id).set(product_data)
+            products_ref.child(product_id).set(cleaned_product_data)
             
             return True, product_id
             
@@ -116,8 +128,20 @@ class ProductFirebaseService:
                 return False
             
             product_data['updated_at'] = datetime.now().isoformat()
+            
+            cleaned_product_data = product_data.copy()
+            if cleaned_product_data.get('ideal_quantity') in [None, '', 0]:
+                cleaned_product_data.pop('ideal_quantity', None)
+            else:
+                cleaned_product_data['ideal_quantity'] = int(cleaned_product_data['ideal_quantity'])
+                
+            if cleaned_product_data.get('critical_quantity') in [None, '', 0]:
+                cleaned_product_data.pop('critical_quantity', None)
+            else:
+                cleaned_product_data['critical_quantity'] = int(cleaned_product_data['critical_quantity'])
+            
             product_ref = restaurant_ref.child('products').child(product_id)
-            product_ref.update(product_data)
+            product_ref.update(cleaned_product_data)
             
             return True
             
@@ -193,5 +217,60 @@ class ProductFirebaseService:
             
         except Exception as e:
             return ""
+
+    @staticmethod
+    def check_low_stock_products(user_id):
+        try:
+            products = ProductFirebaseService.get_all_products(user_id)
+            if not products:
+                return {}
+            
+            alerts = {
+                'ideal_alerts': [],
+                'critical_alerts': []
+            }
+            
+            for product in products:
+                current_quantity = product.get('quantity', 0)
+                ideal_quantity = product.get('ideal_quantity')
+                critical_quantity = product.get('critical_quantity')
+                
+                if (critical_quantity is not None and 
+                    current_quantity <= critical_quantity and 
+                    current_quantity > 0):
+                    alerts['critical_alerts'].append({
+                        'product_id': product['id'],
+                        'product_name': product['name'],
+                        'current_quantity': current_quantity,
+                        'critical_quantity': critical_quantity
+                    })
+                
+                elif (ideal_quantity is not None and 
+                      critical_quantity is not None and
+                      current_quantity <= ideal_quantity and 
+                      current_quantity > critical_quantity):
+                    alerts['ideal_alerts'].append({
+                        'product_id': product['id'],
+                        'product_name': product['name'],
+                        'current_quantity': current_quantity,
+                        'ideal_quantity': ideal_quantity
+                    })
+                
+                elif (ideal_quantity is not None and 
+                      critical_quantity is None and
+                      current_quantity <= ideal_quantity and 
+                      current_quantity > 0):
+                    alerts['ideal_alerts'].append({
+                        'product_id': product['id'],
+                        'product_name': product['name'],
+                        'current_quantity': current_quantity,
+                        'ideal_quantity': ideal_quantity
+                    })
+            
+            return alerts
+            
+        except Exception as e:
+            logger.error(f"Erro ao verificar estoque baixo: {e}")
+            return {}
 
 product_service = ProductFirebaseService()

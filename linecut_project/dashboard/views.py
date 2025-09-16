@@ -51,6 +51,9 @@ def criar_produto(request):
         try:
             firebase_uid = request.session.get('firebase_uid')
             
+            ideal_quantity = request.POST.get('ideal_quantity')
+            critical_quantity = request.POST.get('critical_quantity')
+            
             product_data = {
                 'name': request.POST.get('name'),
                 'description': request.POST.get('description'),
@@ -60,6 +63,12 @@ def criar_produto(request):
                 'is_available': request.POST.get('is_available') == 'true',
                 'image_url': ''
             }
+            
+            if ideal_quantity and ideal_quantity.strip():
+                product_data['ideal_quantity'] = int(ideal_quantity)
+            
+            if critical_quantity and critical_quantity.strip():
+                product_data['critical_quantity'] = int(critical_quantity)
             
             image_file = request.FILES.get('image')
             
@@ -91,6 +100,9 @@ def editar_produto(request, product_id):
             produto_atual = product_service.get_product(firebase_uid, product_id)
             imagem_antiga = produto_atual.get('image_url') if produto_atual else None
             
+            ideal_quantity = request.POST.get('ideal_quantity')
+            critical_quantity = request.POST.get('critical_quantity')
+            
             product_data = {
                 'name': request.POST.get('name'),
                 'description': request.POST.get('description'),
@@ -99,6 +111,16 @@ def editar_produto(request, product_id):
                 'quantity': int(request.POST.get('quantity', 0)),
                 'is_available': request.POST.get('is_available') == 'true'
             }
+            
+            if ideal_quantity and ideal_quantity.strip():
+                product_data['ideal_quantity'] = int(ideal_quantity)
+            elif 'ideal_quantity' in produto_atual:
+                product_data['ideal_quantity'] = None
+            
+            if critical_quantity and critical_quantity.strip():
+                product_data['critical_quantity'] = int(critical_quantity)
+            elif 'critical_quantity' in produto_atual:
+                product_data['critical_quantity'] = None
             
             image_file = request.FILES.get('image')
             if image_file:
@@ -188,7 +210,9 @@ def detalhes_produto(request, product_id):
                     'quantity': product.get('quantity', 0),
                     'is_available': product.get('is_available', False),
                     'description': product.get('description', ''),
-                    'image_url': product.get('image_url', '')
+                    'image_url': product.get('image_url', ''),
+                    'ideal_quantity': product.get('ideal_quantity', ''),
+                    'critical_quantity': product.get('critical_quantity', '')
                 }
             })
         else:

@@ -111,6 +111,8 @@ function preencherFormularioEdicao(produtoId) {
         const status = statusBadge.textContent.trim() === 'Disponível' ? 'true' : 'false';
         const categoria = linhaProduto.getAttribute('data-category');
         const imagemUrl = linhaProduto.getAttribute('data-image-url');
+        const quantidadeIdeal = linhaProduto.getAttribute('data-ideal-quantity') || '';
+        const quantidadeCritica = linhaProduto.getAttribute('data-critical-quantity') || '';
         
         document.getElementById('nome').value = nome;
         document.getElementById('descricao').value = descricao;
@@ -118,6 +120,8 @@ function preencherFormularioEdicao(produtoId) {
         document.getElementById('quantidade').value = quantidade;
         document.getElementById('status').value = status;
         document.getElementById('categoria').value = categoria;
+        document.getElementById('quantidade_ideal').value = quantidadeIdeal;
+        document.getElementById('quantidade_critica').value = quantidadeCritica;
         
         if (imagemUrl && imagemUrl !== 'null' && imagemUrl !== 'undefined' && imagemUrl !== '') {
             carregarImagemPreview(imagemUrl);
@@ -142,6 +146,8 @@ function preencherFormularioEdicao(produtoId) {
                 document.getElementById('quantidade').value = produto.quantity || '';
                 document.getElementById('status').value = produto.is_available ? 'true' : 'false';
                 document.getElementById('descricao').value = produto.description || '';
+                document.getElementById('quantidade_ideal').value = produto.ideal_quantity || '';
+                document.getElementById('quantidade_critica').value = produto.critical_quantity || '';
                 
                 if (produto.image_url) {
                     carregarImagemPreview(produto.image_url);
@@ -188,6 +194,8 @@ function limparFormulario() {
     document.getElementById('categoria').value = '';
     document.getElementById('preco').value = '';
     document.getElementById('quantidade').value = '';
+    document.getElementById('quantidade_ideal').value = '';
+    document.getElementById('quantidade_critica').value = '';
     document.getElementById('status').value = 'true';
     document.getElementById('descricao').value = '';
     
@@ -206,7 +214,6 @@ function salvarProduto() {
     const modoEdicao = document.getElementById('modo-edicao').value === 'true';
     const produtoId = document.getElementById('produto-id').value;
     
-    // Usar o novo sistema de loading
     setButtonLoading(btnSalvar, true);
     const loading = showLoading(modoEdicao ? 'Atualizando produto...' : 'Salvando produto...');
     
@@ -267,7 +274,6 @@ function excluirProduto(produtoId, produtoNome) {
     mensagem.textContent = `Tem certeza que deseja excluir o produto "${produtoNome}"? Esta ação não pode ser desfeita.`;
     
     btnConfirmar.onclick = function() {
-        // Usar o novo sistema de loading
         setButtonLoading(btnConfirmar, true);
         
         const linhaProduto = encontrarLinhaPorId(produtoId);
@@ -371,7 +377,6 @@ function mostrarLinhaVazia() {
 function toggleStatus(produtoId, buttonElement, currentStatus) {
     const originalText = buttonElement.textContent;
     
-    // Usar o novo sistema de loading
     setButtonLoading(buttonElement, true);
     
     fetch(`/dashboard/produtos/toggle-status/${produtoId}/`, {
@@ -443,7 +448,6 @@ function getCSRFToken() {
 }
 
 function showToast(message, type = 'success') {
-    // Criar container se não existir
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -452,26 +456,21 @@ function showToast(message, type = 'success') {
         document.body.appendChild(container);
     }
     
-    // Criar toast
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     
-    // Conteúdo do toast
     const messageSpan = document.createElement('span');
     messageSpan.textContent = message;
     toast.appendChild(messageSpan);
     
-    // Botão de fechar
     const closeButton = document.createElement('button');
     closeButton.className = 'toast-close';
     closeButton.innerHTML = '&times;';
     closeButton.onclick = () => removeToast(toast);
     toast.appendChild(closeButton);
     
-    // Adicionar ao container
     container.appendChild(toast);
     
-    // Remover automaticamente após 3 segundos
     setTimeout(() => {
         if (toast.parentNode) {
             removeToast(toast);
@@ -490,7 +489,6 @@ function removeToast(toast) {
     }, 500);
 }
 
-// Funções auxiliares para diferentes tipos de toast
 function showSuccessToast(message) {
     return showToast(message, 'success');
 }
@@ -508,7 +506,6 @@ function showInfoToast(message) {
 }
 
 function showLoading(message = 'Carregando...') {
-    // Criar overlay se não existir
     let overlay = document.getElementById('loading-overlay');
     if (!overlay) {
         overlay = document.createElement('div');

@@ -1,4 +1,3 @@
-/* C:\Repository\linecut-web\linecut_project\dashboard\static\dashboard\css\produtos.css */
 :root {
     --vermelho-principal: #9C0202;
     --vermelho-escuro: #7D0000;
@@ -27,7 +26,6 @@ body {
     color: #333;
 }
 
-/* Menu Lateral (mesmo estilo da dashboard) */
 .menu-lateral {
     width: 250px;
     height: 100vh;
@@ -179,7 +177,6 @@ body {
     color: var(--vermelho-principal);
 }
 
-/* Conteúdo Principal */
 .conteudo-principal {
     flex: 1;
     margin-left: 250px;
@@ -221,7 +218,6 @@ body {
     color: var(--vermelho-principal) !important;
 }
 
-/* Filtros */
 .filtros {
     display: flex;
     gap: 15px;
@@ -565,7 +561,6 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
-/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -588,8 +583,8 @@ body {
     margin: 5% auto;
     padding: 0;
     border-radius: 10px;
-    width: 90%;
-    max-width: 800px;
+    width: 95%;
+    max-width: 900px;
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -629,8 +624,9 @@ body {
 .modal-corpo {
     padding: 20px;
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr 3fr;
     gap: 30px;
+    align-items: start;
 }
 
 .modal-corpo select {
@@ -650,6 +646,38 @@ body {
     outline: none;
 }
 
+.coluna-direita {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.coluna-direita .form-group {
+    width: 100%;
+}
+
+.coluna-direita .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 100%;
+}
+
+.form-group-full-width {
+    grid-column: 1 / -1;
+}
+
+.coluna-direita input,
+.coluna-direita select,
+.coluna-direita textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.coluna-direita select {
+    width: 100%;
+}
+
 .coluna-esquerda, .coluna-direita {
     display: flex;
     flex-direction: column;
@@ -661,6 +689,17 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 15px;
+}
+
+.form-row input,
+.form-row select {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+}
+
+.form-row select {
+    width: 100% !important;
 }
 
 .imagem-preview {
@@ -746,13 +785,9 @@ body {
     gap: 15px;
 }
 
-.form-row .form-group:nth-child(1) {
+.form-row .form-group {
     min-width: 0;
-}
-
-.form-row .form-group:nth-child(2) { 
-    min-width: 120px; 
-    max-width: 150px; 
+    width: 100%;
 }
 
 .modal-rodape {
@@ -791,7 +826,6 @@ body {
     background: #148C41;
 }
 
-/* Modal de confirmação */
 .modal-conteudo.confirmacao {
     max-width: 500px;
     text-align: center;
