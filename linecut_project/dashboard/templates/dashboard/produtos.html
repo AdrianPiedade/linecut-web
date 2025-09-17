@@ -54,7 +54,7 @@
                 <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
                 <span>Notificações</span>
             </a>
-            <a href="#" class="menu-item">
+            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item {% if request.resolver_match.url_name == 'configuracoes' %}selected{% endif %}">
                 <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
                 <span>Configurações</span>
             </a>

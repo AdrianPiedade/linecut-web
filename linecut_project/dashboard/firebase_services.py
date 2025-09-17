@@ -269,5 +269,134 @@ class ProductFirebaseService:
         except Exception as e:
             logger.error(f"Erro ao verificar estoque baixo: {e}")
             return {}
+        
+class CompanyFirebaseService:
+    @staticmethod
+    def _ensure_initialized():
+        try:
+            if not firebase_admin._apps:
+                from linecut_project.firebase_config import initialize_firebase
+                initialize_firebase()
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao inicializar Firebase: {e}")
+            return False
 
+    @staticmethod
+    def get_company_data(user_id):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return None
+            
+            # Buscar dados da empresa
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_data = company_ref.get()
+            
+            if company_data:
+                # Processar URL da imagem se existir
+                if 'image_url' in company_data:
+                    company_data['image_url'] = CompanyFirebaseService._process_image_url(company_data['image_url'])
+                return company_data
+            return None
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar dados da empresa: {e}")
+            return None
+
+    @staticmethod
+    def update_company_data(user_id, company_data):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False
+            
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_data['updated_at'] = datetime.now().isoformat()
+            
+            company_ref.update(company_data)
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar dados da empresa: {e}")
+            return False
+
+    @staticmethod
+    def update_company_plan(user_id, new_plan):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False
+            
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_ref.update({
+                'plano': new_plan,
+                'updated_at': datetime.now().isoformat()
+            })
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar plano da empresa: {e}")
+            return False
+
+    @staticmethod
+    def _process_image_url(image_path):
+        if not image_path:
+            return ""
+        
+        try:
+            from firebase_admin import storage
+            from datetime import timedelta
+            from urllib.parse import urlparse, unquote
+            
+            if image_path.startswith('http'):
+                parsed_url = urlparse(image_path)
+                path = unquote(parsed_url.path)
+                
+                if '/o/' in path:
+                    image_path = path.split('/o/')[1].split('?')[0]
+            
+            bucket = storage.bucket('linecut-3bf2b.firebasestorage.app')
+            blob = bucket.blob(image_path)
+            
+            if not blob.exists():
+                return ""
+            
+            signed_url = blob.generate_signed_url(
+                expiration=timedelta(days=7),
+                method='GET'
+            )
+            
+            return signed_url
+            
+        except Exception as e:
+            return ""
+        
+    @staticmethod
+    def check_trial_expiration(user_id):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False
+            
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_data = company_ref.get()
+            
+            if company_data and company_data.get('plano') == 'trial':
+                from datetime import datetime, timedelta
+                signup_date = datetime.fromisoformat(company_data.get('data_cadastro', datetime.now().isoformat()))
+                
+                # Verificar se passaram mais de 30 dias
+                if datetime.now() > signup_date + timedelta(days=30):
+                    # Atualizar para plano básico automaticamente
+                    company_ref.update({
+                        'plano': 'basic',
+                        'trial_expired': True,
+                        'updated_at': datetime.now().isoformat()
+                    })
+                    return True
+            
+            return False
+                
+        except Exception as e:
+            logger.error(f"Erro ao verificar expiração do trial: {e}")
+            return False
+
+company_service = CompanyFirebaseService()
 product_service = ProductFirebaseService()

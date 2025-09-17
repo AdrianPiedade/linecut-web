@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .firebase_services import product_service
+from .firebase_services import product_service, company_service
 from .firebase_storage import storage_service
 from django.core.cache import cache
 from django.core.paginator import Paginator
@@ -325,6 +325,147 @@ def detalhes_estoque(request, product_id):
             
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+    
+def configuracoes(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    firebase_uid = request.session.get('firebase_uid')
+    
+    # Buscar dados da empresa
+    company_data = company_service.get_company_data(firebase_uid)
+    
+    context = {
+        'company_data': company_data
+    }
+    return render(request, 'dashboard/configuracoes.html', context)
+
+def update_company_profile(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    if request.method == 'POST':
+        try:
+            firebase_uid = request.session.get('firebase_uid')
+            
+            current_company = company_service.get_company_data(firebase_uid)
+            old_image_url = current_company.get('image_url') if current_company else None
+            
+            company_data = {
+                'nome_fantasia': request.POST.get('nome_fantasia'),
+                'razao_social': request.POST.get('razao_social'),
+                'cnpj': request.POST.get('cnpj'),
+                'descricao': request.POST.get('descricao'),
+                'polo': request.POST.get('polo'),
+                'telefone': request.POST.get('telefone'),
+                'email': request.POST.get('email'),
+                'endereco': request.POST.get('endereco'),
+                'numero': request.POST.get('numero'),
+                'cep': request.POST.get('cep')
+            }
+            
+            image_file = request.FILES.get('company_image')
+            if image_file:
+                if old_image_url:
+                    storage_service.delete_image(old_image_url)
+                
+                image_path = storage_service.upload_image(image_file, firebase_uid, 'company_logo')
+                if image_path:
+                    company_data['image_url'] = image_path
+            
+            success = company_service.update_company_data(firebase_uid, company_data)
+            
+            if success:
+                return JsonResponse({'success': True, 'message': 'Perfil atualizado com sucesso!'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Erro ao atualizar perfil'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+def update_company_plan(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    if request.method == 'POST':
+        try:
+            # Verificar se é uma requisição AJAX
+            if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Requisição inválida'})
+            
+            firebase_uid = request.session.get('firebase_uid')
+            data = json.loads(request.body)
+            new_plan = data.get('new_plan')
+            
+            # Planos válidos atualizados
+            valid_plans = ['trial', 'basic', 'premium']
+            if new_plan not in valid_plans:
+                return JsonResponse({'success': False, 'message': 'Plano inválido'})
+            
+            # Verificar se já está no plano trial e tenta mudar para trial
+            current_company = company_service.get_company_data(firebase_uid)
+            if current_company and current_company.get('plano') == 'trial' and new_plan == 'trial':
+                return JsonResponse({'success': False, 'message': 'Você já está no plano Trial'})
+            
+            success = company_service.update_company_plan(firebase_uid, new_plan)
+            
+            if success:
+                return JsonResponse({
+                    'success': True, 
+                    'message': f'Plano alterado para {new_plan.capitalize()} com sucesso!'
+                })
+            else:
+                return JsonResponse({'success': False, 'message': 'Erro ao alterar plano'})
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Dados inválidos'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+def get_company_data(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    try:
+        firebase_uid = request.session.get('firebase_uid')
+        company_data = company_service.get_company_data(firebase_uid)
+        
+        if company_data:
+            return JsonResponse({
+                'success': True,
+                'company_data': company_data
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'company_data': {
+                    'nome_fantasia': 'Nome da Empresa',
+                    'razao_social': 'Razão Social',
+                    'cnpj': '00.000.000/0000-00',
+                    'descricao': 'Descrição da empresa',
+                    'polo': 'Polo',
+                    'telefone': '(00) 00000-0000',
+                    'email': 'email@empresa.com',
+                    'endereco': 'Endereço',
+                    'numero': '000',
+                    'cep': '00000-000',
+                    'plano': 'premium'
+                }
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Erro ao carregar dados: {str(e)}'
+        })
 
 def dashboard_logout(request):
     dashboard_keys = ['firebase_uid', 'user_email', 'logged_in', 'user_profile']

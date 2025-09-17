@@ -14,5 +14,9 @@ urlpatterns = [
     path('estoque/', views.estoque, name='estoque'),
     path('estoque/atualizar/<str:product_id>/', views.atualizar_estoque, name='atualizar_estoque'),
     path('estoque/detalhes/<str:product_id>/', views.detalhes_estoque, name='detalhes_estoque'),
+    path('configuracoes/', views.configuracoes, name='configuracoes'),
+    path('configuracoes/get-company-data/', views.get_company_data, name='get_company_data'),
+    path('configuracoes/update-profile/', views.update_company_profile, name='update_company_profile'),
+    path('configuracoes/update-plan/', views.update_company_plan, name='update_company_plan'),
     path('logout/', views.dashboard_logout, name='logout'), 
 ]

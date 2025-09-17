@@ -1,0 +1,668 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>LineCut - Configurações</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/configuracoes.css' %}">
+</head>
+<body>
+    <aside class="menu-lateral">
+        <div class="logo">
+            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+        </div>
+        
+        <div class="restaurant-info">
+            <h3>Meu Restaurante</h3>
+            <div class="status-loja">
+                <div class="status-indicator"></div>
+                <span>Loja Aberta</span>
+            </div>
+        </div>
+        
+        <nav class="menu-nav">
+            <a href="{% url 'dashboard:index' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
+                <span>Início</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
+                <span>Pedidos</span>
+            </a>
+            <a href="{% url 'dashboard:produtos' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
+                <span>Produtos</span>
+            </a>
+            <a href="{% url 'dashboard:estoque' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
+                <span>Estoque</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                <span>Dashboard</span>
+                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
+                <span>Avaliações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
+                <span>Notificações</span>
+            </a>
+            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item selected">
+                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
+                <span>Configurações</span>
+            </a>
+        </nav>
+        
+        <div class="menu-sair">
+            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
+            <span>Sair</span>
+        </div>
+    </aside>
+
+    <main class="conteudo-principal">
+        <header class="cabecalho-configuracoes">
+            <div class="titulos">
+                <h1 class="titulo-ativo" id="titulo-perfil">Perfil</h1>
+                <h1 class="titulo-inativo" id="titulo-ajuda">Ajuda</h1>
+            </div>
+        </header>
+
+        <!-- SEÇÃO PERFIL -->
+        <div id="secao-perfil" class="secao-configuracoes">
+            <!-- Perfil da Lanchonete -->
+            <div class="card-configuracao">
+                <div class="card-header">
+                    <h2>Perfil da Lanchonete</h2>
+                </div>
+                <div class="card-body">
+                    <div class="perfil-info">
+                        <div class="perfil-imagem">
+                            {% if company_data and company_data.image_url %}
+                                <img id="logo-lanchonete" src="{{ company_data.image_url }}" alt="Logo Lanchonete">
+                            {% else %}
+                                <img id="logo-lanchonete" src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
+                            {% endif %}
+                        </div>
+                        <div class="perfil-detalhes">
+                            <h3 id="nome-fantasia">{{ company_data.nome_fantasia|default:"Burger Queen" }}</h3>
+                            <p id="categoria-lanchonete">{{ company_data.descricao|default:"Lanches e Salgados" }}</p>
+                            <div class="plano-info">
+                                <div class="plano-badge">
+                                    <span class="icone-coroa">👑</span>
+                                    <span id="tipo-plano">{{ company_data.plano|default:"premium"|capfirst }}</span>
+                                </div>
+                                <a href="#" class="link-mudar-plano" onclick="abrirModalPlanos()">Mudar plano</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horário de Funcionamento -->
+            <div class="card-configuracao">
+                <div class="card-header">
+                    <h2>Horário de Funcionamento</h2>
+                    <button class="btn-editar-card" onclick="editarHorario()">
+                        <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="dias-funcionamento">
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="segunda" name="dias" value="segunda" checked>
+                            <label for="segunda">Segunda</label>
+                        </div>
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="terca" name="dias" value="terca" checked>
+                            <label for="terca">Terça</label>
+                        </div>
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="quarta" name="dias" value="quarta" checked>
+                            <label for="quarta">Quarta</label>
+                        </div>
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="quinta" name="dias" value="quinta" checked>
+                            <label for="quinta">Quinta</label>
+                        </div>
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="sexta" name="dias" value="sexta" checked>
+                            <label for="sexta">Sexta</label>
+                        </div>
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="sabado" name="dias" value="sabado" checked>
+                            <label for="sabado">Sábado</label>
+                        </div>
+                        <div class="checkbox-dia">
+                            <input type="checkbox" id="domingo" name="dias" value="domingo">
+                            <label for="domingo">Domingo</label>
+                        </div>
+                    </div>
+                    <div class="horario-funcionamento">
+                        <div class="horario-input">
+                            <label for="abertura">Abertura</label>
+                            <div class="time-selector">
+                                <input type="time" id="abertura" value="09:00">
+                            </div>
+                        </div>
+                        <div class="horario-input">
+                            <label for="fechamento">Fechamento</label>
+                            <div class="time-selector">
+                                <input type="time" id="fechamento" value="18:00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações da Conta -->
+            <div class="card-configuracao">
+                <div class="card-header">
+                    <h2>Informações da Conta</h2>
+                    <button class="btn-editar-card" onclick="editarInformacoes()">
+                        <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="tabela-informacoes">
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Nome fantasia</div>
+                            <div class="coluna-valor" id="info-nome-fantasia">Burger Queen</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Razão social</div>
+                            <div class="coluna-valor" id="info-razao-social">Burger Queen LTDA</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">CNPJ</div>
+                            <div class="coluna-valor" id="info-cnpj">13.048.587/0001-50</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Descrição</div>
+                            <div class="coluna-valor" id="info-descricao">Lanches e Salgados</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Polo</div>
+                            <div class="coluna-valor" id="info-polo">Centro Universitário Senac - Praça 3</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Telefone</div>
+                            <div class="coluna-valor" id="info-telefone">(11) 93937-0313</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">E-mail</div>
+                            <div class="coluna-valor" id="info-email">BurgerQueen@email.com.br</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Senha</div>
+                            <div class="coluna-valor">************</div>
+                            <div class="coluna-acao">
+                                <a href="#" class="link-alterar">Alterar</a>
+                            </div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Endereço</div>
+                            <div class="coluna-valor" id="info-endereco">Rua ..... </div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Número</div>
+                            <div class="coluna-valor" id="info-numero">1234</div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">CEP</div>
+                            <div class="coluna-valor" id="info-cep">04820-392</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Termos e Condições & Política de Privacidade -->
+            <div class="card-configuracao">
+                <div class="card-header">
+                    <h2>Termos e Condições & Política de Privacidade</h2>
+                </div>
+                <div class="card-body">
+                    <div class="tabela-termos">
+                        <div class="linha-termo">
+                            <div class="coluna-titulo">Termos e Condições</div>
+                            <div class="coluna-acao">
+                                <button class="btn-visualizar" onclick="abrirModalTermos()">Visualizar</button>
+                            </div>
+                        </div>
+                        <div class="linha-termo">
+                            <div class="coluna-titulo">Política de Privacidade</div>
+                            <div class="coluna-acao">
+                                <button class="btn-visualizar" onclick="abrirModalPolitica()">Visualizar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO AJUDA -->
+        <div id="secao-ajuda" class="secao-configuracoes">
+            <div class="ajuda-cards-container">
+                <!-- FAQ -->
+                <div class="ajuda-card" onclick="abrirModalFAQ()">
+                    <div class="ajuda-card-icon">
+                        <img src="{% static 'dashboard/images/icone_faq.png' %}" alt="FAQ">
+                    </div>
+                    <h3>FAQ</h3>
+                    <p>Perguntas Frequentes</p>
+                    <div class="ajuda-card-descricao">
+                        <p>Encontre respostas rápidas para as dúvidas mais comuns sobre o uso do portal LineCut.</p>
+                    </div>
+                </div>
+
+                <!-- SAC -->
+                <div class="ajuda-card" onclick="abrirModalSAC()">
+                    <div class="ajuda-card-icon">
+                        <img src="{% static 'dashboard/images/icone_sac.png' %}" alt="SAC">
+                    </div>
+                    <h3>SAC</h3>
+                    <p>Precisando de Ajuda?</p>
+                    <div class="ajuda-card-descricao">
+                        <p>Não encontrou o que precisava? Estamos aqui para ajudar! Fale conosco através dos canais disponíveis.</p>
+                    </div>
+                </div>
+
+                <!-- CONTATO -->
+                <div class="ajuda-card" onclick="abrirModalContato()">
+                    <div class="ajuda-card-icon">
+                        <img src="{% static 'dashboard/images/icone_email.png' %}" alt="Contato">
+                    </div>
+                    <h3>CONTATO</h3>
+                    <p>Fale Conosco</p>
+                    <div class="ajuda-card-descricao">
+                        <p>Entre em contato com nossa equipe de suporte para esclarecer dúvidas, relatar problemas ou obter orientações.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAIS -->
+     <!-- Modal Mudança de Plano -->
+    <div id="modal-planos" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Mudar Plano de Assinatura</h2>
+                <span class="fechar-modal" onclick="fecharModalPlanos()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <div class="planos-container">
+                    <div class="plano-option" data-plano="trial">
+                        <h3>Trial</h3>
+                        <p class="plano-preco">Grátis</p>
+                        <p class="plano-taxa">30 dias gratuitos</p>
+                        <ul>
+                            <li>✅ Gestão completa de produtos e estoque</li>
+                            <li>✅ Feedback direto dos clientes</li>
+                            <li>✅ Venda pelo aplicativo</li>
+                            <li>✅ Funcionalidades Essenciais</li>
+                            <li>⏰ Limitado a 30 dias</li>
+                        </ul>
+                        <div class="plano-recomendado" style="display: none;">Recomendado</div>
+                    </div>
+                    
+                    <div class="plano-option" data-plano="basic">
+                        <h3>Basic</h3>
+                        <p class="plano-preco">Sem mensalidade</p>
+                        <p class="plano-taxa">7% por venda</p>
+                        <ul>
+                            <li>✅ Gestão completa de produtos e estoque</li>
+                            <li>✅ Feedback direto dos clientes</li>
+                            <li>✅ Venda pelo aplicativo</li>
+                            <li>✅ Funcionalidades Essenciais</li>
+                            <li>🚀 Ilimitado no tempo</li>
+                        </ul>
+                        <div class="plano-recomendado">Mais Popular</div>
+                    </div>
+                    
+                    <div class="plano-option" data-plano="premium">
+                        <h3>Premium</h3>
+                        <p class="plano-preco">Sem mensalidade</p>
+                        <p class="plano-taxa">10% por venda</p>
+                        <ul>
+                            <li>✅ Todos os recursos Basic</li>
+                            <li>📊 Dashboard analítico personalizado</li>
+                            <li>📈 Relatórios avançados de vendas</li>
+                            <li>🎯 Insights de desempenho</li>
+                            <li>🚀 Ilimitado no tempo</li>
+                        </ul>
+                        <div class="plano-recomendado">Mais Completo</div>
+                    </div>
+                </div>
+                
+                <div class="plano-atual">
+                    <p>Plano atual: <strong id="plano-atual-nome">{{ company_data.plano|default:"trial"|capfirst }}</strong></p>
+                    <p class="plano-info-adicional">* Valores sujeitos a alteração. Taxa aplicada sobre o valor total de cada venda.</p>
+                </div>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalPlanos()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="confirmarMudancaPlano()">Confirmar Mudança</button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Perfil -->
+    <div id="modal-perfil" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Editar Perfil da Lanchonete</h2>
+                <span class="fechar-modal" onclick="fecharModalPerfil()">&times;</span>
+            </div>
+            <form id="form-perfil">
+                <div class="modal-corpo">
+                    <div class="form-group">
+                        <label for="edit-nome-fantasia">Nome Fantasia</label>
+                        <input type="text" id="edit-nome-fantasia" name="nome_fantasia" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-razao-social">Razão Social</label>
+                        <input type="text" id="edit-razao-social" name="razao_social" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-cnpj">CNPJ</label>
+                        <input type="text" id="edit-cnpj" name="cnpj" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-descricao">Descrição</label>
+                        <input type="text" id="edit-descricao" name="descricao" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-polo">Polo</label>
+                        <input type="text" id="edit-polo" name="polo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-telefone">Telefone</label>
+                        <input type="text" id="edit-telefone" name="telefone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-email">E-mail</label>
+                        <input type="email" id="edit-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-endereco">Endereço</label>
+                        <input type="text" id="edit-endereco" name="endereco" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-numero">Número</label>
+                        <input type="text" id="edit-numero" name="numero" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-cep">CEP</label>
+                        <input type="text" id="edit-cep" name="cep" required>
+                    </div>
+                </div>
+                <div class="modal-rodape">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalPerfil()">Cancelar</button>
+                    <button type="submit" class="btn-salvar">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Horário -->
+    <div id="modal-horario" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Editar Horário de Funcionamento</h2>
+                <span class="fechar-modal" onclick="fecharModalHorario()">&times;</span>
+            </div>
+            <form id="form-horario">
+                <div class="modal-corpo">
+                    <div class="form-group">
+                        <label>Dias de Funcionamento</label>
+                        <div class="dias-checkbox">
+                            <label><input type="checkbox" name="dias[]" value="segunda" checked> Segunda-feira</label>
+                            <label><input type="checkbox" name="dias[]" value="terca" checked> Terça-feira</label>
+                            <label><input type="checkbox" name="dias[]" value="quarta" checked> Quarta-feira</label>
+                            <label><input type="checkbox" name="dias[]" value="quinta" checked> Quinta-feira</label>
+                            <label><input type="checkbox" name="dias[]" value="sexta" checked> Sexta-feira</label>
+                            <label><input type="checkbox" name="dias[]" value="sabado" checked> Sábado</label>
+                            <label><input type="checkbox" name="dias[]" value="domingo"> Domingo</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-abertura">Horário de Abertura</label>
+                        <input type="time" id="edit-abertura" name="abertura" value="09:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-fechamento">Horário de Fechamento</label>
+                        <input type="time" id="edit-fechamento" name="fechamento" value="18:00" required>
+                    </div>
+                </div>
+                <div class="modal-rodape">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalHorario()">Cancelar</button>
+                    <button type="submit" class="btn-salvar">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal FAQ -->
+    <div id="modal-faq" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Perguntas Frequentes (FAQ)</h2>
+                <span class="fechar-modal" onclick="fecharModalFAQ()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <div class="faq-conteudo">
+                    <h3>Encontre respostas rápidas para as dúvidas mais comuns</h3>
+                    <p>Se você está com alguma dúvida sobre funcionalidades, acesso ou gerenciamento no portal, confira nossa lista de perguntas frequentes. Estamos aqui para ajudar você a aproveitar ao máximo todos os recursos disponíveis.</p>
+                    
+                    <div class="faq-lista">
+                        <div class="faq-item">
+                            <h4>Como cadastrar um novo produto?</h4>
+                            <p>Para cadastrar um novo produto, acesse a seção "Produtos" no menu lateral e clique em "Cadastrar". Preencha todas as informações necessárias e clique em "Salvar".</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h4>Como alterar o horário de funcionamento?</h4>
+                            <p>Na seção "Configurações", vá até "Horário de Funcionamento" e clique no ícone de edição. ajuste os horários conforme necessário e salve as alterações.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h4>Como visualizar relatórios de vendas?</h4>
+                            <p>Os relatórios de vendas estão disponíveis na seção "Dashboard". Você pode filtrar por período e visualizar diferentes métricas de desempenho.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h4>Como alterar minha senha?</h4>
+                            <p>Acesse "Configurações" > "Segurança" e clique em "Alterar Senha". Siga as instruções para criar uma nova senha segura.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-contato">
+                        <p>Não encontrou o que procurava? <a href="#" onclick="fecharModalFAQ(); abrirModalSAC();">Entre em contato conosco</a>.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalFAQ()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal SAC -->
+    <div id="modal-sac" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Serviço de Atendimento ao Cliente (SAC)</h2>
+                <span class="fechar-modal" onclick="fecharModalSAC()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <div class="sac-conteudo">
+                    <h3>Precisando de Ajuda?</h3>
+                    <p>Nosso SAC está pronto para resolver qualquer problema relacionado ao uso do portal. Não encontrou o que precisava? Estamos aqui para ajudar!</p>
+                    
+                    <div class="sac-canais">
+                        <div class="canal-item">
+                            <div class="canal-icon">
+                                <img src="{% static 'dashboard/images/icone_email.png' %}" alt="E-mail">
+                            </div>
+                            <div class="canal-info">
+                                <h4>E-mail</h4>
+                                <p>sac@linecut.app.br</p>
+                                <small>Respondemos em até 24 horas</small>
+                            </div>
+                        </div>
+                        
+                        <div class="canal-item">
+                            <div class="canal-icon">
+                                <img src="{% static 'dashboard/images/icone_phone.png' %}" alt="Telefone">
+                            </div>
+                            <div class="canal-info">
+                                <h4>Telefone</h4>
+                                <p>(11) 4004-2000</p>
+                                <small>Segunda a sexta, das 8h às 18h</small>
+                            </div>
+                        </div>
+                        
+                        <div class="canal-item">
+                            <div class="canal-icon">
+                                <img src="{% static 'dashboard/images/icone_msg.png' %}" alt="WhatsApp">
+                            </div>
+                            <div class="canal-info">
+                                <h4>WhatsApp</h4>
+                                <p>(11) 99999-0000</p>
+                                <small>Atendimento rápido pelo WhatsApp Business</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sac-formulario">
+                        <h4>Envie sua mensagem</h4>
+                        <form id="form-sac">
+                            <div class="form-group">
+                                <label for="sac-nome">Nome</label>
+                                <input type="text" id="sac-nome" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sac-email">E-mail</label>
+                                <input type="email" id="sac-email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sac-assunto">Assunto</label>
+                                <select id="sac-assunto" name="assunto" required>
+                                    <option value="">Selecione um assunto</option>
+                                    <option value="duvida">Dúvida</option>
+                                    <option value="problema">Problema Técnico</option>
+                                    <option value="sugestao">Sugestão</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sac-mensagem">Mensagem</label>
+                                <textarea id="sac-mensagem" name="mensagem" rows="4" required></textarea>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalSAC()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="enviarSAC()">Enviar Mensagem</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Contato -->
+    <div id="modal-contato" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Fale Conosco</h2>
+                <span class="fechar-modal" onclick="fecharModalContato()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <div class="contato-conteudo">
+                    <h3>Entre em contato com nossa equipe</h3>
+                    <p>Nossa equipe está disponível para atender suas solicitações o mais breve possível. Preencha o formulário abaixo e retornaremos em breve.</p>
+                    
+                    <div class="contato-info">
+                        <div class="contato-detalhes">
+                            <h4>Informações de Contato</h4>
+                            <p><strong>E-mail:</strong> suporte@linecut.app.br</p>
+                            <p><strong>Telefone:</strong> (11) 3003-4004</p>
+                            <p><strong>Horário de Atendimento:</strong> Segunda a sexta, das 8h às 18h</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contato-formulario">
+                        <form id="form-contato">
+                            <div class="form-group">
+                                <label for="contato-nome">Nome Completo</label>
+                                <input type="text" id="contato-nome" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contato-email">E-mail</label>
+                                <input type="email" id="contato-email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contato-empresa">Nome da Empresa</label>
+                                <input type="text" id="contato-empresa" name="empresa" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contato-assunto">Assunto</label>
+                                <input type="text" id="contato-assunto" name="assunto" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contato-mensagem">Mensagem</label>
+                                <textarea id="contato-mensagem" name="mensagem" rows="5" required></textarea>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalContato()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="enviarContato()">Enviar Mensagem</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Termos -->
+    <div id="modal-termos" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Termos e Condições</h2>
+                <span class="fechar-modal" onclick="fecharModalTermos()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <p>Conteúdo dos Termos e Condições será adicionado aqui.</p>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalTermos()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Política -->
+    <div id="modal-politica" class="modal">
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2>Política de Privacidade</h2>
+                <span class="fechar-modal" onclick="fecharModalPolitica()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <p>Conteúdo da Política de Privacidade será adicionado aqui.</p>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalPolitica()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'dashboard/js/configuracoes.js' %}"></script>
+</body>
+</html>

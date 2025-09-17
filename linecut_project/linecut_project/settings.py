@@ -10,6 +10,14 @@ FIREBASE_DB_URL = 'https://linecut-3bf2b-default-rtdb.firebaseio.com/'
 FIREBASE_API_KEY = "AIzaSyB14a_rxVSb5CtVQt2EJU4NByHeiMPpLOc"
 FIREBASE_STORAGE_BUCKET = "linecut-3bf2b.firebasestorage.app"
 
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SECURE = False  # True em produção com HTTPS
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 

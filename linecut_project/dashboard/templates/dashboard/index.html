@@ -54,10 +54,10 @@
                 <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
                 <span>Notificações</span>
             </div>
-            <div class="menu-item">
+            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item {% if request.resolver_match.url_name == 'configuracoes' %}selected{% endif %}">
                 <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
                 <span>Configurações</span>
-            </div>
+            </a>
         </nav>
         
         <div class="menu-sair">
@@ -77,7 +77,7 @@
         <div class="info-cards">
             <div class="info-card dados-lanchonete">
                 <div class="lanchonete-imagem">
-                    <img src="{% static 'dashboard/images/burger_queen_logo.png' %}" alt="Logo Lanchonete">
+                    <img src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
                 </div>
                 <div class="lanchonete-info">
                     <h2>Burger Queen</h2>
