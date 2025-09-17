@@ -1,0 +1,251 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LineCut - Estoque</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/estoque.css' %}">
+</head>
+<body>
+    <aside class="menu-lateral">
+        <div class="logo">
+            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+        </div>
+        
+        <div class="restaurant-info">
+            <h3>Meu Restaurante</h3>
+            <div class="status-loja">
+                <div class="status-indicator"></div>
+                <span>Loja Aberta</span>
+            </div>
+        </div>
+        
+        <nav class="menu-nav">
+            <a href="{% url 'dashboard:index' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
+                <span>Início</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
+                <span>Pedidos</span>
+            </a>
+            <a href="{% url 'dashboard:produtos' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
+                <span>Produtos</span>
+            </a>
+            <a href="{% url 'dashboard:estoque' %}" class="menu-item selected">
+                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
+                <span>Estoque</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                <span>Dashboard</span>
+                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
+                <span>Avaliações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
+                <span>Notificações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
+                <span>Configurações</span>
+            </a>
+        </nav>
+        
+        <div class="menu-sair">
+            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
+            <span>Sair</span>
+        </div>
+    </aside>
+
+    <main class="conteudo-principal">
+        <header class="cabecalho-estoque">
+            <div class="titulos">
+                <h1 class="titulo-ativo">Estoque</h1>
+            </div>
+        </header>
+
+        <div class="filtros">
+            <div class="filtro-group">
+                <label>Buscar produto</label>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Digite o nome do produto...">
+                </div>
+            </div>
+            
+            <div class="filtro-group">
+                <label>Categoria</label>
+                <select id="categoria-filter">
+                    <option value="">Todas as categorias</option>
+                    <option value="Salgados">Salgados</option>
+                    <option value="Lanches">Lanches</option>
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Sobremesas">Sobremesas</option>
+                    <option value="Doces">Doces</option>
+                    <option value="Acompanhamentos">Acompanhamentos</option>
+                    <option value="Saudáveis">Saudáveis</option>
+                    <option value="Laticínios">Laticínios</option>
+                    <option value="Ingredientes">Ingredientes</option>
+                </select>
+            </div>
+            
+            <div class="filtro-group">
+                <label>Status estoque</label>
+                <select id="status-estoque-filter">
+                    <option value="">Todos</option>
+                    <option value="suficiente">Suficiente</option>
+                    <option value="baixo">Baixo</option>
+                    <option value="critico">Crítico</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tabela-container">
+            <div class="cabecalho-tabela">
+                <span class="col-id">ID</span>
+                <span class="col-nome">Produto</span>
+                <span class="col-descricao">Descrição</span>
+                <span class="col-preco">Preço</span>
+                <span class="col-quantidade">Qtd. Atual</span>
+                <span class="col-status">Status</span>
+                <span class="col-acoes">Editar</span>
+            </div>
+            
+            <div class="corpo-tabela" id="estoque-lista">
+                {% for product in products %}
+                <div class="linha-estoque"
+                    data-product-id="{{ product.id|default:'N/A' }}" 
+                    data-category="{{ product.category }}" 
+                    data-status-estoque="{% if product.critical_quantity and product.quantity <= product.critical_quantity %}critico{% elif product.ideal_quantity and product.quantity <= product.ideal_quantity %}baixo{% else %}suficiente{% endif %}"
+                    data-quantidade="{{ product.quantity|default:0 }}"
+                    data-quantidade-ideal="{{ product.ideal_quantity|default:0 }}"
+                    data-quantidade-critica="{{ product.critical_quantity|default:0 }}">
+                    <div class="col-id">{{ product.id|default:"N/A" }}</div>
+                    <div class="col-nome">{{ product.name }}</div>
+                    <div class="col-descricao">{{ product.description|truncatewords:10 }}</div>
+                    <div class="col-preco">R$ {{ product.price|floatformat:2 }}</div>
+                    <div class="col-quantidade">{{ product.quantity|default:0 }}</div>
+                    <div class="col-status">
+                        <span class="status-badge {% if product.critical_quantity and product.quantity <= product.critical_quantity %}critico{% elif product.ideal_quantity and product.quantity <= product.ideal_quantity %}baixo{% else %}suficiente{% endif %}">
+                            {% if product.critical_quantity and product.quantity <= product.critical_quantity %}Crítico
+                            {% elif product.ideal_quantity and product.quantity <= product.ideal_quantity %}Baixo
+                            {% else %}Suficiente
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="col-acoes">
+                        <button class="btn-editar" onclick="editarEstoque('{{ product.id }}')">
+                            <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                            Editar
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="legenda-status">
+            <div class="status-item">
+                <div class="indicador-status suficiente"></div>
+                <span>Estoque Suficiente</span>
+            </div>
+            <div class="status-item">
+                <div class="indicador-status baixo"></div>
+                <span>Estoque Baixo</span>
+            </div>
+            <div class="status-item">
+                <div class="indicador-status critico"></div>
+                <span>Estoque Crítico</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para editar estoque -->
+    <div id="modal-estoque" class="modal">
+        <div class="modal-conteudo modal-estoque">
+            <div class="modal-cabecalho">
+                <h2 id="modal-titulo">Editar Estoque</h2>
+                <span class="fechar-modal" onclick="fecharModalEstoque()">&times;</span>
+            </div>
+            
+            <form id="form-estoque">
+                {% csrf_token %}
+                <input type="hidden" id="produto-id" name="produto_id">
+                
+                <div class="modal-corpo">
+                    <div class="info-produto">
+                        <h3 id="nome-produto"></h3>
+                        <p id="categoria-produto"></p>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantidade-atual">Quantidade Atual</label>
+                            <input type="number" id="quantidade-atual" name="quantidade" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantidade-ideal" title="Quantidade ideal para manter em estoque. Quando o estoque ficar abaixo deste valor, você receberá um alerta.">
+                                Quantidade Ideal
+                                <span class="help-icon">(?)</span>
+                            </label>
+                            <input type="number" id="quantidade-ideal" name="ideal_quantity" min="0" 
+                                placeholder="Defina a quantidade ideal">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quantidade-critica" title="Quantidade crítica de estoque. Quando o estoque chegar neste nível, você receberá uma notificação urgente para repor o produto.">
+                                Quantidade Crítica
+                                <span class="help-icon">(?)</span>
+                            </label>
+                            <input type="number" id="quantidade-critica" name="critical_quantity" min="0" 
+                                placeholder="Defina a quantidade crítica">
+                        </div>
+                    </div>
+                    
+                    <div class="info-status">
+                        <h4>Status Atual:</h4>
+                        <div class="status-preview">
+                            <span class="status-badge" id="status-preview">Suficiente</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-rodape">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalEstoque()">Cancelar</button>
+                    <button type="submit" class="btn-salvar" id="btn-salvar-estoque">
+                        <span id="btn-text">Salvar Alterações</span>
+                        <div id="btn-loading" style="display: none;">
+                            <div class="loading-spinner"></div>
+                            <span id="loading-text">Salvando...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-confirmacao" class="modal">
+        <div class="modal-conteudo confirmacao">
+            <h3 id="confirmacao-titulo">Confirmar alteração</h3>
+            <p id="confirmacao-mensagem">Tem certeza que deseja salvar as alterações no estoque?</p>
+            <div class="botoes-confirmacao">
+                <button class="btn-cancelar" onclick="fecharConfirmacao()">Cancelar</button>
+                <button class="btn-confirmar" id="btn-confirmar-acao">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'dashboard/js/estoque.js' %}"></script>
+</body>
+</html>

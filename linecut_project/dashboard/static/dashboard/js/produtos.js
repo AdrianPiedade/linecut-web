@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoriaFilter = document.getElementById('categoria-filter');
     const statusFilter = document.getElementById('status-filter');
     const imagemInput = document.getElementById('imagem-input');
+    const editorImage = document.getElementById('editor-image');
     const formProduto = document.getElementById('form-produto');
     
     if (searchInput) searchInput.addEventListener('input', filtrarProdutos);
@@ -11,19 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (imagemInput) {
         imagemInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const previewImg = document.getElementById('preview-img');
-                    const placeholderText = document.getElementById('placeholder-text');
-                    previewImg.src = e.target.result;
-                    previewImg.style.display = 'block';
-                    placeholderText.style.display = 'none';
-                };
-                reader.readAsDataURL(file);
+            if (e.target.files && e.target.files[0]) {
+                abrirEditorImagem(e.target.files[0]);
             }
         });
+    }
+
+    // Configurar eventos de arraste apenas se o editor image existir
+    if (editorImage) {
+        editorImage.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
     }
 
     if (formProduto) {
@@ -32,9 +31,199 @@ document.addEventListener('DOMContentLoaded', function() {
             salvarProduto();
         });
     }
+
+    // Fechar modal ao clicar fora
+    window.addEventListener('click', function(e) {
+        const modalEditor = document.getElementById('modal-editor-imagem');
+        if (e.target === modalEditor) {
+            fecharEditorImagem();
+        }
+        
+        const modalProduto = document.getElementById('modal-produto');
+        const modalConfirmacao = document.getElementById('modal-confirmacao');
+        
+        if (e.target === modalProduto) fecharModal();
+        if (e.target === modalConfirmacao) fecharConfirmacao();
+    });
     
     filtrarProdutos();
 });
+
+let originalImageFile = null;
+let currentRotation = 0;
+let currentScale = 1;
+let isDragging = false;
+let startX, startY;
+let offsetX = 0, offsetY = 0;
+
+function abrirEditorImagem(file) {
+    originalImageFile = file;
+    const modal = document.getElementById('modal-editor-imagem');
+    const editorImage = document.getElementById('editor-image');
+    const previewImage = document.getElementById('preview-edited');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        editorImage.src = e.target.result;
+        previewImage.src = e.target.result;
+        
+        // Resetar transformações
+        currentRotation = 0;
+        currentScale = 1;
+        offsetX = 0;
+        offsetY = 0;
+        applyTransformations();
+        
+        modal.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function applyTransformations() {
+    const editorImage = document.getElementById('editor-image');
+    const previewImage = document.getElementById('preview-edited');
+    
+    // Aplicar todas as transformações
+    const transform = `rotate(${currentRotation}deg) scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+    
+    editorImage.style.transform = transform;
+    previewImage.style.transform = transform;
+    
+    editorImage.style.transformOrigin = 'center';
+    previewImage.style.transformOrigin = 'center';
+}
+
+// Funções de controle do editor
+function rotateImage() {
+    currentRotation = (currentRotation + 90) % 360;
+    applyTransformations();
+}
+
+function zoomIn() {
+    currentScale = Math.min(3, currentScale + 0.1);
+    applyTransformations();
+}
+
+function zoomOut() {
+    currentScale = Math.max(0.5, currentScale - 0.1);
+    applyTransformations();
+}
+
+function resetEditor() {
+    currentRotation = 0;
+    currentScale = 1;
+    offsetX = 0;
+    offsetY = 0;
+    applyTransformations();
+}
+
+// Funções de arrastar a imagem
+function startDrag(e) {
+    if (e.button !== 0) return;
+    
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const editorImage = document.getElementById('editor-image');
+    editorImage.style.cursor = 'grabbing';
+    e.preventDefault();
+}
+
+function doDrag(e) {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+    
+    offsetX += deltaX;
+    offsetY += deltaY;
+    
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    applyTransformations();
+}
+
+function stopDrag() {
+    isDragging = false;
+    const editorImage = document.getElementById('editor-image');
+    editorImage.style.cursor = 'grab';
+}
+
+// Função para salvar a imagem editada
+function salvarImagemEditada() {
+    const editorImage = document.getElementById('editor-image');
+    const previewImg = document.getElementById('preview-img');
+    const placeholderText = document.getElementById('placeholder-text');
+    
+    // Criar canvas para processar a imagem
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Tamanho de saída (usar o mesmo tamanho do preview)
+    const outputSize = 300;
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    
+    // Fundo branco
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    const img = new Image();
+    img.onload = function() {
+        // Calcular escala baseada no tamanho original da imagem
+        const originalScale = Math.min(
+            outputSize / img.width,
+            outputSize / img.height
+        );
+        
+        // Aplicar a escala adicional do usuário
+        const finalScale = originalScale * currentScale;
+        
+        // Calcular posição com offset
+        const x = (outputSize - img.width * finalScale) / 2 + (offsetX * finalScale);
+        const y = (outputSize - img.height * finalScale) / 2 + (offsetY * finalScale);
+        
+        // Aplicar rotação
+        ctx.save();
+        ctx.translate(outputSize / 2, outputSize / 2);
+        ctx.rotate(currentRotation * Math.PI / 180);
+        ctx.translate(-outputSize / 2, -outputSize / 2);
+        
+        // Desenhar imagem com todas as transformações
+        ctx.drawImage(img, x, y, img.width * finalScale, img.height * finalScale);
+        ctx.restore();
+        
+        // Converter para data URL e atualizar o preview
+        const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+        previewImg.src = dataURL;
+        previewImg.style.display = 'block';
+        placeholderText.style.display = 'none';
+        
+        // Criar arquivo para o form
+        canvas.toBlob(function(blob) {
+            const editedFile = new File([blob], 'product-image.jpg', {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+            });
+            
+            // Atualizar o input file
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(editedFile);
+            document.getElementById('imagem-input').files = dataTransfer.files;
+        }, 'image/jpeg', 0.9);
+        
+        fecharEditorImagem();
+    };
+    
+    img.src = editorImage.src;
+}
+
+function fecharEditorImagem() {
+    const modal = document.getElementById('modal-editor-imagem');
+    modal.style.display = 'none';
+}
 
 function filtrarProdutos() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
@@ -219,6 +408,26 @@ function salvarProduto() {
     
     const form = document.getElementById('form-produto');
     const formData = new FormData(form);
+    
+    // Verificar se há uma imagem editada no preview
+    const previewImg = document.getElementById('preview-img');
+    if (previewImg.src && previewImg.src.startsWith('data:image')) {
+        // Converter data URL para blob
+        fetch(previewImg.src)
+            .then(res => res.blob())
+            .then(blob => {
+                formData.set('image', blob, 'product-image.jpg');
+                enviarFormulario(formData, modoEdicao, produtoId, btnSalvar, loading);
+            })
+            .catch(error => {
+                enviarFormulario(formData, modoEdicao, produtoId, btnSalvar, loading);
+            });
+    } else {
+        enviarFormulario(formData, modoEdicao, produtoId, btnSalvar, loading);
+    }
+}
+
+function enviarFormulario(formData, modoEdicao, produtoId, btnSalvar, loading) {
     const url = modoEdicao ? `/dashboard/produtos/editar/${produtoId}/` : '/dashboard/produtos/criar/';
     
     if (modoEdicao) {

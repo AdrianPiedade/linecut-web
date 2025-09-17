@@ -37,7 +37,7 @@
                 <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
                 <span>Produtos</span>
             </a>
-            <a href="#" class="menu-item">
+            <a href="{% url 'dashboard:estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'estoque' %}selected{% endif %}">
                 <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
                 <span>Estoque</span>
             </a>
@@ -86,10 +86,15 @@
                 <label>Categoria</label>
                 <select id="categoria-filter">
                     <option value="">Todas as categorias</option>
+                    <option value="Salgados">Salgados</option>
                     <option value="Lanches">Lanches</option>
                     <option value="Bebidas">Bebidas</option>
                     <option value="Sobremesas">Sobremesas</option>
+                    <option value="Doces">Doces</option>
                     <option value="Acompanhamentos">Acompanhamentos</option>
+                    <option value="Saudáveis">Saudáveis</option>
+                    <option value="Laticínios">Laticínios</option>
+                    <option value="Ingredientes">Ingredientes</option>
                 </select>
             </div>
             
@@ -151,18 +156,6 @@
             </div>
         </div>
 
-        <div class="paginacao">
-            <button class="btn-pagina anterior">Anterior</button>
-            <span class="numeros-pagina">
-                <button class="btn-pagina ativo">1</button>
-                <button class="btn-pagina">2</button>
-                <button class="btn-pagina">3</button>
-            </span>
-            <button class="btn-pagina proximo">Próximo</button>
-        </div>
-    </main>
-
-    <!-- Modal para adicionar/editar produto -->
     <div id="modal-produto" class="modal">
         <div class="modal-conteudo">
             <div class="modal-cabecalho">
@@ -178,9 +171,9 @@
                 <div class="modal-corpo">
                     <div class="coluna-esquerda">
                         <div class="upload-imagem">
-                            <div class="imagem-preview" id="imagem-preview">
+                            <div class="imagem-preview" id="imagem-preview" onclick="document.getElementById('imagem-input').click()">
                                 <img src="" alt="Preview" id="preview-img" style="display: none;">
-                                <div id="placeholder-text">+ Adicionar foto</div>
+                                <div id="placeholder-text">+ Clique para adicionar foto</div>
                             </div>
                             <input type="file" id="imagem-input" name="image" accept="image/*" style="display: none;">
                             <button type="button" class="btn-upload" onclick="document.getElementById('imagem-input').click()">
@@ -200,10 +193,15 @@
                                 <label for="categoria">Categoria *</label>
                                 <select id="categoria" name="category" required>
                                     <option value="">Selecione uma categoria</option>
+                                    <option value="Salgados">Salgados</option>
                                     <option value="Lanches">Lanches</option>
                                     <option value="Bebidas">Bebidas</option>
                                     <option value="Sobremesas">Sobremesas</option>
+                                    <option value="Doces">Doces</option>
                                     <option value="Acompanhamentos">Acompanhamentos</option>
+                                    <option value="Saudáveis">Saudáveis</option>
+                                    <option value="Laticínios">Laticínios</option>
+                                    <option value="Ingredientes">Ingredientes</option>
                                 </select>
                             </div>
                             
@@ -269,7 +267,50 @@
         </div>
     </div>
 
-    <!-- Modal de confirmação -->
+    <div id="modal-editor-imagem" class="modal">
+        <div class="modal-conteudo" style="max-width: 800px;">
+            <div class="modal-cabecalho">
+                <h2>Editar Imagem</h2>
+                <span class="fechar-modal" onclick="fecharEditorImagem()">&times;</span>
+            </div>
+            
+            <div class="editor-imagem-corpo">
+                <div class="editor-toolbar">
+                    <button type="button" class="btn-editor" onclick="rotateImage()" title="Rotacionar 90°">
+                        ↻ Rotacionar
+                    </button>
+                    <button type="button" class="btn-editor" onclick="zoomIn()" title="Zoom In">
+                        + Zoom In
+                    </button>
+                    <button type="button" class="btn-editor" onclick="zoomOut()" title="Zoom Out">
+                        - Zoom Out
+                    </button>
+                    <button type="button" class="btn-editor" onclick="resetEditor()" title="Resetar">
+                        ⟲ Resetar
+                    </button>
+                </div>
+                
+                <div class="editor-container">
+                    <div class="image-crop-container">
+                        <img id="editor-image" src="" alt="Imagem para editar">
+                    </div>
+                </div>
+                
+                <div class="editor-preview">
+                    <h4>Preview:</h4>
+                    <div class="preview-container">
+                        <img id="preview-edited" src="" alt="Preview">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharEditorImagem()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="salvarImagemEditada()">Aplicar Edições</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-confirmacao" class="modal">
         <div class="modal-conteudo confirmacao">
             <h3 id="confirmacao-titulo">Confirmar exclusão</h3>

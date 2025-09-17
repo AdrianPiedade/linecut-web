@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .firebase_services import product_service
 from .firebase_storage import storage_service
+from django.core.cache import cache
+from django.core.paginator import Paginator
+from django.views.decorators.cache import cache_page
 import json
 
 def check_dashboard_auth(request):
@@ -211,6 +214,108 @@ def detalhes_produto(request, product_id):
                     'is_available': product.get('is_available', False),
                     'description': product.get('description', ''),
                     'image_url': product.get('image_url', ''),
+                    'ideal_quantity': product.get('ideal_quantity', ''),
+                    'critical_quantity': product.get('critical_quantity', '')
+                }
+            })
+        else:
+            return JsonResponse({'success': False, 'message': 'Produto não encontrado'})
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+
+def estoque(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    firebase_uid = request.session.get('firebase_uid')
+    products = product_service.get_all_products(firebase_uid)
+    
+    paginator = Paginator(products, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'products': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator
+    }
+    return render(request, 'dashboard/estoque.html', context)
+
+def atualizar_estoque(request, product_id):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    if request.method == 'POST':
+        try:
+            firebase_uid = request.session.get('firebase_uid')
+                        
+            quantity = request.POST.get('quantity', '0')
+            ideal_quantity = request.POST.get('ideal_quantity', '0')
+            critical_quantity = request.POST.get('critical_quantity', '0')
+            
+            try:
+                quantity_int = int(quantity) if quantity else 0
+            except ValueError:
+                quantity_int = 0
+                
+            try:
+                ideal_quantity_int = int(ideal_quantity) if ideal_quantity else 0
+            except ValueError:
+                ideal_quantity_int = 0
+                
+            try:
+                critical_quantity_int = int(critical_quantity) if critical_quantity else 0
+            except ValueError:
+                critical_quantity_int = 0
+                        
+            product_data = {
+                'quantity': quantity_int,
+            }
+            
+            if ideal_quantity_int > 0:
+                product_data['ideal_quantity'] = ideal_quantity_int
+            else:
+                product_data['ideal_quantity'] = None
+                
+            if critical_quantity_int > 0:
+                product_data['critical_quantity'] = critical_quantity_int
+            else:
+                product_data['critical_quantity'] = None
+                        
+            success = product_service.update_product(firebase_uid, product_id, product_data)
+            
+            if success:
+                return JsonResponse({'success': True, 'message': 'Estoque atualizado com sucesso!'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Erro ao atualizar estoque'})
+                
+        except Exception as e:
+            print(f"Erro completo: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+def detalhes_estoque(request, product_id):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    try:
+        firebase_uid = request.session.get('firebase_uid')
+        product = product_service.get_product(firebase_uid, product_id)
+        
+        if product:
+            return JsonResponse({
+                'success': True,
+                'produto': {
+                    'name': product.get('name', ''),
+                    'category': product.get('category', ''),
+                    'quantity': product.get('quantity', 0),
                     'ideal_quantity': product.get('ideal_quantity', ''),
                     'critical_quantity': product.get('critical_quantity', '')
                 }

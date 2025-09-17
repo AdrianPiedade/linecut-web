@@ -129,17 +129,13 @@ class ProductFirebaseService:
             
             product_data['updated_at'] = datetime.now().isoformat()
             
-            cleaned_product_data = product_data.copy()
-            if cleaned_product_data.get('ideal_quantity') in [None, '', 0]:
-                cleaned_product_data.pop('ideal_quantity', None)
-            else:
-                cleaned_product_data['ideal_quantity'] = int(cleaned_product_data['ideal_quantity'])
-                
-            if cleaned_product_data.get('critical_quantity') in [None, '', 0]:
-                cleaned_product_data.pop('critical_quantity', None)
-            else:
-                cleaned_product_data['critical_quantity'] = int(cleaned_product_data['critical_quantity'])
-            
+            cleaned_product_data = {}
+            for key, value in product_data.items():
+                if value is not None:
+                    cleaned_product_data[key] = value
+                else:
+                    cleaned_product_data[key] = None
+                        
             product_ref = restaurant_ref.child('products').child(product_id)
             product_ref.update(cleaned_product_data)
             
@@ -147,6 +143,7 @@ class ProductFirebaseService:
             
         except Exception as e:
             logger.error(f"Erro ao atualizar produto: {e}")
+            print(f"Erro detalhado: {str(e)}")
             return False
 
     @staticmethod

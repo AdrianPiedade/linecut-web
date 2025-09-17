@@ -37,10 +37,10 @@
                 <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
                 <span>Produtos</span>
             </a>
-            <div class="menu-item">
+            <a href="{% url 'dashboard:estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'estoque' %}selected{% endif %}">
                 <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
                 <span>Estoque</span>
-            </div>
+            </a>
             <div class="menu-item">
                 <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
                 <span>Dashboard</span>
