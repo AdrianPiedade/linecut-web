@@ -96,8 +96,8 @@
                         </div>
                         <input type="file" id="company-image-input" name="company_image" accept="image/*" style="display: none;" onchange="handleCompanyImageUpload(this.files[0])">
                         <div class="perfil-detalhes">
-                            <h3 id="nome-fantasia">{{ company_data.nome_fantasia|default:"Burger Queen" }}</h3>
-                            <p id="categoria-lanchonete">{{ company_data.descricao|default:"Lanches e Salgados" }}</p>
+                            <h3 id="nome-lanchonete">{{ company_data.nome_lanchonete|default:"Nome da Lanchonete" }}</h3>
+                            <p id="categoria-lanchonete">{{ company_data.description|default:"Descrição da Lanchonete" }}</p>
                             <div class="plano-info">
                                 <div class="plano-badge" id="plano-badge">
                                     <span class="icone-plano">
@@ -122,51 +122,10 @@
                         <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
                     </button>
                 </div>
-                <div class="card-body">
-                    <div class="dias-funcionamento">
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="segunda" name="dias" value="segunda" checked>
-                            <label for="segunda">Segunda</label>
-                        </div>
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="terca" name="dias" value="terca" checked>
-                            <label for="terca">Terça</label>
-                        </div>
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="quarta" name="dias" value="quarta" checked>
-                            <label for="quarta">Quarta</label>
-                        </div>
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="quinta" name="dias" value="quinta" checked>
-                            <label for="quinta">Quinta</label>
-                        </div>
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="sexta" name="dias" value="sexta" checked>
-                            <label for="sexta">Sexta</label>
-                        </div>
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="sabado" name="dias" value="sabado" checked>
-                            <label for="sabado">Sábado</label>
-                        </div>
-                        <div class="checkbox-dia">
-                            <input type="checkbox" id="domingo" name="dias" value="domingo">
-                            <label for="domingo">Domingo</label>
-                        </div>
-                    </div>
-                    <div class="horario-funcionamento">
-                        <div class="horario-input">
-                            <label for="abertura">Abertura</label>
-                            <div class="time-selector">
-                                <input type="time" id="abertura" value="09:00">
-                            </div>
-                        </div>
-                        <div class="horario-input">
-                            <label for="fechamento">Fechamento</label>
-                            <div class="time-selector">
-                                <input type="time" id="fechamento" value="18:00">
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body" id="horario-display-body">
+                   <div id="horario-info-container">
+                        <p>Carregando horários...</p>
+                   </div>
                 </div>
             </div>
 
@@ -181,74 +140,48 @@
                 <div class="card-body">
                     <div class="tabela-informacoes">
                         <div class="linha-informacao">
-                            <div class="coluna-titulo">Nome fantasia</div>
-                            <div class="coluna-valor" id="info-nome-fantasia">Burger Queen</div>
+                            <div class="coluna-titulo">Nome Fantasia</div>
+                            <div class="coluna-valor" id="info-nome-fantasia"></div>
                         </div>
                         <div class="linha-informacao">
-                            <div class="coluna-titulo">Razão social</div>
-                            <div class="coluna-valor" id="info-razao-social">Burger Queen LTDA</div>
+                            <div class="coluna-titulo">Razão Social</div>
+                            <div class="coluna-valor" id="info-razao-social"></div>
                         </div>
                         <div class="linha-informacao">
                             <div class="coluna-titulo">CNPJ</div>
-                            <div class="coluna-valor" id="info-cnpj">13.048.587/0001-50</div>
+                            <div class="coluna-valor" id="info-cnpj"></div>
                         </div>
                         <div class="linha-informacao">
-                            <div class="coluna-titulo">Descrição</div>
-                            <div class="coluna-valor" id="info-descricao">Lanches e Salgados</div>
+                            <div class="coluna-titulo">Nome da Lanchonete</div>
+                            <div class="coluna-valor" id="info-nome-lanchonete"></div>
+                        </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Descrição da Lanchonete</div>
+                            <div class="coluna-valor" id="info-description">Lanches e Salgados</div>
                         </div>
                         <div class="linha-informacao">
                             <div class="coluna-titulo">Polo</div>
-                            <div class="coluna-valor" id="info-polo">Centro Universitário Senac - Praça 3</div>
+                            <div class="coluna-valor" id="info-polo"></div>
                         </div>
                         <div class="linha-informacao">
                             <div class="coluna-titulo">Telefone</div>
-                            <div class="coluna-valor" id="info-telefone">(11) 93937-0313</div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">E-mail</div>
-                            <div class="coluna-valor" id="info-email">BurgerQueen@email.com.br</div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Senha</div>
-                            <div class="coluna-valor">************</div>
-                            <div class="coluna-acao">
-                                <a href="#" class="link-alterar">Alterar</a>
-                            </div>
+                            <div class="coluna-valor" id="info-telefone"></div>
                         </div>
                         <div class="linha-informacao">
                             <div class="coluna-titulo">Endereço</div>
-                            <div class="coluna-valor" id="info-endereco">Rua ..... </div>
+                            <div class="coluna-valor" id="info-endereco"></div>
                         </div>
                         <div class="linha-informacao">
                             <div class="coluna-titulo">Número</div>
-                            <div class="coluna-valor" id="info-numero">1234</div>
+                            <div class="coluna-valor" id="info-numero"></div>
                         </div>
                         <div class="linha-informacao">
                             <div class="coluna-titulo">CEP</div>
                             <div class="coluna-valor" id="info-cep">04820-392</div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Termos e Condições & Política de Privacidade -->
-            <div class="card-configuracao">
-                <div class="card-header">
-                    <h2>Termos e Condições & Política de Privacidade</h2>
-                </div>
-                <div class="card-body">
-                    <div class="tabela-termos">
-                        <div class="linha-termo">
-                            <div class="coluna-titulo">Termos e Condições</div>
-                            <div class="coluna-acao">
-                                <button class="btn-visualizar" onclick="abrirModalTermos()">Visualizar</button>
-                            </div>
-                        </div>
-                        <div class="linha-termo">
-                            <div class="coluna-titulo">Política de Privacidade</div>
-                            <div class="coluna-acao">
-                                <button class="btn-visualizar" onclick="abrirModalPolitica()">Visualizar</button>
-                            </div>
+                        <div class="linha-informacao">
+                            <div class="coluna-titulo">Data de Cadastro</div>
+                            <div class="coluna-valor" id="info-data-cadastro"></div>
                         </div>
                     </div>
                 </div>
@@ -258,39 +191,74 @@
         <!-- SEÇÃO AJUDA -->
         <div id="secao-ajuda" class="secao-configuracoes">
             <div class="ajuda-cards-container">
-                <!-- FAQ -->
-                <div class="ajuda-card" onclick="abrirModalFAQ()">
-                    <div class="ajuda-card-icon">
-                        <img src="{% static 'dashboard/images/icone_faq.png' %}" alt="FAQ">
+                <div class="ajuda-card" data-modal="modal-faq">
+                    <div class="ajuda-card-header">
+                        <div class="ajuda-card-icon">
+                            <img src="{% static 'dashboard/images/icone_faq.png' %}" alt="FAQ">
+                        </div>
+                        <div class="ajuda-card-titles">
+                            <h3>FAQ</h3>
+                            <p>Perguntas Frequentes</p>
+                        </div>
                     </div>
-                    <h3>FAQ</h3>
-                    <p>Perguntas Frequentes</p>
                     <div class="ajuda-card-descricao">
                         <p>Encontre respostas rápidas para as dúvidas mais comuns sobre o uso do portal LineCut.</p>
                     </div>
                 </div>
-
-                <!-- SAC -->
-                <div class="ajuda-card" onclick="abrirModalSAC()">
-                    <div class="ajuda-card-icon">
-                        <img src="{% static 'dashboard/images/icone_sac.png' %}" alt="SAC">
+                <div class="ajuda-card" data-modal="modal-sac">
+                    <div class="ajuda-card-header">
+                        <div class="ajuda-card-icon">
+                            <img src="{% static 'dashboard/images/icone_sac.png' %}" alt="SAC">
+                        </div>
+                        <div class="ajuda-card-titles">
+                            <h3>SAC</h3>
+                            <p>Precisando de Ajuda?</p>
+                        </div>
                     </div>
-                    <h3>SAC</h3>
-                    <p>Precisando de Ajuda?</p>
                     <div class="ajuda-card-descricao">
                         <p>Não encontrou o que precisava? Estamos aqui para ajudar! Fale conosco através dos canais disponíveis.</p>
                     </div>
                 </div>
-
-                <!-- CONTATO -->
-                <div class="ajuda-card" onclick="abrirModalContato()">
-                    <div class="ajuda-card-icon">
-                        <img src="{% static 'dashboard/images/icone_email.png' %}" alt="Contato">
+                <div class="ajuda-card" data-modal="modal-contato">
+                    <div class="ajuda-card-header">
+                        <div class="ajuda-card-icon">
+                            <img src="{% static 'dashboard/images/icone_email.png' %}" alt="Contato">
+                        </div>
+                        <div class="ajuda-card-titles">
+                            <h3>CONTATO</h3>
+                            <p>Fale Conosco</p>
+                        </div>
                     </div>
-                    <h3>CONTATO</h3>
-                    <p>Fale Conosco</p>
                     <div class="ajuda-card-descricao">
                         <p>Entre em contato com nossa equipe de suporte para esclarecer dúvidas, relatar problemas ou obter orientações.</p>
+                    </div>
+                </div>
+                <div class="ajuda-card" data-modal="modal-termos">
+                    <div class="ajuda-card-header">
+                        <div class="ajuda-card-icon">
+                            <img src="{% static 'dashboard/images/icone_info.png' %}" alt="Termos e Condições">
+                        </div>
+                        <div class="ajuda-card-titles">
+                            <h3>Termos e Condições</h3>
+                            <p>Regras de Utilização</p>
+                        </div>
+                    </div>
+                    <div class="ajuda-card-descricao">
+                        <p>Leia os termos que regem o uso da plataforma LineCut para garantir uma parceria de sucesso.</p>
+                    </div>
+                </div>
+                <div class="ajuda-card" data-modal="modal-politica">
+                    <div class="ajuda-card-header">
+                        <div class="ajuda-card-icon">
+                            <img src="{% static 'dashboard/images/icone_info.png' %}" alt="Política de Privacidade">
+                        </div>
+                        <div class="ajuda-card-titles">
+                            <h3>Política de Privacidade</h3>
+                            <p>Seus Dados Seguros</p>
+                        </div>
+                    </div>
+                    <div class="ajuda-card-descricao">
+                        <p>Entenda como coletamos, usamos e protegemos os dados da sua empresa e dos seus clientes.</p>
                     </div>
                 </div>
             </div>
@@ -377,44 +345,16 @@
             <form id="form-perfil">
                 <div class="modal-corpo">
                     <div class="form-group">
-                        <label for="edit-nome-fantasia">Nome Fantasia</label>
-                        <input type="text" id="edit-nome-fantasia" name="nome_fantasia" required>
+                        <label for="edit-nome-lanchonete">Nome da Lanchonete</label>
+                        <input type="text" id="edit-nome-lanchonete" name="nome_lanchonete" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit-razao-social">Razão Social</label>
-                        <input type="text" id="edit-razao-social" name="razao_social" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-cnpj">CNPJ</label>
-                        <input type="text" id="edit-cnpj" name="cnpj" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-descricao">Descrição</label>
-                        <input type="text" id="edit-descricao" name="descricao" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-polo">Polo</label>
-                        <input type="text" id="edit-polo" name="polo" required>
+                        <label for="edit-description">Descrição da Lanchonete</label>
+                        <input type="text" id="edit-description" name="description" required>
                     </div>
                     <div class="form-group">
                         <label for="edit-telefone">Telefone</label>
                         <input type="text" id="edit-telefone" name="telefone" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-email">E-mail</label>
-                        <input type="email" id="edit-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-endereco">Endereço</label>
-                        <input type="text" id="edit-endereco" name="endereco" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-numero">Número</label>
-                        <input type="text" id="edit-numero" name="numero" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-cep">CEP</label>
-                        <input type="text" id="edit-cep" name="cep" required>
                     </div>
                 </div>
                 <div class="modal-rodape">
@@ -432,27 +372,87 @@
                 <h2>Editar Horário de Funcionamento</h2>
                 <span class="fechar-modal" onclick="fecharModalHorario()">&times;</span>
             </div>
-            <form id="form-horario">
+            <form id="form-horario" onsubmit="event.preventDefault(); salvarHorario();">
                 <div class="modal-corpo">
-                    <div class="form-group">
-                        <label>Dias de Funcionamento</label>
-                        <div class="dias-checkbox">
-                            <label><input type="checkbox" name="dias[]" value="segunda" checked> Segunda-feira</label>
-                            <label><input type="checkbox" name="dias[]" value="terca" checked> Terça-feira</label>
-                            <label><input type="checkbox" name="dias[]" value="quarta" checked> Quarta-feira</label>
-                            <label><input type="checkbox" name="dias[]" value="quinta" checked> Quinta-feira</label>
-                            <label><input type="checkbox" name="dias[]" value="sexta" checked> Sexta-feira</label>
-                            <label><input type="checkbox" name="dias[]" value="sabado" checked> Sábado</label>
-                            <label><input type="checkbox" name="dias[]" value="domingo"> Domingo</label>
+                    <p>Selecione os dias em que sua loja está aberta e defina os horários para cada um.</p>
+                    <div class="horario-editor-container">
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-segunda" onchange="toggleTimeInputs('segunda')">
+                                Segunda-feira
+                            </label>
+                            <div class="time-inputs" id="time-inputs-segunda" style="display: none;">
+                                <input type="time" id="edit-segunda-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-segunda-fechamento" value="18:00">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-abertura">Horário de Abertura</label>
-                        <input type="time" id="edit-abertura" name="abertura" value="09:00" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-fechamento">Horário de Fechamento</label>
-                        <input type="time" id="edit-fechamento" name="fechamento" value="18:00" required>
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-terca" onchange="toggleTimeInputs('terca')">
+                                Terça-feira
+                            </label>
+                            <div class="time-inputs" id="time-inputs-terca" style="display: none;">
+                                <input type="time" id="edit-terca-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-terca-fechamento" value="18:00">
+                            </div>
+                        </div>
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-quarta" onchange="toggleTimeInputs('quarta')">
+                                Quarta-feira
+                            </label>
+                            <div class="time-inputs" id="time-inputs-quarta" style="display: none;">
+                                <input type="time" id="edit-quarta-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-quarta-fechamento" value="18:00">
+                            </div>
+                        </div>
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-quinta" onchange="toggleTimeInputs('quinta')">
+                                Quinta-feira
+                            </label>
+                            <div class="time-inputs" id="time-inputs-quinta" style="display: none;">
+                                <input type="time" id="edit-quinta-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-quinta-fechamento" value="18:00">
+                            </div>
+                        </div>
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-sexta" onchange="toggleTimeInputs('sexta')">
+                                Sexta-feira
+                            </label>
+                            <div class="time-inputs" id="time-inputs-sexta" style="display: none;">
+                                <input type="time" id="edit-sexta-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-sexta-fechamento" value="18:00">
+                            </div>
+                        </div>
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-sabado" onchange="toggleTimeInputs('sabado')">
+                                Sábado
+                            </label>
+                            <div class="time-inputs" id="time-inputs-sabado" style="display: none;">
+                                <input type="time" id="edit-sabado-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-sabado-fechamento" value="18:00">
+                            </div>
+                        </div>
+                        <div class="dia-horario-editor">
+                            <label class="dia-label">
+                                <input type="checkbox" id="edit-domingo" onchange="toggleTimeInputs('domingo')">
+                                Domingo
+                            </label>
+                            <div class="time-inputs" id="time-inputs-domingo" style="display: none;">
+                                <input type="time" id="edit-domingo-abertura" value="09:00">
+                                <span>às</span>
+                                <input type="time" id="edit-domingo-fechamento" value="18:00">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-rodape">
@@ -513,80 +513,21 @@
         <div class="modal-conteudo">
             <div class="modal-cabecalho">
                 <h2>Serviço de Atendimento ao Cliente (SAC)</h2>
-                <span class="fechar-modal" onclick="fecharModalSAC()">&times;</span>
+                <span class="fechar-modal" data-modal-close="modal-sac">&times;</span>
             </div>
             <div class="modal-corpo">
                 <div class="sac-conteudo">
                     <h3>Precisando de Ajuda?</h3>
                     <p>Nosso SAC está pronto para resolver qualquer problema relacionado ao uso do portal. Não encontrou o que precisava? Estamos aqui para ajudar!</p>
-                    
                     <div class="sac-canais">
-                        <div class="canal-item">
-                            <div class="canal-icon">
-                                <img src="{% static 'dashboard/images/icone_email.png' %}" alt="E-mail">
-                            </div>
-                            <div class="canal-info">
-                                <h4>E-mail</h4>
-                                <p>sac@linecut.app.br</p>
-                                <small>Respondemos em até 24 horas</small>
-                            </div>
-                        </div>
-                        
-                        <div class="canal-item">
-                            <div class="canal-icon">
-                                <img src="{% static 'dashboard/images/icone_phone.png' %}" alt="Telefone">
-                            </div>
-                            <div class="canal-info">
-                                <h4>Telefone</h4>
-                                <p>(11) 4004-2000</p>
-                                <small>Segunda a sexta, das 8h às 18h</small>
-                            </div>
-                        </div>
-                        
-                        <div class="canal-item">
-                            <div class="canal-icon">
-                                <img src="{% static 'dashboard/images/icone_msg.png' %}" alt="WhatsApp">
-                            </div>
-                            <div class="canal-info">
-                                <h4>WhatsApp</h4>
-                                <p>(11) 99999-0000</p>
-                                <small>Atendimento rápido pelo WhatsApp Business</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="sac-formulario">
-                        <h4>Envie sua mensagem</h4>
-                        <form id="form-sac">
-                            <div class="form-group">
-                                <label for="sac-nome">Nome</label>
-                                <input type="text" id="sac-nome" name="nome" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="sac-email">E-mail</label>
-                                <input type="email" id="sac-email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="sac-assunto">Assunto</label>
-                                <select id="sac-assunto" name="assunto" required>
-                                    <option value="">Selecione um assunto</option>
-                                    <option value="duvida">Dúvida</option>
-                                    <option value="problema">Problema Técnico</option>
-                                    <option value="sugestao">Sugestão</option>
-                                    <option value="outro">Outro</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="sac-mensagem">Mensagem</label>
-                                <textarea id="sac-mensagem" name="mensagem" rows="4" required></textarea>
-                            </div>
-                        </form>
+                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_email.png' %}" alt="E-mail"></div><div class="canal-info"><h4>E-mail</h4><p>sac@linecut.app.br</p><small>Respondemos em até 24 horas</small></div></div>
+                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_phone.png' %}" alt="Telefone"></div><div class="canal-info"><h4>Telefone</h4><p>(11) 4004-2000</p><small>Segunda a sexta, das 8h às 18h</small></div></div>
+                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_msg.png' %}" alt="WhatsApp"></div><div class="canal-info"><h4>WhatsApp</h4><p>(11) 99999-0000</p><small>Atendimento rápido pelo WhatsApp Business</small></div></div>
                     </div>
                 </div>
             </div>
             <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" onclick="fecharModalSAC()">Cancelar</button>
-                <button type="button" class="btn-salvar" onclick="enviarSAC()">Enviar Mensagem</button>
+                <button type="button" class="btn-cancelar" data-modal-close="modal-sac">Fechar</button>
             </div>
         </div>
     </div>
@@ -596,13 +537,11 @@
         <div class="modal-conteudo">
             <div class="modal-cabecalho">
                 <h2>Fale Conosco</h2>
-                <span class="fechar-modal" onclick="fecharModalContato()">&times;</span>
+                <span class="fechar-modal" data-modal-close="modal-contato">&times;</span>
             </div>
             <div class="modal-corpo">
                 <div class="contato-conteudo">
                     <h3>Entre em contato com nossa equipe</h3>
-                    <p>Nossa equipe está disponível para atender suas solicitações o mais breve possível. Preencha o formulário abaixo e retornaremos em breve.</p>
-                    
                     <div class="contato-info">
                         <div class="contato-detalhes">
                             <h4>Informações de Contato</h4>
@@ -611,36 +550,10 @@
                             <p><strong>Horário de Atendimento:</strong> Segunda a sexta, das 8h às 18h</p>
                         </div>
                     </div>
-                    
-                    <div class="contato-formulario">
-                        <form id="form-contato">
-                            <div class="form-group">
-                                <label for="contato-nome">Nome Completo</label>
-                                <input type="text" id="contato-nome" name="nome" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="contato-email">E-mail</label>
-                                <input type="email" id="contato-email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="contato-empresa">Nome da Empresa</label>
-                                <input type="text" id="contato-empresa" name="empresa" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="contato-assunto">Assunto</label>
-                                <input type="text" id="contato-assunto" name="assunto" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="contato-mensagem">Mensagem</label>
-                                <textarea id="contato-mensagem" name="mensagem" rows="5" required></textarea>
-                            </div>
-                        </form>
-                    </div>
                 </div>
             </div>
             <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" onclick="fecharModalContato()">Cancelar</button>
-                <button type="button" class="btn-salvar" onclick="enviarContato()">Enviar Mensagem</button>
+                <button type="button" class="btn-cancelar" data-modal-close="modal-contato">Fechar</button>
             </div>
         </div>
     </div>
@@ -653,7 +566,44 @@
                 <span class="fechar-modal" onclick="fecharModalTermos()">&times;</span>
             </div>
             <div class="modal-corpo">
-                <p>Conteúdo dos Termos e Condições será adicionado aqui.</p>
+                <h3>TERMO DE USO DO PORTAL WEB ADMINISTRATIVO DO LINECUT</h3>
+                <p>Última atualização: [01/05/2025]</p>
+                
+                <p>Pelo presente instrumento, o LINECUT, doravante denominado simplesmente 'Plataforma', estabelece os termos e condições de uso do Portal Web Administrativo, conforme as cláusulas a seguir:</p>
+                
+                <h4>1. OBJETO</h4>
+                <p>1.1. O presente Termo regula o uso do Portal Web Administrativo do LineCut, que permite às lanchonetes cadastradas gerenciar pedidos, filas, estoque e dados dos clientes que utilizam o aplicativo LineCut.</p>
+                <p>1.2. O acesso ao Portal é restrito a usuários cadastrados e autorizados pelas lanchonetes, sendo seu uso exclusivo para fins administrativos.</p>
+                
+                <h4>2. ACEITAÇÃO</h4>
+                <p>2.1. Ao acessar o Portal, o usuário declara ter lido, compreendido e aceitado os presentes Termos de Uso.</p>
+                <p>2.2. Caso o usuário não concorde com qualquer condição estabelecida, deverá interromper imediatamente o uso do Portal.</p>
+                
+                <h4>3. CADASTRO</h4>
+                <p>3.1. O acesso ao Portal é pessoal e intransferível. A lanchonete é responsável pela gestão e segurança das credenciais fornecidas.</p>
+                <p>3.2. O administrador deve garantir que apenas pessoas autorizadas utilizem as credenciais de acesso.</p>
+                <p>3.3. A Plataforma não se responsabiliza por danos decorrentes de uso indevido das credenciais ou por falhas de segurança imputáveis ao administrador.</p>
+                
+                <h4>4. OBRIGAÇÕES</h4>
+                <p>4.1. Utilizar o Portal de forma ética, respeitando a legislação vigente e as políticas da Plataforma.</p>
+                <p>4.2. Manter atualizados os dados cadastrais da lanchonete.</p>
+                <p>4.3. Assegurar que as informações dos clientes coletadas estejam em conformidade com a Lei Geral de Proteção de Dados (LGPD).</p>
+                
+                <h4>5. LIMITAÇÃO</h4>
+                <p>5.1. A Plataforma não se responsabiliza por falhas operacionais da lanchonete, incluindo problemas com conexão de internet, equipamentos ou gestão inadequada de pedidos.</p>
+                <p>5.2. O uso do Portal é disponibilizado 'no estado em que se encontra', sem garantias de funcionamento contínuo ou livre de erros.</p>
+                
+                <h4>6. PRIVACIDADE E SEGURANÇA</h4>
+                <p>6.1. Os dados pessoais coletados são tratados de acordo com a Política de Privacidade do LineCut.</p>
+                <p>6.2. A Plataforma adota medidas de segurança para proteger os dados, mas não se responsabiliza por acessos indevidos resultantes de negligência do usuário.</p>
+                
+                <h4>7. MODIFICAÇÕES DOS TERMOS</h4>
+                <p>7.1. O LineCut reserva-se o direito de modificar os presentes Termos a qualquer momento, notificando os usuários por meio do Portal.</p>
+                <p>7.2. O uso contínuo do Portal após as modificações constitui aceitação das novas condições.</p>
+                
+                <h4>8. LEGISLAÇÃO APLICÁVEL E FORO</h4>
+                <p>8.1. O presente Termo é regido pelas leis da República Federativa do Brasil.</p>
+                <p>8.2. Fica eleito o foro da comarca de [cidade/estado do desenvolvedor] para dirimir quaisquer controvérsias oriundas deste instrumento.</p>
             </div>
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharModalTermos()">Fechar</button>
@@ -669,7 +619,44 @@
                 <span class="fechar-modal" onclick="fecharModalPolitica()">&times;</span>
             </div>
             <div class="modal-corpo">
-                <p>Conteúdo da Política de Privacidade será adicionado aqui.</p>
+                <h3>POLÍTICA DE PRIVACIDADE</h3>
+                
+                <h4>1. COLETA DE DADOS:</h4>
+                <p>O portal coleta e armazena informações necessárias para a gestão dos pedidos e da lanchonete, incluindo:</p>
+                <ul>
+                    <li><strong>Dados da lanchonete:</strong> Nome, CNPJ, endereço e dados de contato.</li>
+                    <li><strong>Dados de pedidos:</strong> Itens comprados, valores, horários e status.</li>
+                </ul>
+                
+                <h4>2. USO DAS INFORMAÇÕES:</h4>
+                <p>Os dados coletados são utilizados para:</p>
+                <ul>
+                    <li>Gestão de pedidos e filas.</li>
+                    <li>Emissão de relatórios operacionais.</li>
+                    <li>Monitoramento do atendimento e eficiência da lanchonete.</li>
+                    <li>Contato com clientes em casos específicos (ex: pedido cancelado ou atraso).</li>
+                </ul>
+                
+                <h4>3. COMPARTILHAMENTO DE DADOS:</h4>
+                <ul>
+                    <li>As informações coletadas podem ser compartilhadas com serviços de pagamento integrados, autoridades legais (quando necessário) e o próprio LineCut para manutenção e suporte.</li>
+                    <li>Não vendemos nem compartilhamos os dados dos clientes para fins comerciais.</li>
+                </ul>
+                
+                <h4>4. SEGURANÇA DOS DADOS:</h4>
+                <p>Os dados são armazenados em servidores seguros com protocolos de criptografia. O acesso ao portal é protegido por autenticação e controle de permissões.</p>
+                
+                <h4>5. DIREITOS DOS USUÁRIOS (LGPD):</h4>
+                <p>O administrador pode solicitar a retificação ou exclusão de dados pessoais a qualquer momento pelo e-mail: privacidade@linecut.app.br</p>
+                
+                <h4>6. COOKIES E RASTREAMENTO:</h4>
+                <p>O portal utiliza cookies para manter a sessão ativa e armazenar preferências de uso. O administrador pode optar por bloquear cookies diretamente no navegador, ciente de que algumas funcionalidades podem ser prejudicadas.</p>
+                
+                <h4>7. ALTERAÇÕES NA POLÍTICA DE PRIVACIDADE:</h4>
+                <p>Quaisquer mudanças na política serão notificadas através do portal e/ou e-mail cadastrado.</p>
+                
+                <h4>8. CONTATO:</h4>
+                <p>Para dúvidas ou solicitações sobre privacidade e proteção de dados, entre em contato pelo e-mail: privacidade@linecut.app.br</p>
             </div>
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharModalPolitica()">Fechar</button>

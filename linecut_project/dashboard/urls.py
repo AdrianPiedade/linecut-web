@@ -18,6 +18,7 @@ urlpatterns = [
     path('configuracoes/', views.configuracoes, name='configuracoes'),
     path('configuracoes/get-company-data/', views.get_company_data, name='get_company_data'),
     path('configuracoes/update-profile/', views.update_company_profile, name='update_company_profile'),
+    path('configuracoes/update-horario/', views.update_horario_funcionamento, name='update_horario_funcionamento'),
     path('configuracoes/update-plan/', views.update_company_plan, name='update_company_plan'),
     path('configuracoes/check-trial-plan/', views.check_trial_plan_expired, name='check_trial_plan'),
     path('configuracoes/update-image/', views.update_company_image, name='update_company_image'),

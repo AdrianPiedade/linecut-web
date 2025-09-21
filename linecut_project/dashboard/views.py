@@ -435,11 +435,9 @@ def update_company_profile(request):
             if not current_company:
                 return JsonResponse({'success': False, 'message': 'Empresa não encontrada'})
             
-            # Apenas campos textuais - sem processar imagem aqui
             company_data = {}
             valid_fields = [
-                'nome_fantasia', 'razao_social', 'cnpj', 'descricao',
-                'polo', 'telefone', 'endereco', 'numero', 'cep'
+                'nome_lanchonete', 'description', 'telefone'
             ]
             
             for field in valid_fields:
@@ -461,6 +459,28 @@ def update_company_profile(request):
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+def update_horario_funcionamento(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    if request.method == 'POST':
+        try:
+            firebase_uid = request.session.get('firebase_uid')
+            data = json.loads(request.body)
+            horario_data = data.get('horario_funcionamento')
+
+            if not isinstance(horario_data, dict):
+                return JsonResponse({'success': False, 'message': 'Formato de dados inválido.'})
+
+            success = company_service.update_company_field(firebase_uid, 'horario_funcionamento', horario_data)
+
+            if success:
+                return JsonResponse({'success': True, 'message': 'Horário de funcionamento atualizado com sucesso!'})
+            return JsonResponse({'success': False, 'message': 'Não foi possível atualizar o horário.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
 
 def update_company_plan(request):
     auth_redirect = check_dashboard_auth(request)
@@ -519,22 +539,7 @@ def get_company_data(request):
                 'company_data': company_data
             })
         else:
-            return JsonResponse({
-                'success': True,
-                'company_data': {
-                    'nome_fantasia': 'Nome da Empresa',
-                    'razao_social': 'Razão Social',
-                    'cnpj': '00.000.000/0000-00',
-                    'descricao': 'Descrição da empresa',
-                    'polo': 'Polo',
-                    'telefone': '(00) 00000-0000',
-                    'email': 'email@empresa.com',
-                    'endereco': 'Endereço',
-                    'numero': '000',
-                    'cep': '00000-000',
-                    'plano': 'premium'
-                }
-            })
+            return JsonResponse({'success': True, 'company_data': {}})
             
     except Exception as e:
         return JsonResponse({

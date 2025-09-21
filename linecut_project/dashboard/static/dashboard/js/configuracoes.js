@@ -6,6 +6,7 @@ let companyOffsetX = 0, companyOffsetY = 0;
 let isCompanyDragging = false;
 let companyStartX, companyStartY;
 let editedCompanyImageBlob = null;
+let isSavingHorario = false;
 let companyDataBackup = null;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,14 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('mousemove', doCompanyDrag);
         document.addEventListener('mouseup', stopCompanyDrag);
     }
-    
-    window.addEventListener('click', function(e) {
-        const modalEditorEmpresa = document.getElementById('modal-editor-imagem-empresa');
-        const modalConfirmacaoUpload = document.getElementById('modal-confirmacao-upload');
-        
-        if (e.target === modalEditorEmpresa) fecharEditorImagemEmpresa();
-        if (e.target === modalConfirmacaoUpload) fecharConfirmacaoUpload();
-    });
 });
 
 function initializePage() {
@@ -40,7 +33,6 @@ function backupCompanyData() {
 
 function handleCompanyImageUpload(file) {
     if (!file) return;
-    
     backupCompanyData();
     originalCompanyImageFile = file;
     abrirEditorImagemEmpresa(file);
@@ -58,29 +50,37 @@ function setupEventListeners() {
     const tituloAjuda = document.getElementById('titulo-ajuda');
     const secaoPerfil = document.getElementById('secao-perfil');
     const secaoAjuda = document.getElementById('secao-ajuda');
-    
-    tituloPerfil.addEventListener('click', function() {
+
+    tituloPerfil.addEventListener('click', () => {
         switchToSection('perfil', tituloPerfil, tituloAjuda, secaoPerfil, secaoAjuda);
     });
     
-    tituloAjuda.addEventListener('click', function() {
+    tituloAjuda.addEventListener('click', () => {
         switchToSection('ajuda', tituloAjuda, tituloPerfil, secaoAjuda, secaoPerfil);
     });
-    
-    window.addEventListener('click', function(e) {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            if (e.target === modal) {
-                closeModal(modal);
-            }
-        });
+
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+        const card = target.closest('[data-modal]');
+        const closeTrigger = target.closest('[data-modal-close]');
+
+        if (card) {
+            openModal(card.getAttribute('data-modal'));
+        } else if (closeTrigger) {
+            closeModal(closeTrigger.getAttribute('data-modal-close'));
+        } else if (target.classList.contains('modal')) {
+            closeModal(target);
+        }
+    });
+
+    document.getElementById('form-perfil')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        salvarInformacoes();
     });
     
-    document.addEventListener('click', function(e) {
-        const planoOption = e.target.closest('.plano-option');
-        if (planoOption) {
-            selectPlan(planoOption);
-        }
+    document.getElementById('form-horario')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        salvarHorario();
     });
 }
 
@@ -110,7 +110,7 @@ function abrirEditorImagemEmpresa(file) {
         previewImage.style.top = '0px';
         
         applyCompanyTransformations();
-        modal.style.display = 'block';
+        openModal('modal-editor-imagem-empresa');
     };
     reader.readAsDataURL(file);
 }
@@ -267,15 +267,11 @@ function fecharEditorImagemEmpresa() {
 }
 
 function abrirConfirmacaoUpload() {
-    const modal = document.getElementById('modal-confirmacao-upload');
-    modal.style.display = 'block';
+    openModal('modal-confirmacao-upload');
 }
 
 function fecharConfirmacaoUpload() {
-    const modal = document.getElementById('modal-confirmacao-upload');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    closeModal('modal-confirmacao-upload');
 }
 
 function showLoading(message = 'Carregando...') {
@@ -284,30 +280,17 @@ function showLoading(message = 'Carregando...') {
     const overlay = document.createElement('div');
     overlay.id = 'loading-overlay-config';
     overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        color: white;
-        font-family: 'Poppins', sans-serif;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7); display: flex; flex-direction: column;
+        justify-content: center; align-items: center; z-index: 9999;
+        color: white; font-family: 'Poppins', sans-serif;
     `;
     
     const spinner = document.createElement('div');
     spinner.style.cssText = `
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #9C0202;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 15px;
+        width: 40px; height: 40px; border: 4px solid #f3f3f3;
+        border-top: 4px solid #9C0202; border-radius: 50%;
+        animation: spin 1s linear infinite; margin-bottom: 15px;
     `;
     
     const text = document.createElement('div');
@@ -326,7 +309,6 @@ function hideLoading() {
     if (overlay) {
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.3s ease';
-        
         setTimeout(() => {
             if (overlay.parentNode) {
                 overlay.remove();
@@ -409,12 +391,10 @@ function loadInitialData() {
 
 function loadCompanyData() {
     fetch('/dashboard/configuracoes/get-company-data/', {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(response => {
-        if (!response.ok) throw new Error('Erro na resposta do servidor');
+        if (!response.ok) throw new Error('Erro de rede.');
         return response.json();
     })
     .then(data => {
@@ -434,76 +414,98 @@ function updateCompanyUI() {
     if (!window.companyData) return;
     
     const elementsToUpdate = {
-        'nome-fantasia': window.companyData.nome_fantasia,
-        'categoria-lanchonete': window.companyData.descricao,
+        'nome-lanchonete': window.companyData.nome_lanchonete,
+        'categoria-lanchonete': window.companyData.description,
         'tipo-plano': window.companyData.plano ? window.companyData.plano.charAt(0).toUpperCase() + window.companyData.plano.slice(1) : 'Premium',
         'info-nome-fantasia': window.companyData.nome_fantasia,
         'info-razao-social': window.companyData.razao_social,
         'info-cnpj': window.companyData.cnpj,
-        'info-descricao': window.companyData.descricao,
+        'info-nome-lanchonete': window.companyData.nome_lanchonete,
+        'info-description': window.companyData.description,
         'info-polo': window.companyData.polo,
         'info-telefone': window.companyData.telefone,
-        'info-email': window.companyData.email,
         'info-endereco': window.companyData.endereco,
         'info-numero': window.companyData.numero,
-        'info-cep': window.companyData.cep
+        'info-cep': window.companyData.cep,
+        'info-data-cadastro': window.companyData.data_cadastro ? new Date(window.companyData.data_cadastro).toLocaleDateString('pt-BR') : 'Não disponível'
     };
     
     Object.entries(elementsToUpdate).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element && value) {
-            element.textContent = value;
+        if (element) {
+            element.textContent = value || '';
         }
     });
 
+    updateHorarioDisplay();
     updatePlanBadgeIcon(window.companyData.plano || 'premium');
     
     const logoElement = document.getElementById('logo-lanchonete');
     if (logoElement && window.companyData.image_url) {
         const timestamp = new Date().getTime();
-        const imageUrl = window.companyData.image_url + 
-            (window.companyData.image_url.includes('?') ? '&' : '?') + 
-            't=' + timestamp;
-        
-        logoElement.src = imageUrl;
-        
-        logoElement.onerror = function() {
-            const defaultImage = document.body.getAttribute('data-default-image') || 
-                                '/static/dashboard/images/perfil_default.png';
-            logoElement.src = defaultImage;
+        logoElement.src = `${window.companyData.image_url}${window.companyData.image_url.includes('?') ? '&' : '?'}t=${timestamp}`;
+        logoElement.onerror = () => {
+            logoElement.src = document.body.getAttribute('data-default-image') || '/static/dashboard/images/perfil_default.png';
         };
     }
     
     const formFields = {
-        'edit-nome-fantasia': window.companyData.nome_fantasia,
-        'edit-razao-social': window.companyData.razao_social,
-        'edit-cnpj': window.companyData.cnpj,
-        'edit-descricao': window.companyData.descricao,
-        'edit-polo': window.companyData.polo,
-        'edit-telefone': window.companyData.telefone,
-        'edit-email': window.companyData.email,
-        'edit-endereco': window.companyData.endereco,
-        'edit-numero': window.companyData.numero,
-        'edit-cep': window.companyData.cep
+        'edit-nome-lanchonete': window.companyData.nome_lanchonete,
+        'edit-description': window.companyData.description,
+        'edit-telefone': window.companyData.telefone
     };
     
     Object.entries(formFields).forEach(([id, value]) => {
         const element = document.getElementById(id);
-        if (element && value) {
-            element.value = value;
+        if (element) {
+            element.value = value || '';
         }
     });
+}
+
+function updateHorarioDisplay() {
+    const container = document.getElementById('horario-info-container');
+    const horarios = window.companyData.horario_funcionamento;
+
+    if (!horarios || Object.keys(horarios).length === 0) {
+        container.innerHTML = `<p style="color: var(--cinza-escuro);">Sua lanchonete ainda não tem um horário de funcionamento configurado. Por favor clique no botão de edição e ajuste os dias e horários.</p>`;
+        return;
+    }
+
+    let html = '<div class="horario-card-container">';
+    const diasSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+    
+    diasSemana.forEach(dia => {
+        if (horarios[dia] && horarios[dia].aberto) {
+            html += `
+                <div class="horario-card">
+                    <span class="dia-nome">${dia.charAt(0).toUpperCase() + dia.slice(1)}</span>
+                    <span class="dia-horario">${horarios[dia].abertura} - ${horarios[dia].fechamento}</span>
+                </div>
+            `;
+        } else if (horarios[dia] && !horarios[dia].aberto) {
+            html += `
+                <div class="horario-card">
+                    <span class="dia-nome">${dia.charAt(0).toUpperCase() + dia.slice(1)}</span>
+                    <span class="dia-horario fechado">Fechado</span>
+                </div>
+            `;
+        }
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 }
 
-function closeModal(modalId) {
-    const modal = typeof modalId === 'string' ? document.getElementById(modalId) : modalId;
+function closeModal(modalOrId) {
+    const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId;
     if (modal) {
         modal.style.display = 'none';
     }
@@ -518,6 +520,28 @@ function fecharModalPerfil() {
 }
 
 function editarHorario() {
+    const horarios = window.companyData.horario_funcionamento || {};
+    const diasSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+
+    diasSemana.forEach(dia => {
+        const checkbox = document.getElementById(`edit-${dia}`);
+        const aberturaInput = document.getElementById(`edit-${dia}-abertura`);
+        const fechamentoInput = document.getElementById(`edit-${dia}-fechamento`);
+        const timeInputs = document.getElementById(`time-inputs-${dia}`);
+
+        if (horarios[dia] && horarios[dia].aberto) {
+            checkbox.checked = true;
+            aberturaInput.value = horarios[dia].abertura;
+            fechamentoInput.value = horarios[dia].fechamento;
+            timeInputs.style.display = 'flex';
+        } else {
+            checkbox.checked = false;
+            aberturaInput.value = '09:00';
+            fechamentoInput.value = '18:00';
+            timeInputs.style.display = 'none';
+        }
+    });
+
     openModal('modal-horario');
 }
 
@@ -567,7 +591,7 @@ async function abrirModalPlanos() {
         if (option.dataset.plano === currentPlan) {
             option.classList.add('plano-selecionado');
             const h3 = option.querySelector('h3');
-            if (h3) {
+            if (h3 && !h3.querySelector('.plano-atual-badge')) {
                 h3.innerHTML += ' <span class="plano-atual-badge">(Atual)</span>';
             }
         }
@@ -684,45 +708,16 @@ function updateCompanyPlan(newPlan) {
     });
 }
 
-function abrirModalFAQ() {
-    openModal('modal-faq');
-}
-
-function fecharModalFAQ() {
-    closeModal('modal-faq');
-}
-
-function abrirModalSAC() {
-    openModal('modal-sac');
-}
-
-function fecharModalSAC() {
-    closeModal('modal-sac');
-}
-
-function abrirModalContato() {
-    openModal('modal-contato');
-}
-
-function fecharModalContato() {
-    closeModal('modal-contato');
-}
-
-function abrirModalTermos() {
-    openModal('modal-termos');
-}
-
-function fecharModalTermos() {
-    closeModal('modal-termos');
-}
-
-function abrirModalPolitica() {
-    openModal('modal-politica');
-}
-
-function fecharModalPolitica() {
-    closeModal('modal-politica');
-}
+function abrirModalFAQ() { openModal('modal-faq'); }
+function fecharModalFAQ() { closeModal('modal-faq'); }
+function abrirModalSAC() { openModal('modal-sac'); }
+function fecharModalSAC() { closeModal('modal-sac'); }
+function abrirModalContato() { openModal('modal-contato'); }
+function fecharModalContato() { closeModal('modal-contato'); }
+function abrirModalTermos() { openModal('modal-termos'); }
+function fecharModalTermos() { closeModal('modal-termos'); }
+function abrirModalPolitica() { openModal('modal-politica'); }
+function fecharModalPolitica() { closeModal('modal-politica'); }
 
 function abrirModalConfirmacao(mensagem, detalhes = null) {
     document.getElementById('confirmacao-mensagem').textContent = mensagem;
@@ -759,21 +754,12 @@ document.getElementById('form-perfil')?.addEventListener('submit', function(e) {
 
 function salvarInformacoes() {
     const formData = new FormData();
-    
-    const fields = [
-        'nome_fantasia', 'razao_social', 'cnpj', 'descricao', 
-        'polo', 'telefone', 'email', 'endereco', 'numero', 'cep'
-    ];
+    const fields = ['nome_lanchonete', 'description', 'telefone'];
     
     fields.forEach(field => {
-        const value = document.getElementById(`edit-${field.replace('_', '-')}`)?.value;
+        const value = document.getElementById(`edit-${field}`)?.value;
         if (value) formData.append(field, value);
     });
-    
-    const imageFile = document.getElementById('edit-company-image')?.files[0];
-    if (imageFile) {
-        formData.append('company_image', imageFile);
-    }
     
     fetch('/dashboard/configuracoes/update-profile/', {
         method: 'POST',
@@ -788,14 +774,12 @@ function salvarInformacoes() {
         if (data.success) {
             showSuccessToast(data.message);
             loadCompanyData();
-            fecharModalPerfil();
+            closeModal('modal-perfil');
         } else {
             showErrorToast(data.message);
         }
     })
-    .catch(error => {
-        showErrorToast('Erro ao salvar informações');
-    });
+    .catch(error => showErrorToast('Erro ao salvar informações'));
 }
 
 document.getElementById('form-horario')?.addEventListener('submit', function(e) {
@@ -804,59 +788,66 @@ document.getElementById('form-horario')?.addEventListener('submit', function(e) 
 });
 
 function salvarHorario() {
-    const diasSelecionados = [];
-    document.querySelectorAll('#form-horario input[name="dias[]"]:checked').forEach(checkbox => {
-        diasSelecionados.push(checkbox.value);
+    if (isSavingHorario) return;
+    isSavingHorario = true; 
+
+    const horarioData = {};
+    const diasSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+
+    diasSemana.forEach(dia => {
+        const checkbox = document.getElementById(`edit-${dia}`);
+        horarioData[dia] = {
+            aberto: checkbox.checked,
+            abertura: document.getElementById(`edit-${dia}-abertura`).value,
+            fechamento: document.getElementById(`edit-${dia}-fechamento`).value
+        };
     });
-    
-    const formData = {
-        dias: diasSelecionados,
-        abertura: document.getElementById('edit-abertura').value,
-        fechamento: document.getElementById('edit-fechamento').value
-    };
-    
-    document.querySelectorAll('input[name="dias"]').forEach(checkbox => {
-        checkbox.checked = formData.dias.includes(checkbox.value);
-    });
-    
-    document.getElementById('abertura').value = formData.abertura;
-    document.getElementById('fechamento').value = formData.fechamento;
-    
-    showSuccessToast('Horário de funcionamento atualizado com sucesso!');
-    fecharModalHorario();
+
+    fetch('/dashboard/configuracoes/update-horario/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ horario_funcionamento: horarioData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessToast('Horário atualizado com sucesso!');
+            window.companyData.horario_funcionamento = horarioData;
+            updateHorarioDisplay();
+            closeModal('modal-horario');
+        } else {
+            showErrorToast(data.message || 'Erro ao salvar horário.');
+        }
+    })
+    .catch(error => showErrorToast('Ocorreu um erro de comunicação.'))
+    .finally(() => { isSavingHorario = false; });
 }
 
+
 function enviarSAC() {
-    const formData = {
-        nome: document.getElementById('sac-nome').value,
-        email: document.getElementById('sac-email').value,
-        assunto: document.getElementById('sac-assunto').value,
-        mensagem: document.getElementById('sac-mensagem').value
-    };
-    
     showSuccessToast('Mensagem enviada com sucesso! Entraremos em contato em breve.');
     fecharModalSAC();
 }
 
 function enviarContato() {
-    const formData = {
-        nome: document.getElementById('contato-nome').value,
-        email: document.getElementById('contato-email').value,
-        empresa: document.getElementById('contato-empresa').value,
-        assunto: document.getElementById('contato-assunto').value,
-        mensagem: document.getElementById('contato-mensagem').value
-    };
-    
     showSuccessToast('Mensagem enviada com sucesso! Entraremos em contato em breve.');
     fecharModalContato();
+}
+
+function toggleTimeInputs(dia) {
+    const checkbox = document.getElementById(`edit-${dia}`);
+    const timeInputs = document.getElementById(`time-inputs-${dia}`);
+    timeInputs.style.display = checkbox.checked ? 'flex' : 'none';
 }
 
 async function checkTrialPlanExpired() {
     try {
         const response = await fetch('/dashboard/configuracoes/check-trial-plan/', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         
         if (response.ok) {
@@ -873,112 +864,40 @@ async function checkTrialPlanExpired() {
 }
 
 function getCSRFToken() {
-    const cookieValue = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-    
-    if (cookieValue) {
-        return cookieValue;
-    }
-    
+    const cookieValue = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+    if (cookieValue) return cookieValue;
     const metaToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    if (metaToken) {
-        return metaToken;
-    }
-    
-    const inputToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-    if (inputToken) {
-        return inputToken;
-    }
-    
-    return '';
+    if (metaToken) return metaToken;
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 }
 
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container') || createToastContainer();
-    
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.style.cssText = `
-        padding: 15px 20px;
-        border-radius: 6px;
-        color: white;
-        font-family: 'Poppins', sans-serif;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        min-width: 300px;
-        max-width: 400px;
-        margin-bottom: 10px;
-        animation: slideInRight 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
-    `;
-    
-    if (type === 'success') {
-        toast.style.background = '#189F4C';
-    } else if (type === 'error') {
-        toast.style.background = '#9C0202';
-    } else if (type === 'warning') {
-        toast.style.background = '#F2C12E';
-        toast.style.color = '#333';
-    }
     
     const messageSpan = document.createElement('span');
     messageSpan.textContent = message;
-    messageSpan.style.flex = '1';
     toast.appendChild(messageSpan);
     
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '&times;';
-    closeButton.style.cssText = `
-        background: none;
-        border: none;
-        color: inherit;
-        font-size: 18px;
-        cursor: pointer;
-        margin-left: 15px;
-        opacity: 0.7;
-    `;
+    closeButton.className = 'toast-close';
     closeButton.onclick = () => toast.remove();
     toast.appendChild(closeButton);
     
     container.appendChild(toast);
-    
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
-        }
-    }, 3000);
-    
-    return toast;
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3000);
 }
+
 
 function createToastContainer() {
     const container = document.createElement('div');
     container.id = 'toast-container';
-    container.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    `;
     document.body.appendChild(container);
     return container;
 }
 
-function showSuccessToast(message) {
-    return showToast(message, 'success');
-}
-
-function showErrorToast(message) {
-    return showToast(message, 'error');
-}
-
-function showWarningToast(message) {
-    return showToast(message, 'warning');
-}
+function showSuccessToast(message) { showToast(message, 'success'); }
+function showErrorToast(message) { showToast(message, 'error'); }
+function showWarningToast(message) { showToast(message, 'warning'); }
