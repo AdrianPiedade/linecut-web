@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     })
                     .catch(error => {
-                        console.error('Erro ao consultar CNPJ:', error);
                         notificacoes.erro('Erro ao consultar CNPJ: ' + error.message);
 
                         document.getElementById('nome_fantasia').removeAttribute('readonly');

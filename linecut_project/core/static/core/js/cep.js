@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     })
                     .catch(error => {
-                        console.error('Erro ao consultar CEP:', error);
                         notificacoes.erro('Erro ao consultar CEP. Tente novamente.');
                     })
                     .finally(() => {

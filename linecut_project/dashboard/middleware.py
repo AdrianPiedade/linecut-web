@@ -1,5 +1,4 @@
 from django.shortcuts import redirect
-from django.urls import reverse
 
 class DashboardAuthMiddleware:
     def __init__(self, get_response):

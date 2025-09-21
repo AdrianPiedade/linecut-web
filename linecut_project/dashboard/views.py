@@ -1,13 +1,10 @@
-from datetime import datetime
-from django.conf import settings
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from .firebase_services import product_service, company_service
-from .firebase_storage import storage_service
-from django.core.cache import cache
-from django.core.paginator import Paginator
-from django.views.decorators.cache import cache_page
 import json
+from django.conf import settings
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect
+from .firebase_storage import storage_service
+from .firebase_services import product_service, company_service
 
 def check_dashboard_auth(request):
     if not all(key in request.session for key in ['firebase_uid', 'user_email', 'logged_in']):
@@ -37,22 +34,16 @@ def check_trial_expiration(request):
     
     try:
         firebase_uid = request.session.get('firebase_uid')
-        print(f"=== INICIANDO VERIFICAÇÃO TRIAL ===")
         
         company_data = company_service.get_company_data(firebase_uid)
         
         if not company_data:
-            print("❌ Empresa não encontrada")
             return JsonResponse({
                 'success': False, 
                 'message': 'Empresa não encontrada'
             })
-        
-        print(f"Plano atual: {company_data.get('plano')}")
-        print(f"Trial expirado: {company_data.get('trial_plan_expired')}")
-        
+                
         if company_data.get('plano') != 'trial':
-            print("ℹ️ Não é plano trial, ignorando verificação")
             return JsonResponse({
                 'success': True,
                 'trial_expired': False,
@@ -62,7 +53,6 @@ def check_trial_expiration(request):
             })
         
         if company_data.get('trial_plan_expired'):
-            print("✅ Já está marcado como trial expirado")
             return JsonResponse({
                 'success': True,
                 'trial_expired': True,
@@ -71,9 +61,7 @@ def check_trial_expiration(request):
                 'message': 'Seu período trial expirou anteriormente.'
             })
         
-        print("🔍 Verificando expiração do trial...")
         expired, was_updated = company_service.check_and_update_trial_expiration(firebase_uid)
-        print(f"📊 Resultado: expired={expired}, was_updated={was_updated}")
         
         response_data = {
             'success': True,
@@ -84,19 +72,14 @@ def check_trial_expiration(request):
         
         if expired and was_updated:
             response_data['message'] = 'Seu período trial expirou. Seu plano foi alterado para Basic. Agora há uma taxa de 7% por venda.'
-            print("🎯 Trial expirado E atualizado - mostrar modal")
         elif expired:
             response_data['message'] = 'Seu período trial já havia expirado anteriormente.'
-            print("ℹ️ Trial expirado mas não foi atualizado agora")
         else:
             response_data['message'] = 'Seu trial ainda está ativo.'
-            print("✅ Trial ainda ativo")
         
-        print(f"=== FIM DA VERIFICAÇÃO TRIAL ===")
         return JsonResponse(response_data)
             
     except Exception as e:
-        print(f"❌ Erro completo ao verificar trial: {str(e)}")
         import traceback
         traceback.print_exc()
         return JsonResponse({
@@ -370,9 +353,6 @@ def atualizar_estoque(request, product_id):
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar estoque'})
                 
         except Exception as e:
-            print(f"Erro completo: {str(e)}")
-            import traceback
-            traceback.print_exc()
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
@@ -599,7 +579,6 @@ def update_company_image(request):
                     method='GET'
                 )
             except Exception as e:
-                print(f"Erro ao gerar URL assinada: {e}")
                 signed_url = image_path 
             
             success = company_service.update_company_field(firebase_uid, 'image_url', image_path)
@@ -614,7 +593,6 @@ def update_company_image(request):
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar imagem no banco'})
                 
         except Exception as e:
-            print(f"Erro ao atualizar imagem: {e}")
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Método não permitido'})

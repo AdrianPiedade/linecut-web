@@ -7,64 +7,51 @@ const modalManager = {
     message: null,
     confirmBtn: null,
     isInitialized: false,
-    
+
     init() {
         try {
             this.modal = document.getElementById('planoModal');
             this.title = document.getElementById('modalTitle');
             this.message = document.getElementById('modalMessage');
             this.confirmBtn = document.getElementById('modalConfirm');
-            
+
             if (this.modal && this.title && this.message && this.confirmBtn) {
                 const closeBtn = this.modal.querySelector('.modal-close');
                 if (closeBtn) {
                     closeBtn.addEventListener('click', () => this.hide());
                 }
-                
+
                 this.modal.addEventListener('click', (e) => {
                     if (e.target === this.modal) this.hide();
                 });
-                
+
                 this.confirmBtn.addEventListener('click', () => this.hide());
-                
+
                 this.isInitialized = true;
-                console.log('Modal inicializado com sucesso');
-            } else {
-                console.error('Elementos do modal não encontrados:', {
-                    modal: !!this.modal,
-                    title: !!this.title,
-                    message: !!this.message,
-                    confirmBtn: !!this.confirmBtn
-                });
             }
         } catch (error) {
-            console.error('Erro ao inicializar modal:', error);
         }
     },
-    
+
     show(title, message) {
         if (!this.isInitialized) {
-            console.warn('Modal não inicializado, tentando inicializar...');
             this.init();
         }
-        
+
         if (this.modal && this.title && this.message) {
             this.title.textContent = title;
             this.message.textContent = message;
             this.modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
-            console.log('Modal aberto com sucesso');
         } else {
-            console.error('Não foi possível abrir o modal - elementos não encontrados');
             alert(`${title}\n\n${message}`);
         }
     },
-    
+
     hide() {
         if (this.modal) {
             this.modal.style.display = 'none';
             document.body.style.overflow = 'auto';
-            console.log('Modal fechado');
         }
     }
 };
@@ -93,19 +80,15 @@ const dadosMockados = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-
-    console.log('Dashboard carregado - verificando trial expiration');
-
     modalManager.init();
 
-     if (!toastManager) {
+    if (!toastManager) {
         toastManager = new ToastManager();
     }
-    
+
     debugCompanyData().then(() => {
         if (typeof checkTrialExpiration === 'function') {
             setTimeout(() => {
-                console.log('Executando verificação do trial...');
                 checkTrialExpiration();
             }, 1000);
         }
@@ -116,26 +99,19 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', function() {
             menuItems.forEach(i => i.classList.remove('selected'));
             this.classList.add('selected');
-            
-            const menuText = this.querySelector('span:not(.icon)').textContent;
-            console.log(`Clicou em: ${menuText}`);
         });
     });
-    
+
     document.querySelector('.menu-sair').addEventListener('click', function() {
-        console.log('Sair clicado');
     });
-    
+
     document.querySelector('.btn-ver-pedidos').addEventListener('click', function() {
-        console.log('Ver todos os pedidos');
     });
-    
+
     const detalhesLinks = document.querySelectorAll('.ver-detalhes');
     detalhesLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const pedidoId = this.closest('.linha-pedido').querySelector('.col-numero').textContent;
-            console.log(`Ver detalhes do pedido: ${pedidoId}`);
         });
     });
 });
@@ -170,7 +146,7 @@ class ToastManager {
     showToast(type, title, message, duration = 5000) {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        
+
         toast.innerHTML = `
             <img src="${staticUrl}dashboard/images/icone_${type === 'success' ? 'sucesso' : type === 'warning' ? 'alerta' : 'info'}.png" 
                  alt="${type}" class="toast-icon">
@@ -210,44 +186,27 @@ toastManager = new ToastManager();
 async function checkTrialExpiration() {
     try {
         if (modalAlreadyShown) {
-            console.log('Modal já foi mostrado, ignorando verificação');
             return;
         }
-        
-        console.log('Iniciando verificação do trial...');
-        
+
         const response = await fetch('/dashboard/check-trial-expiration/');
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        console.log('Resposta completa da verificação:', data);
-        
+
         if (data.success && data.was_updated && data.trial_expired) {
-            console.log('Mostrando modal de atualização de plano...');
             modalAlreadyShown = true;
-            
             setTimeout(() => {
                 modalManager.show(
                     'Plano Atualizado',
                     data.message || 'Seu período trial expirou. Seu plano foi alterado para Basic. Agora há uma taxa de 7% por venda.'
                 );
             }, 2000);
-            
-        } else if (data.success && data.trial_expired && !data.was_updated) {
-            console.log('Trial já estava expirado, não mostrar modal');
-            
-        } else if (data.success && data.is_trial === false) {
-            console.log('Usuário não está no trial, ignorar');
-            
-        } else {
-            console.log('Situação não requer modal:', data);
         }
-        
     } catch (error) {
-        console.error('Erro ao verificar expiração do trial:', error);
     }
 }
 
@@ -255,20 +214,7 @@ async function debugCompanyData() {
     try {
         const response = await fetch('/dashboard/configuracoes/get-company-data/');
         const data = await response.json();
-        console.log('Dados da empresa:', data);
-        
-        if (data.success && data.company_data) {
-            console.log('Plano atual:', data.company_data.plano);
-            console.log('Trial expirado:', data.company_data.trial_plan_expired);
-            if (data.company_data.created_at) {
-                console.log('Data de criação:', data.company_data.created_at);
-            }
-            if (data.company_data.data_cadastro) {
-                console.log('Data de cadastro:', data.company_data.data_cadastro);
-            }
-        }
     } catch (error) {
-        console.error('Erro ao obter dados da empresa:', error);
     }
 }
 
@@ -280,4 +226,3 @@ function testToast() {
         5000
     );
 }
-

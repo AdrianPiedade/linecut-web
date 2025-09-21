@@ -1,9 +1,8 @@
-import firebase_admin
-from firebase_admin import db, credentials
-import logging
-from datetime import datetime
 import uuid
-from django.conf import settings
+import logging
+import firebase_admin
+from datetime import datetime
+from firebase_admin import db
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +142,6 @@ class ProductFirebaseService:
             
         except Exception as e:
             logger.error(f"Erro ao atualizar produto: {e}")
-            print(f"Erro detalhado: {str(e)}")
             return False
 
     @staticmethod
@@ -279,9 +277,7 @@ class CompanyFirebaseService:
                 
             company_ref = db.reference(f'/empresas/{user_id}')
             company_data = company_ref.get()
-            
-            print(f"Dados da empresa para trial: {company_data}")
-            
+                        
             if company_data and company_data.get('plano') == 'trial':
                 from datetime import datetime, timedelta
                 import re
@@ -289,11 +285,8 @@ class CompanyFirebaseService:
                 signup_date_str = (company_data.get('created_at') or 
                                 company_data.get('data_cadastro') or 
                                 company_data.get('signup_date'))
-                
-                print(f"Data de cadastro encontrada: {signup_date_str}")
-                
+                                
                 if not signup_date_str:
-                    print("Nenhuma data de cadastro encontrada, usando data atual - 31 dias")
                     signup_date = datetime.now() - timedelta(days=31)
                 else:
                     try:
@@ -322,21 +315,14 @@ class CompanyFirebaseService:
                                 continue
                         
                         if not signup_date:
-                            print(f"Formato de data não reconhecido: {signup_date_str}")
                             signup_date = datetime.now() - timedelta(days=31)
                             
                     except Exception as e:
-                        print(f"Erro ao parsear data: {e}")
                         signup_date = datetime.now() - timedelta(days=31)
-                
-                print(f"Data de cadastro parseada: {signup_date}")
-                print(f"Data atual: {datetime.now()}")
-                
+                                
                 days_diff = (datetime.now() - signup_date).days
-                print(f"Dias desde o cadastro: {days_diff}")
                 
                 if days_diff >= 30:
-                    print("Trial expirado! Atualizando para plano basic...")
                     update_data = {
                         'plano': 'basic',
                         'trial_plan_expired': True,
@@ -344,17 +330,13 @@ class CompanyFirebaseService:
                         'updated_at': datetime.now().isoformat()
                     }
                     company_ref.update(update_data)
-                    print("Plano atualizado com sucesso!")
                     return True, True
                 
-                print("Trial ainda não expirou")
                 return False, False 
                 
-            print("Não é plano trial ou empresa não encontrada")
             return False, False 
         
         except Exception as e:
-            print(f"Erro completo ao verificar expiração do trial: {e}")
             import traceback
             traceback.print_exc()
             return False, False

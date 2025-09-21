@@ -53,8 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .then(response => {
-                console.log('Response status:', response.status);
-                
+
                 if (response.redirected) {
                     window.location.href = response.url;
                     return null;
@@ -65,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.json();
                 } else {
                     return response.text().then(text => {
-                        console.log('Non-JSON response:', text);
                         throw new Error('Resposta do servidor não é JSON');
                     });
                 }
@@ -75,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnCadastrar.disabled = false;
                 
                 if (data) {
-                    console.log('Data received:', data);
                     
                     if (data.success) {
                         notificacoes.sucesso('Cadastro realizado com sucesso! Redirecionando...');
@@ -95,7 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 loadingOverlay.style.display = 'none';
                 btnCadastrar.disabled = false;
-                console.error('Erro completo:', error);
                 notificacoes.erro('Erro de conexão. Tente novamente. ' + error.message);
             });
         } else {

@@ -173,12 +173,6 @@ function salvarEstoque() {
     formData.append('ideal_quantity', idealQuantity);
     formData.append('critical_quantity', criticalQuantity);
     
-    console.log('Enviando dados:', {
-        quantity: quantidade,
-        ideal_quantity: idealQuantity,
-        critical_quantity: criticalQuantity
-    });
-    
     fetch(`/dashboard/estoque/atualizar/${produtoId}/`, {
         method: 'POST',
         body: formData,
@@ -189,7 +183,6 @@ function salvarEstoque() {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Resposta do servidor:', data);
         if (data.success) {
             showSuccessToast(data.message);
             fecharModalEstoque();
@@ -201,7 +194,6 @@ function salvarEstoque() {
         }
     })
     .catch(error => {
-        console.error('Erro na requisição:', error);
         showErrorToast('Erro ao salvar estoque: ' + error.message);
     })
     .finally(() => {

@@ -1,18 +1,15 @@
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-from django.contrib.auth import authenticate
-from django.contrib.auth import login as django_login
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from django.contrib.auth import get_user_model
-from django.urls import reverse
+import logging
 import requests
+from datetime import datetime
+
+from django.urls import reverse
+from django.contrib import messages
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.views.decorators.http import require_GET
+
 from .forms import CadastroForm
 from .firebase_services import FirebaseService
-import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +39,7 @@ def cadastro(request):
     if request.method == 'POST':
         form = CadastroForm(request.POST)
         if form.is_valid():
-            try:
-                print("✅ Formulário válido, processando cadastro...")
-                
+            try:                
                 dados = form.cleaned_data
                 
                 if FirebaseService.verificar_email_existe(dados['email']):
@@ -91,7 +86,6 @@ def cadastro(request):
                 return redirect('login_page')
                 
             except Exception as e:
-                print(f"❌ ERRO NO CADASTRO: {str(e)}")
                 logger.error(f"Erro no cadastro: {e}")
                 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -102,8 +96,6 @@ def cadastro(request):
                 
                 messages.error(request, f'Erro ao realizar cadastro: {str(e)}')
         else:
-            print("❌ Formulário inválido")
-            print(f"Erros: {form.errors}")
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -115,7 +107,6 @@ def cadastro(request):
             messages.error(request, 'Por favor, corrija os erros abaixo.')
     else:
         form = CadastroForm()
-        print("📋 Formulário de cadastro carregado (GET)")
     
     return render(request, 'core/cadastro.html', {'form': form})
 
@@ -149,8 +140,6 @@ def login_submit(request):
             email = request.POST.get('email', '').strip()
             senha = request.POST.get('password', '').strip()
             
-            print(f"📧 Tentativa de login: {email}")
-            
             if not email or not senha:
                 messages.error(request, 'Por favor, preencha todos os campos.')
                 return render(request, 'core/login.html', {'email': email})
@@ -168,7 +157,6 @@ def login_submit(request):
                     request.session['id_token'] = user_data['idToken']
                     request.session['refresh_token'] = user_data['refreshToken']
                     
-                    print(f"✅ Login bem-sucedido para: {email}")
                     messages.success(request, 'Login realizado com sucesso!')
                     
                     return redirect('dashboard:index')
@@ -179,7 +167,6 @@ def login_submit(request):
                     
             except Exception as e:
                 error_message = str(e)
-                print(f"❌ Erro no login: {error_message}")
                 
                 context = {'email': email}
                 
@@ -197,7 +184,6 @@ def login_submit(request):
                 return render(request, 'core/login.html', context)
                 
         except Exception as e:
-            print(f"❌ Erro geral no login: {str(e)}")
             messages.error(request, 'Erro ao processar login. Tente novamente.')
             return render(request, 'core/login.html', {'email': request.POST.get('email', '')})
     
