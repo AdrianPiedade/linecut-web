@@ -1,4 +1,3 @@
-# core/firebase_services.py
 import firebase_admin
 from firebase_admin import auth, db, credentials
 import logging

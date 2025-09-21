@@ -283,7 +283,6 @@ body {
     color: #336;
 }
 
-/* Estilos para campos com erro */
 .form-group input.error {
     border-color: #9C0202;
     background-color: #fff5f5;

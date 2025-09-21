@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Se tudo estiver válido, enviar o formulário
             loadingOverlay.style.display = 'flex';
             btnCadastrar.disabled = true;
             

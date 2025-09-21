@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
     
     inputs.forEach(input => {
-        // Salva o placeholder original
         const originalPlaceholder = input.getAttribute('placeholder');
         
         input.addEventListener('focus', function() {

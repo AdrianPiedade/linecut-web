@@ -16,18 +16,15 @@ const modalManager = {
             this.confirmBtn = document.getElementById('modalConfirm');
             
             if (this.modal && this.title && this.message && this.confirmBtn) {
-                // Fechar modal ao clicar no X
                 const closeBtn = this.modal.querySelector('.modal-close');
                 if (closeBtn) {
                     closeBtn.addEventListener('click', () => this.hide());
                 }
                 
-                // Fechar modal ao clicar fora
                 this.modal.addEventListener('click', (e) => {
                     if (e.target === this.modal) this.hide();
                 });
                 
-                // Botão de confirmar
                 this.confirmBtn.addEventListener('click', () => this.hide());
                 
                 this.isInitialized = true;
@@ -59,7 +56,6 @@ const modalManager = {
             console.log('Modal aberto com sucesso');
         } else {
             console.error('Não foi possível abrir o modal - elementos não encontrados');
-            // Fallback: alert
             alert(`${title}\n\n${message}`);
         }
     },
@@ -106,9 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toastManager = new ToastManager();
     }
     
-    // Debug primeiro
     debugCompanyData().then(() => {
-        // Depois verificar expiração
         if (typeof checkTrialExpiration === 'function') {
             setTimeout(() => {
                 console.log('Executando verificação do trial...');
@@ -164,7 +158,6 @@ class ToastManager {
     }
 
     init() {
-        // Criar container de toasts se não existir
         if (!document.querySelector('.toast-container')) {
             this.container = document.createElement('div');
             this.container.className = 'toast-container';
@@ -192,11 +185,9 @@ class ToastManager {
 
         this.container.appendChild(toast);
 
-        // Fechar toast ao clicar no botão
         const closeBtn = toast.querySelector('.toast-close');
         closeBtn.addEventListener('click', () => this.removeToast(toast));
 
-        // Fechar toast automaticamente após o tempo especificado
         if (duration > 0) {
             setTimeout(() => this.removeToast(toast), duration);
         }
@@ -216,10 +207,8 @@ class ToastManager {
 
 toastManager = new ToastManager();
 
-// Função para verificar expiração do trial
 async function checkTrialExpiration() {
     try {
-        // Prevenir múltiplas execuções
         if (modalAlreadyShown) {
             console.log('Modal já foi mostrado, ignorando verificação');
             return;
@@ -236,18 +225,16 @@ async function checkTrialExpiration() {
         const data = await response.json();
         console.log('Resposta completa da verificação:', data);
         
-        // Só mostrar modal se realmente houve atualização DO TRIAL PARA BASIC
         if (data.success && data.was_updated && data.trial_expired) {
             console.log('Mostrando modal de atualização de plano...');
             modalAlreadyShown = true;
             
-            // Pequeno delay para garantir que o DOM está pronto
             setTimeout(() => {
                 modalManager.show(
                     'Plano Atualizado',
                     data.message || 'Seu período trial expirou. Seu plano foi alterado para Basic. Agora há uma taxa de 7% por venda.'
                 );
-            }, 2000); // Aumentei para 2 segundos
+            }, 2000);
             
         } else if (data.success && data.trial_expired && !data.was_updated) {
             console.log('Trial já estava expirado, não mostrar modal');

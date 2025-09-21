@@ -39,7 +39,6 @@ def check_trial_expiration(request):
         firebase_uid = request.session.get('firebase_uid')
         print(f"=== INICIANDO VERIFICAÇÃO TRIAL ===")
         
-        # Buscar dados da empresa
         company_data = company_service.get_company_data(firebase_uid)
         
         if not company_data:
@@ -52,7 +51,6 @@ def check_trial_expiration(request):
         print(f"Plano atual: {company_data.get('plano')}")
         print(f"Trial expirado: {company_data.get('trial_plan_expired')}")
         
-        # Se não é trial, não precisa verificar expiração
         if company_data.get('plano') != 'trial':
             print("ℹ️ Não é plano trial, ignorando verificação")
             return JsonResponse({
@@ -63,7 +61,6 @@ def check_trial_expiration(request):
                 'message': 'Não é plano trial'
             })
         
-        # Se já está marcado como expirado
         if company_data.get('trial_plan_expired'):
             print("✅ Já está marcado como trial expirado")
             return JsonResponse({
@@ -74,7 +71,6 @@ def check_trial_expiration(request):
                 'message': 'Seu período trial expirou anteriormente.'
             })
         
-        # Verificar se precisa expirar
         print("🔍 Verificando expiração do trial...")
         expired, was_updated = company_service.check_and_update_trial_expiration(firebase_uid)
         print(f"📊 Resultado: expired={expired}, was_updated={was_updated}")
@@ -83,7 +79,7 @@ def check_trial_expiration(request):
             'success': True,
             'trial_expired': expired,
             'was_updated': was_updated,
-            'is_trial': not expired  # Se expirou, não é mais trial
+            'is_trial': not expired
         }
         
         if expired and was_updated:
@@ -414,7 +410,6 @@ def configuracoes(request):
     
     firebase_uid = request.session.get('firebase_uid')
     
-    # Buscar dados da empresa
     company_data = company_service.get_company_data(firebase_uid)
     
     context = {
@@ -444,7 +439,6 @@ def update_company_profile(request):
                 if field in request.POST:
                     company_data[field] = request.POST[field]
             
-            # Manter a imagem existente
             if current_company.get('image_url'):
                 company_data['image_url'] = current_company['image_url']
             
@@ -489,7 +483,6 @@ def update_company_plan(request):
     
     if request.method == 'POST':
         try:
-            # Verificar se é uma requisição AJAX
             if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Requisição inválida'})
             
@@ -497,12 +490,10 @@ def update_company_plan(request):
             data = json.loads(request.body)
             new_plan = data.get('new_plan')
             
-            # Planos válidos atualizados
             valid_plans = ['trial', 'basic', 'premium']
             if new_plan not in valid_plans:
                 return JsonResponse({'success': False, 'message': 'Plano inválido'})
             
-            # Verificar se já está no plano trial e tenta mudar para trial
             current_company = company_service.get_company_data(firebase_uid)
             if current_company and current_company.get('plano') == 'trial' and new_plan == 'trial':
                 return JsonResponse({'success': False, 'message': 'Você já está no plano Trial'})
@@ -576,7 +567,6 @@ def update_company_image(request):
         try:
             firebase_uid = request.session.get('firebase_uid')
             
-            # Buscar dados atuais da empresa
             current_company = company_service.get_company_data(firebase_uid)
             if not current_company:
                 return JsonResponse({'success': False, 'message': 'Empresa não encontrada'})
@@ -586,7 +576,6 @@ def update_company_image(request):
             if not image_file:
                 return JsonResponse({'success': False, 'message': 'Nenhuma imagem enviada'})
             
-            # Deletar imagem antiga se existir
             old_image_url = current_company.get('image_url')
             if old_image_url:
                 try:
@@ -594,12 +583,10 @@ def update_company_image(request):
                 except Exception as e:
                     print(f"Erro ao deletar imagem antiga: {e}")
             
-            # Fazer upload da nova imagem
             image_path = storage_service.upload_image(image_file, firebase_uid, 'company_logo')
             if not image_path:
                 return JsonResponse({'success': False, 'message': 'Erro ao fazer upload da imagem'})
             
-            # Gerar URL assinada para a imagem
             try:
                 from firebase_admin import storage
                 from datetime import timedelta
@@ -607,23 +594,21 @@ def update_company_image(request):
                 bucket = storage.bucket(settings.FIREBASE_STORAGE_BUCKET)
                 blob = bucket.blob(image_path)
                 
-                # Gerar URL assinada válida por 7 dias
                 signed_url = blob.generate_signed_url(
                     expiration=timedelta(days=7),
                     method='GET'
                 )
             except Exception as e:
                 print(f"Erro ao gerar URL assinada: {e}")
-                signed_url = image_path  # Fallback para o path original
+                signed_url = image_path 
             
-            # Atualizar APENAS o campo image_url no banco
             success = company_service.update_company_field(firebase_uid, 'image_url', image_path)
             
             if success:
                 return JsonResponse({
                     'success': True, 
                     'message': 'Imagem atualizada com sucesso!',
-                    'image_url': signed_url  # Retornar URL assinada
+                    'image_url': signed_url
                 })
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar imagem no banco'})

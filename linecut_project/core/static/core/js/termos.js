@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalContent.addEventListener('scroll', function() {
             const scrollPercentage = (this.scrollTop + this.clientHeight) / this.scrollHeight;
             
-            if (scrollPercentage > 0.95) { // 95% scrolled
+            if (scrollPercentage > 0.95) {
                 btn.disabled = false;
                 indicator.classList.add('scrolled');
                 indicator.innerHTML = '<i class="bi bi-check-circle"></i><span>Documento lido completamente</span>';

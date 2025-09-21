@@ -1,4 +1,3 @@
-// core/static/core/js/login.js
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
@@ -7,11 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordError = document.getElementById('passwordError');
     const submitBtn = document.getElementById('submitBtn');
 
-    // Validação em tempo real
     emailInput.addEventListener('blur', validateEmail);
     passwordInput.addEventListener('blur', validatePassword);
 
-    // Validação no submit
     form.addEventListener('submit', function(e) {
         let isValid = true;
 

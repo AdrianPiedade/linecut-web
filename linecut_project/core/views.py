@@ -151,20 +151,16 @@ def login_submit(request):
             
             print(f"📧 Tentativa de login: {email}")
             
-            # Validação básica
             if not email or not senha:
                 messages.error(request, 'Por favor, preencha todos os campos.')
                 return render(request, 'core/login.html', {'email': email})
             
             try:
-                # Autentica com Firebase
                 user_data = FirebaseService.autenticar_usuario(email, senha)
                 
-                # Obtém dados do usuário do Realtime Database
                 user_profile = FirebaseService.obter_dados_usuario(user_data)
                 
                 if user_profile:
-                    # Armazena dados na sessão
                     request.session['firebase_uid'] = user_data['uid']
                     request.session['user_email'] = email
                     request.session['user_profile'] = user_profile
@@ -185,7 +181,6 @@ def login_submit(request):
                 error_message = str(e)
                 print(f"❌ Erro no login: {error_message}")
                 
-                # Passa o email de volta para manter no formulário
                 context = {'email': email}
                 
                 if "Email não cadastrado" in error_message:

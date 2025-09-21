@@ -1,4 +1,3 @@
-// core/static/core/js/toast.js
 class Toast {
     static show(type, title, message, duration = 5000) {
         const container = document.getElementById('toastContainer') || createToastContainer();
@@ -19,7 +18,6 @@ class Toast {
         
         container.appendChild(toast);
         
-        // Auto-remove após o tempo especificado
         if (duration > 0) {
             setTimeout(() => {
                 if (toast.parentElement) {
@@ -67,7 +65,6 @@ function createToastContainer() {
     return container;
 }
 
-// Função global para facilitar o uso
 function showToast(type, title, message, duration = 5000) {
     return Toast.show(type, title, message, duration);
 }

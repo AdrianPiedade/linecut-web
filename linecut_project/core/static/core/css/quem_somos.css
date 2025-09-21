@@ -1,4 +1,3 @@
-/* Reset e estilos base */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
 
 * {
@@ -223,7 +222,6 @@ body {
     margin-bottom: 30px;
 }
 
-/* ESTILO DO BOTÃO/LINK AJUSTADO */
 .btn-cadastrar-loja {
     display: inline-flex;
     align-items: center;

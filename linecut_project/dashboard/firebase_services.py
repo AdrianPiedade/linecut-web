@@ -286,7 +286,6 @@ class CompanyFirebaseService:
                 from datetime import datetime, timedelta
                 import re
                 
-                # Obter data de cadastro - verificar múltiplos campos possíveis
                 signup_date_str = (company_data.get('created_at') or 
                                 company_data.get('data_cadastro') or 
                                 company_data.get('signup_date'))
@@ -297,19 +296,15 @@ class CompanyFirebaseService:
                     print("Nenhuma data de cadastro encontrada, usando data atual - 31 dias")
                     signup_date = datetime.now() - timedelta(days=31)
                 else:
-                    # Tentar parsear a data de diferentes formatos
                     try:
-                        # Remover timezone se existir
                         if 'Z' in signup_date_str:
                             signup_date_str = signup_date_str.replace('Z', '')
                         if '+' in signup_date_str:
                             signup_date_str = signup_date_str.split('+')[0]
                         
-                        # Remover microssegundos se existirem
                         if '.' in signup_date_str:
                             signup_date_str = signup_date_str.split('.')[0]
                         
-                        # Tentar diferentes formatos
                         formats = [
                             '%Y-%m-%dT%H:%M:%S',
                             '%Y-%m-%d %H:%M:%S',
@@ -337,13 +332,11 @@ class CompanyFirebaseService:
                 print(f"Data de cadastro parseada: {signup_date}")
                 print(f"Data atual: {datetime.now()}")
                 
-                # Verificar se passaram mais de 30 dias
                 days_diff = (datetime.now() - signup_date).days
                 print(f"Dias desde o cadastro: {days_diff}")
                 
                 if days_diff >= 30:
                     print("Trial expirado! Atualizando para plano basic...")
-                    # Atualizar para plano básico automaticamente
                     update_data = {
                         'plano': 'basic',
                         'trial_plan_expired': True,
@@ -352,13 +345,13 @@ class CompanyFirebaseService:
                     }
                     company_ref.update(update_data)
                     print("Plano atualizado com sucesso!")
-                    return True, True  # Expirou e foi atualizado
+                    return True, True
                 
                 print("Trial ainda não expirou")
-                return False, False  # Não expirou
+                return False, False 
                 
             print("Não é plano trial ou empresa não encontrada")
-            return False, False  # Não é trial
+            return False, False 
         
         except Exception as e:
             print(f"Erro completo ao verificar expiração do trial: {e}")
@@ -383,12 +376,10 @@ class CompanyFirebaseService:
             if not CompanyFirebaseService._ensure_initialized():
                 return None
             
-            # Buscar dados da empresa
             company_ref = db.reference(f'/empresas/{user_id}')
             company_data = company_ref.get()
             
             if company_data:
-                # Processar URL da imagem se existir
                 if 'image_url' in company_data:
                     company_data['image_url'] = CompanyFirebaseService._process_image_url(company_data['image_url'])
                 return company_data
@@ -406,10 +397,8 @@ class CompanyFirebaseService:
             
             company_ref = db.reference(f'/empresas/{user_id}')
             
-            # Primeiro buscar dados atuais
             current_data = company_ref.get() or {}
             
-            # Mesclar dados atuais com novos dados
             updated_data = {**current_data, **company_data}
             updated_data['updated_at'] = datetime.now().isoformat()
             
@@ -483,9 +472,7 @@ class CompanyFirebaseService:
                 from datetime import datetime, timedelta
                 signup_date = datetime.fromisoformat(company_data.get('data_cadastro', datetime.now().isoformat()))
                 
-                # Verificar se passaram mais de 30 dias
                 if datetime.now() > signup_date + timedelta(days=30):
-                    # Atualizar para plano básico automaticamente
                     company_ref.update({
                         'plano': 'basic',
                         'trial_expired': True,
@@ -524,7 +511,6 @@ class CompanyFirebaseService:
             
             company_ref = db.reference(f'/empresas/{user_id}')
             
-            # Atualizar apenas o campo específico
             update_data = {
                 field_name: field_value,
                 'updated_at': datetime.now().isoformat()

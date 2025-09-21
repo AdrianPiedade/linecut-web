@@ -18,14 +18,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Atualizar visualização do status em tempo real
     if (quantidadeAtualInput && quantidadeIdealInput && quantidadeCriticaInput) {
         quantidadeAtualInput.addEventListener('input', atualizarStatusPreview);
         quantidadeIdealInput.addEventListener('input', atualizarStatusPreview);
         quantidadeCriticaInput.addEventListener('input', atualizarStatusPreview);
     }
 
-    // Fechar modal ao clicar fora
     window.addEventListener('click', function(e) {
         const modalEstoque = document.getElementById('modal-estoque');
         const modalConfirmacao = document.getElementById('modal-confirmacao');
@@ -105,7 +103,6 @@ function preencherFormularioEstoque(produtoId) {
         document.getElementById('quantidade-ideal').value = quantidadeIdeal !== "0" ? quantidadeIdeal : '';
         document.getElementById('quantidade-critica').value = quantidadeCritica !== "0" ? quantidadeCritica : '';
         
-        // Atualizar visualização do status
         atualizarStatusPreview();
     } else {
         fetch(`/dashboard/estoque/detalhes/${produtoId}/`, {
@@ -124,7 +121,6 @@ function preencherFormularioEstoque(produtoId) {
                 document.getElementById('quantidade-ideal').value = produto.ideal_quantity || '';
                 document.getElementById('quantidade-critica').value = produto.critical_quantity || '';
                 
-                // Atualizar visualização do status
                 atualizarStatusPreview();
             } else {
                 showErrorToast('Erro ao carregar produto: ' + data.message);

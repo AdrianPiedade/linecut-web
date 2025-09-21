@@ -1,5 +1,3 @@
-/* core/static/core/css/toast.css */
-/* Estilos para mensagens toast */
 .toast-container {
     position: fixed;
     top: 100px;
@@ -105,7 +103,6 @@
     }
 }
 
-/* Estilos para mensagens de erro do formulário */
 .alert-container {
     margin-bottom: 20px;
 }

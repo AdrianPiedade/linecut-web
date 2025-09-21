@@ -215,7 +215,6 @@ body {
     color: var(--vermelho-principal) !important;
 }
 
-/* Cards de Configuração */
 .secao-configuracoes {
     display: flex;
     flex-direction: column;
@@ -243,7 +242,6 @@ body {
     box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     margin-bottom: 25px;
-    /* Garantir que o card ocupe espaço mesmo quando escondido */
     min-height: 0;
     transition: all 0.3s ease;
 }
@@ -284,7 +282,6 @@ body {
     padding: 20px;
 }
 
-/* Perfil Info */
 .perfil-info {
     display: flex;
     align-items: center;
@@ -382,7 +379,6 @@ body {
     color: var(--vermelho-principal);
 }
 
-/* Horário de Funcionamento */
 .dias-funcionamento {
     display: flex;
     flex-wrap: wrap;
@@ -437,7 +433,6 @@ body {
     width: 180px;
 }
 
-/* Tabela de Informações */
 .tabela-informacoes, .tabela-termos {
     width: 100%;
 }
@@ -481,7 +476,6 @@ body {
     text-decoration: underline;
 }
 
-/* Cards de Ajuda */
 .card-ajuda h3 {
     font-size: 12.98px;
     font-weight: 600;
@@ -560,7 +554,6 @@ body {
     background: var(--cinza-claro);
 }
 
-/* Modais */
 .modal {
     display: none;
     position: fixed;
@@ -663,7 +656,6 @@ body {
     background: #148C41;
 }
 
-/* Formulários nos modais */
 .form-group {
     margin-bottom: 15px;
 }
@@ -845,7 +837,6 @@ body {
     margin-bottom: 8px;
 }
 
-/* Estilos para FAQ */
 .faq-conteudo h3 {
     color: var(--vermelho-principal);
     margin-bottom: 15px;
@@ -890,7 +881,6 @@ body {
     cursor: pointer;
 }
 
-/* Estilos para SAC */
 .sac-canais {
     margin: 20px 0;
 }
@@ -940,7 +930,6 @@ body {
     border-top: 1px solid var(--cinza-claro);
 }
 
-/* Estilos para Contato */
 .contato-detalhes {
     background: var(--cinza-background);
     padding: 20px;
@@ -1147,7 +1136,6 @@ body {
     padding: 10px;
 }
 
-/* Preview de confirmação */
 .preview-confirmacao {
     display: flex;
     justify-content: center;
@@ -1157,7 +1145,6 @@ body {
     border-radius: 8px;
 }
 
-/* Loading para upload */
 .upload-loading {
     display: flex;
     align-items: center;
@@ -1307,7 +1294,6 @@ body {
     font-style: italic;
 }
 
-/* Estilos para o Modal de Edição de Horário */
 .horario-editor-container {
     display: flex;
     flex-direction: column;
@@ -1426,7 +1412,6 @@ body {
     }
 }
 
-/* Responsividade */
 @media (max-width: 1200px) {
     .horario-funcionamento {
         flex-direction: column;
@@ -1512,7 +1497,6 @@ body {
     }
 }
 
-/* Toast notifications */
 .toast-container {
     position: fixed;
     top: 20px;
