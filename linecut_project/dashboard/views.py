@@ -1,3 +1,5 @@
+from datetime import datetime
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .firebase_services import product_service, company_service
@@ -27,6 +29,85 @@ def dashboard_index(request):
         'total_avaliacoes': 360,
     }
     return render(request, 'dashboard/index.html', context)
+
+def check_trial_expiration(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    try:
+        firebase_uid = request.session.get('firebase_uid')
+        print(f"=== INICIANDO VERIFICAÇÃO TRIAL ===")
+        
+        # Buscar dados da empresa
+        company_data = company_service.get_company_data(firebase_uid)
+        
+        if not company_data:
+            print("❌ Empresa não encontrada")
+            return JsonResponse({
+                'success': False, 
+                'message': 'Empresa não encontrada'
+            })
+        
+        print(f"Plano atual: {company_data.get('plano')}")
+        print(f"Trial expirado: {company_data.get('trial_plan_expired')}")
+        
+        # Se não é trial, não precisa verificar expiração
+        if company_data.get('plano') != 'trial':
+            print("ℹ️ Não é plano trial, ignorando verificação")
+            return JsonResponse({
+                'success': True,
+                'trial_expired': False,
+                'was_updated': False,
+                'is_trial': False,
+                'message': 'Não é plano trial'
+            })
+        
+        # Se já está marcado como expirado
+        if company_data.get('trial_plan_expired'):
+            print("✅ Já está marcado como trial expirado")
+            return JsonResponse({
+                'success': True,
+                'trial_expired': True,
+                'was_updated': False,
+                'is_trial': False,
+                'message': 'Seu período trial expirou anteriormente.'
+            })
+        
+        # Verificar se precisa expirar
+        print("🔍 Verificando expiração do trial...")
+        expired, was_updated = company_service.check_and_update_trial_expiration(firebase_uid)
+        print(f"📊 Resultado: expired={expired}, was_updated={was_updated}")
+        
+        response_data = {
+            'success': True,
+            'trial_expired': expired,
+            'was_updated': was_updated,
+            'is_trial': not expired  # Se expirou, não é mais trial
+        }
+        
+        if expired and was_updated:
+            response_data['message'] = 'Seu período trial expirou. Seu plano foi alterado para Basic. Agora há uma taxa de 7% por venda.'
+            print("🎯 Trial expirado E atualizado - mostrar modal")
+        elif expired:
+            response_data['message'] = 'Seu período trial já havia expirado anteriormente.'
+            print("ℹ️ Trial expirado mas não foi atualizado agora")
+        else:
+            response_data['message'] = 'Seu trial ainda está ativo.'
+            print("✅ Trial ainda ativo")
+        
+        print(f"=== FIM DA VERIFICAÇÃO TRIAL ===")
+        return JsonResponse(response_data)
+            
+    except Exception as e:
+        print(f"❌ Erro completo ao verificar trial: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False, 
+            'message': f'Erro ao verificar expiração do trial: {str(e)}'
+        })
+    
 
 def pedidos(request):
     auth_redirect = check_dashboard_auth(request)
@@ -349,31 +430,25 @@ def update_company_profile(request):
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
-            
             current_company = company_service.get_company_data(firebase_uid)
-            old_image_url = current_company.get('image_url') if current_company else None
             
-            company_data = {
-                'nome_fantasia': request.POST.get('nome_fantasia'),
-                'razao_social': request.POST.get('razao_social'),
-                'cnpj': request.POST.get('cnpj'),
-                'descricao': request.POST.get('descricao'),
-                'polo': request.POST.get('polo'),
-                'telefone': request.POST.get('telefone'),
-                'email': request.POST.get('email'),
-                'endereco': request.POST.get('endereco'),
-                'numero': request.POST.get('numero'),
-                'cep': request.POST.get('cep')
-            }
+            if not current_company:
+                return JsonResponse({'success': False, 'message': 'Empresa não encontrada'})
             
-            image_file = request.FILES.get('company_image')
-            if image_file:
-                if old_image_url:
-                    storage_service.delete_image(old_image_url)
-                
-                image_path = storage_service.upload_image(image_file, firebase_uid, 'company_logo')
-                if image_path:
-                    company_data['image_url'] = image_path
+            # Apenas campos textuais - sem processar imagem aqui
+            company_data = {}
+            valid_fields = [
+                'nome_fantasia', 'razao_social', 'cnpj', 'descricao',
+                'polo', 'telefone', 'endereco', 'numero', 'cep'
+            ]
+            
+            for field in valid_fields:
+                if field in request.POST:
+                    company_data[field] = request.POST[field]
+            
+            # Manter a imagem existente
+            if current_company.get('image_url'):
+                company_data['image_url'] = current_company['image_url']
             
             success = company_service.update_company_data(firebase_uid, company_data)
             
@@ -466,6 +541,93 @@ def get_company_data(request):
             'success': False, 
             'message': f'Erro ao carregar dados: {str(e)}'
         })
+    
+def check_trial_plan_expired(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    try:
+        firebase_uid = request.session.get('firebase_uid')
+        is_expired = company_service.check_trial_plan_expired(firebase_uid)
+        
+        return JsonResponse({
+            'success': True,
+            'trial_plan_expired': is_expired
+        })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Erro ao verificar plano: {str(e)}'
+        })
+    
+def update_company_image(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    if request.method == 'POST':
+        try:
+            firebase_uid = request.session.get('firebase_uid')
+            
+            # Buscar dados atuais da empresa
+            current_company = company_service.get_company_data(firebase_uid)
+            if not current_company:
+                return JsonResponse({'success': False, 'message': 'Empresa não encontrada'})
+            
+            image_file = request.FILES.get('company_image')
+            
+            if not image_file:
+                return JsonResponse({'success': False, 'message': 'Nenhuma imagem enviada'})
+            
+            # Deletar imagem antiga se existir
+            old_image_url = current_company.get('image_url')
+            if old_image_url:
+                try:
+                    storage_service.delete_image(old_image_url)
+                except Exception as e:
+                    print(f"Erro ao deletar imagem antiga: {e}")
+            
+            # Fazer upload da nova imagem
+            image_path = storage_service.upload_image(image_file, firebase_uid, 'company_logo')
+            if not image_path:
+                return JsonResponse({'success': False, 'message': 'Erro ao fazer upload da imagem'})
+            
+            # Gerar URL assinada para a imagem
+            try:
+                from firebase_admin import storage
+                from datetime import timedelta
+                
+                bucket = storage.bucket(settings.FIREBASE_STORAGE_BUCKET)
+                blob = bucket.blob(image_path)
+                
+                # Gerar URL assinada válida por 7 dias
+                signed_url = blob.generate_signed_url(
+                    expiration=timedelta(days=7),
+                    method='GET'
+                )
+            except Exception as e:
+                print(f"Erro ao gerar URL assinada: {e}")
+                signed_url = image_path  # Fallback para o path original
+            
+            # Atualizar APENAS o campo image_url no banco
+            success = company_service.update_company_field(firebase_uid, 'image_url', image_path)
+            
+            if success:
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Imagem atualizada com sucesso!',
+                    'image_url': signed_url  # Retornar URL assinada
+                })
+            else:
+                return JsonResponse({'success': False, 'message': 'Erro ao atualizar imagem no banco'})
+                
+        except Exception as e:
+            print(f"Erro ao atualizar imagem: {e}")
+            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def dashboard_logout(request):
     dashboard_keys = ['firebase_uid', 'user_email', 'logged_in', 'user_profile']

@@ -1,22 +1,59 @@
+let pendingPlanChange = null;
+let originalCompanyImageFile = null;
+let currentCompanyRotation = 0;
+let currentCompanyScale = 1;
+let companyOffsetX = 0, companyOffsetY = 0;
+let isCompanyDragging = false;
+let companyStartX, companyStartY;
+let editedCompanyImageBlob = null;
+let companyDataBackup = null;
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicialização
     initializePage();
-    
-    // Configurar eventos
     setupEventListeners();
-    
-    // Carregar dados iniciais
     loadInitialData();
+
+    const editorImageEmpresa = document.getElementById('editor-image-empresa');
+    if (editorImageEmpresa) {
+        editorImageEmpresa.addEventListener('mousedown', startCompanyDrag);
+        document.addEventListener('mousemove', doCompanyDrag);
+        document.addEventListener('mouseup', stopCompanyDrag);
+    }
+    
+    window.addEventListener('click', function(e) {
+        const modalEditorEmpresa = document.getElementById('modal-editor-imagem-empresa');
+        const modalConfirmacaoUpload = document.getElementById('modal-confirmacao-upload');
+        
+        if (e.target === modalEditorEmpresa) fecharEditorImagemEmpresa();
+        if (e.target === modalConfirmacaoUpload) fecharConfirmacaoUpload();
+    });
 });
 
 function initializePage() {
-    // Inicializar variáveis globais
     window.selectedPlan = null;
     window.companyData = {};
 }
 
+function backupCompanyData() {
+    companyDataBackup = window.companyData ? {...window.companyData} : null;
+}
+
+function handleCompanyImageUpload(file) {
+    if (!file) return;
+    
+    backupCompanyData();
+    originalCompanyImageFile = file;
+    abrirEditorImagemEmpresa(file);
+}
+
+function restoreCompanyData() {
+    if (companyDataBackup) {
+        window.companyData = companyDataBackup;
+        updateCompanyUI();
+    }
+}
+
 function setupEventListeners() {
-    // Alternar entre Perfil e Ajuda
     const tituloPerfil = document.getElementById('titulo-perfil');
     const tituloAjuda = document.getElementById('titulo-ajuda');
     const secaoPerfil = document.getElementById('secao-perfil');
@@ -30,7 +67,6 @@ function setupEventListeners() {
         switchToSection('ajuda', tituloAjuda, tituloPerfil, secaoAjuda, secaoPerfil);
     });
     
-    // Fechar modais ao clicar fora
     window.addEventListener('click', function(e) {
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
@@ -40,13 +76,322 @@ function setupEventListeners() {
         });
     });
     
-    // Eventos de seleção de plano
     document.addEventListener('click', function(e) {
         const planoOption = e.target.closest('.plano-option');
         if (planoOption) {
             selectPlan(planoOption);
         }
     });
+}
+
+function abrirEditorImagemEmpresa(file) {
+    if (!file) return;
+    
+    originalCompanyImageFile = file;
+    const modal = document.getElementById('modal-editor-imagem-empresa');
+    const editorImage = document.getElementById('editor-image-empresa');
+    const previewImage = document.getElementById('preview-edited-empresa');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentCompanyRotation = 0;
+        currentCompanyScale = 1;
+        companyOffsetX = 0;
+        companyOffsetY = 0;
+        
+        editorImage.src = e.target.result;
+        previewImage.src = e.target.result;
+        
+        editorImage.style.position = 'relative';
+        editorImage.style.left = '0px';
+        editorImage.style.top = '0px';
+        previewImage.style.position = 'relative';
+        previewImage.style.left = '0px';
+        previewImage.style.top = '0px';
+        
+        applyCompanyTransformations();
+        modal.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function applyCompanyTransformations() {
+    const editorImage = document.getElementById('editor-image-empresa');
+    const previewImage = document.getElementById('preview-edited-empresa');
+    
+    const transform = `rotate(${currentCompanyRotation}deg) scale(${currentCompanyScale})`;
+    
+    editorImage.style.transform = transform;
+    previewImage.style.transform = transform;
+    
+    editorImage.style.transformOrigin = 'center';
+    previewImage.style.transformOrigin = 'center';
+    
+    editorImage.style.position = 'relative';
+    editorImage.style.left = companyOffsetX + 'px';
+    editorImage.style.top = companyOffsetY + 'px';
+    
+    previewImage.style.position = 'relative';
+    previewImage.style.left = (companyOffsetX * 0.3) + 'px';
+    previewImage.style.top = (companyOffsetY * 0.3) + 'px';
+}
+
+function rotateCompanyImage() {
+    currentCompanyRotation = (currentCompanyRotation + 90) % 360;
+    applyCompanyTransformations();
+}
+
+function zoomInCompanyImage() {
+    currentCompanyScale = Math.min(3, currentCompanyScale + 0.1);
+    applyCompanyTransformations();
+}
+
+function zoomOutCompanyImage() {
+    currentCompanyScale = Math.max(0.5, currentCompanyScale - 0.1);
+    applyCompanyTransformations();
+}
+
+function resetCompanyImageEditor() {
+    currentCompanyRotation = 0;
+    currentCompanyScale = 1;
+    companyOffsetX = 0;
+    companyOffsetY = 0;
+    
+    const editorImage = document.getElementById('editor-image-empresa');
+    const previewImage = document.getElementById('preview-edited-empresa');
+    
+    editorImage.style.left = '0px';
+    editorImage.style.top = '0px';
+    previewImage.style.left = '0px';
+    previewImage.style.top = '0px';
+    
+    applyCompanyTransformations();
+}
+
+function startCompanyDrag(e) {
+    if (e.button !== 0) return;
+    
+    isCompanyDragging = true;
+    companyStartX = e.clientX;
+    companyStartY = e.clientY;
+    
+    const editorImage = document.getElementById('editor-image-empresa');
+    editorImage.style.cursor = 'grabbing';
+    e.preventDefault();
+}
+
+function doCompanyDrag(e) {
+    if (!isCompanyDragging) return;
+    
+    const deltaX = e.clientX - companyStartX;
+    const deltaY = e.clientY - companyStartY;
+    
+    companyOffsetX += deltaX;
+    companyOffsetY += deltaY;
+    
+    companyStartX = e.clientX;
+    companyStartY = e.clientY;
+    
+    const editorImage = document.getElementById('editor-image-empresa');
+    const previewImage = document.getElementById('preview-edited-empresa');
+    
+    editorImage.style.left = companyOffsetX + 'px';
+    editorImage.style.top = companyOffsetY + 'px';
+    
+    previewImage.style.left = (companyOffsetX * 0.3) + 'px';
+    previewImage.style.top = (companyOffsetY * 0.3) + 'px';
+}
+
+function stopCompanyDrag() {
+    isCompanyDragging = false;
+    const editorImage = document.getElementById('editor-image-empresa');
+    editorImage.style.cursor = 'grab';
+}
+
+function salvarImagemEditadaEmpresa() {
+    const editorImage = document.getElementById('editor-image-empresa');
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const outputSize = 300;
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    const img = new Image();
+    img.onload = function() {
+        const scale = Math.min(
+            outputSize / img.width,
+            outputSize / img.height
+        ) * currentCompanyScale;
+        
+        const x = (outputSize - img.width * scale) / 2 + (companyOffsetX * scale);
+        const y = (outputSize - img.height * scale) / 2 + (companyOffsetY * scale);
+        
+        ctx.save();
+        ctx.translate(outputSize / 2, outputSize / 2);
+        ctx.rotate(currentCompanyRotation * Math.PI / 180);
+        ctx.translate(-outputSize / 2, -outputSize / 2);
+        
+        ctx.drawImage(
+            img, 
+            x, 
+            y, 
+            img.width * scale, 
+            img.height * scale
+        );
+        ctx.restore();
+        
+        canvas.toBlob(function(blob) {
+            editedCompanyImageBlob = blob;
+            
+            const previewUrl = URL.createObjectURL(blob);
+            document.getElementById('preview-confirmacao').src = previewUrl;
+            
+            fecharEditorImagemEmpresa();
+            abrirConfirmacaoUpload();
+        }, 'image/jpeg', 0.9);
+    };
+    
+    img.src = editorImage.src;
+}
+
+function fecharEditorImagemEmpresa() {
+    const modal = document.getElementById('modal-editor-imagem-empresa');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function abrirConfirmacaoUpload() {
+    const modal = document.getElementById('modal-confirmacao-upload');
+    modal.style.display = 'block';
+}
+
+function fecharConfirmacaoUpload() {
+    const modal = document.getElementById('modal-confirmacao-upload');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function showLoading(message = 'Carregando...') {
+    hideLoading();
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'loading-overlay-config';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-family: 'Poppins', sans-serif;
+    `;
+    
+    const spinner = document.createElement('div');
+    spinner.style.cssText = `
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #9C0202;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    `;
+    
+    const text = document.createElement('div');
+    text.textContent = message;
+    text.style.fontSize = '16px';
+    
+    overlay.appendChild(spinner);
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+    
+    return overlay;
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay-config');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease';
+        
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.remove();
+            }
+        }, 300);
+    }
+}
+
+function confirmarUploadImagem() {
+    if (!editedCompanyImageBlob) {
+        showErrorToast('Nenhuma imagem para salvar');
+        return;
+    }
+
+    const loadingOverlay = showLoading('Salvando imagem...');
+    
+    const timeoutId = setTimeout(() => {
+        hideLoading();
+        showErrorToast('Tempo limite excedido. Tente novamente.');
+    }, 15000);
+    
+    const formData = new FormData();
+    formData.append('company_image', editedCompanyImageBlob, 'company-logo.jpg');
+    
+    fetch('/dashboard/configuracoes/update-image/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => {
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+            throw new Error('Erro na resposta do servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            finalizarUploadComSucesso(data.image_url);
+        } else {
+            throw new Error(data.message || 'Erro ao salvar imagem');
+        }
+    })
+    .catch(error => {
+        showErrorToast('Erro: ' + error.message);
+    })
+    .finally(() => {
+        clearTimeout(timeoutId);
+        hideLoading();
+        editedCompanyImageBlob = null;
+    });
+}
+
+function finalizarUploadComSucesso(imageUrl) {
+    fecharConfirmacaoUpload();
+    fecharEditorImagemEmpresa();
+    
+    showSuccessToast('Imagem do perfil atualizada com sucesso!');
+    
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
 }
 
 function switchToSection(targetSection, activeTitle, inactiveTitle, activeSection, inactiveSection) {
@@ -59,11 +404,9 @@ function switchToSection(targetSection, activeTitle, inactiveTitle, activeSectio
 }
 
 function loadInitialData() {
-    // Carregar dados da empresa
     loadCompanyData();
 }
 
-// ========== FUNÇÕES DA EMPRESA ==========
 function loadCompanyData() {
     fetch('/dashboard/configuracoes/get-company-data/', {
         headers: {
@@ -83,7 +426,6 @@ function loadCompanyData() {
         }
     })
     .catch(error => {
-        console.error('Erro ao carregar dados da empresa:', error);
         showErrorToast('Erro de conexão');
     });
 }
@@ -91,7 +433,6 @@ function loadCompanyData() {
 function updateCompanyUI() {
     if (!window.companyData) return;
     
-    // Atualizar informações básicas
     const elementsToUpdate = {
         'nome-fantasia': window.companyData.nome_fantasia,
         'categoria-lanchonete': window.companyData.descricao,
@@ -114,14 +455,25 @@ function updateCompanyUI() {
             element.textContent = value;
         }
     });
+
+    updatePlanBadgeIcon(window.companyData.plano || 'premium');
     
-    // Atualizar imagem
     const logoElement = document.getElementById('logo-lanchonete');
     if (logoElement && window.companyData.image_url) {
-        logoElement.src = window.companyData.image_url;
+        const timestamp = new Date().getTime();
+        const imageUrl = window.companyData.image_url + 
+            (window.companyData.image_url.includes('?') ? '&' : '?') + 
+            't=' + timestamp;
+        
+        logoElement.src = imageUrl;
+        
+        logoElement.onerror = function() {
+            const defaultImage = document.body.getAttribute('data-default-image') || 
+                                '/static/dashboard/images/perfil_default.png';
+            logoElement.src = defaultImage;
+        };
     }
     
-    // Preencher formulário de edição
     const formFields = {
         'edit-nome-fantasia': window.companyData.nome_fantasia,
         'edit-razao-social': window.companyData.razao_social,
@@ -143,7 +495,6 @@ function updateCompanyUI() {
     });
 }
 
-// ========== MODAIS ==========
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -158,7 +509,6 @@ function closeModal(modalId) {
     }
 }
 
-// Modal Perfil (agora apenas para informações da conta)
 function editarInformacoes() {
     openModal('modal-perfil');
 }
@@ -167,7 +517,6 @@ function fecharModalPerfil() {
     closeModal('modal-perfil');
 }
 
-// Modal Horário
 function editarHorario() {
     openModal('modal-horario');
 }
@@ -176,16 +525,44 @@ function fecharModalHorario() {
     closeModal('modal-horario');
 }
 
-// Modal Planos
-function abrirModalPlanos() {
+async function abrirModalPlanos() {
     openModal('modal-planos');
     
-    // Destacar plano atual
+    const isTrialExpired = await checkTrialPlanExpired();
+
+    const alertElement = document.getElementById('plano-bloqueado-alert');
+    if (alertElement) {
+        alertElement.style.display = isTrialExpired ? 'block' : 'none';
+    }
+    
     const currentPlan = window.companyData?.plano || 'premium';
     document.querySelectorAll('.plano-option').forEach(option => {
         option.classList.remove('plano-selecionado');
         const badge = option.querySelector('.plano-atual-badge');
         if (badge) badge.remove();
+        
+        if (option.dataset.plano === 'trial' && isTrialExpired) {
+            option.classList.add('plano-bloqueado');
+            option.style.opacity = '0.6';
+            option.style.cursor = 'not-allowed';
+            option.onclick = null;
+            
+            const bloqueioMsg = option.querySelector('.plano-bloqueio-msg') || document.createElement('div');
+            bloqueioMsg.className = 'plano-bloqueio-msg';
+            bloqueioMsg.innerHTML = '<span style="color: var(--vermelho); font-size: 12px;">⚠️ Plano indisponível</span>';
+            
+            if (!option.querySelector('.plano-bloqueio-msg')) {
+                option.appendChild(bloqueioMsg);
+            }
+        } else {
+            option.classList.remove('plano-bloqueado');
+            option.style.opacity = '1';
+            option.style.cursor = 'pointer';
+            option.onclick = function() { selectPlan(this); };
+            
+            const bloqueioMsg = option.querySelector('.plano-bloqueio-msg');
+            if (bloqueioMsg) bloqueioMsg.remove();
+        }
         
         if (option.dataset.plano === currentPlan) {
             option.classList.add('plano-selecionado');
@@ -204,6 +581,11 @@ function fecharModalPlanos() {
 }
 
 function selectPlan(planoOption) {
+    if (planoOption.classList.contains('plano-bloqueado')) {
+        showErrorToast('Este plano não está disponível para sua empresa');
+        return;
+    }
+    
     document.querySelectorAll('.plano-option').forEach(option => {
         option.classList.remove('plano-selecionado');
     });
@@ -218,7 +600,12 @@ function confirmarMudancaPlano() {
         return;
     }
     
-    const currentPlan = window.companyData?.plano || 'trial';
+    if (window.selectedPlan === 'trial' && window.trialPlanExpired) {
+        showErrorToast('O período trial não está mais disponível para sua empresa');
+        return;
+    }
+    
+    const currentPlan = window.companyData?.plano || 'basic';
     if (window.selectedPlan === currentPlan) {
         showWarningToast('Este já é o seu plano atual');
         return;
@@ -230,11 +617,31 @@ function confirmarMudancaPlano() {
         'premium': 'Você será cobrado 10% sobre o valor total de cada venda. Inclui dashboard analítico personalizado.'
     };
     
-    const message = planMessages[window.selectedPlan] || 'Confirmar mudança de plano?';
+    const planTitles = {
+        'trial': 'Trial',
+        'basic': 'Basic', 
+        'premium': 'Premium'
+    };
     
-    if (confirm(`${message}\n\nTem certeza que deseja mudar para o plano ${window.selectedPlan.toUpperCase()}?`)) {
-        updateCompanyPlan(window.selectedPlan);
-    }
+    const message = `Tem certeza que deseja mudar para o plano ${planTitles[window.selectedPlan]}?`;
+    const details = planMessages[window.selectedPlan];
+    
+    pendingPlanChange = window.selectedPlan;
+    
+    abrirModalConfirmacao(message, details);
+}
+
+function updatePlanBadgeIcon(planType) {
+    const badgeIcon = document.querySelector('.icone-plano');
+    if (!badgeIcon) return;
+    
+    const icons = {
+        'trial': '🧩',
+        'basic': '💼', 
+        'premium': '👑'
+    };
+    
+    badgeIcon.textContent = icons[planType] || '👑';
 }
 
 function updateCompanyPlan(newPlan) {
@@ -273,49 +680,10 @@ function updateCompanyPlan(newPlan) {
         }
     })
     .catch(error => {
-        console.error('Erro detalhado:', error);
         showErrorToast('Erro ao atualizar plano. Tente novamente.');
     });
 }
 
-function loadCompanyData() {
-    fetch('/dashboard/configuracoes/get-company-data/', {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Erro na resposta do servidor');
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            window.companyData = data.company_data;
-            updateCompanyUI();
-        } else {
-            console.error('Erro ao carregar dados:', data.message);
-            // Usar dados padrão como fallback
-            window.companyData = {
-                nome_fantasia: 'Minha Empresa',
-                descricao: 'Descrição da empresa',
-                plano: 'trial'  // Padrão agora é trial
-            };
-            updateCompanyUI();
-        }
-    })
-    .catch(error => {
-        console.error('Erro ao carregar dados da empresa:', error);
-        // Usar dados padrão como fallback
-        window.companyData = {
-            nome_fantasia: 'Minha Empresa',
-            descricao: 'Descrição da empresa',
-            plano: 'trial'  // Padrão agora é trial
-        };
-        updateCompanyUI();
-    });
-}
-
-// Modal FAQ
 function abrirModalFAQ() {
     openModal('modal-faq');
 }
@@ -324,7 +692,6 @@ function fecharModalFAQ() {
     closeModal('modal-faq');
 }
 
-// Modal SAC
 function abrirModalSAC() {
     openModal('modal-sac');
 }
@@ -333,7 +700,6 @@ function fecharModalSAC() {
     closeModal('modal-sac');
 }
 
-// Modal Contato
 function abrirModalContato() {
     openModal('modal-contato');
 }
@@ -342,7 +708,6 @@ function fecharModalContato() {
     closeModal('modal-contato');
 }
 
-// Modal Termos
 function abrirModalTermos() {
     openModal('modal-termos');
 }
@@ -351,7 +716,6 @@ function fecharModalTermos() {
     closeModal('modal-termos');
 }
 
-// Modal Política
 function abrirModalPolitica() {
     openModal('modal-politica');
 }
@@ -360,8 +724,34 @@ function fecharModalPolitica() {
     closeModal('modal-politica');
 }
 
-// ========== FORMULÁRIOS ==========
-// Formulário de Perfil (Informações da Conta)
+function abrirModalConfirmacao(mensagem, detalhes = null) {
+    document.getElementById('confirmacao-mensagem').textContent = mensagem;
+    
+    const detalhesElement = document.getElementById('confirmacao-detalhes');
+    const detalhesTexto = document.getElementById('confirmacao-detalhes-texto');
+    
+    if (detalhes) {
+        detalhesTexto.textContent = detalhes;
+        detalhesElement.style.display = 'block';
+    } else {
+        detalhesElement.style.display = 'none';
+    }
+    
+    openModal('modal-confirmacao');
+}
+
+function fecharModalConfirmacao() {
+    closeModal('modal-confirmacao');
+    pendingPlanChange = null;
+}
+
+function confirmarMudancaPlanoModal() {
+    if (pendingPlanChange) {
+        updateCompanyPlan(pendingPlanChange);
+    }
+    fecharModalConfirmacao();
+}
+
 document.getElementById('form-perfil')?.addEventListener('submit', function(e) {
     e.preventDefault();
     salvarInformacoes();
@@ -370,7 +760,6 @@ document.getElementById('form-perfil')?.addEventListener('submit', function(e) {
 function salvarInformacoes() {
     const formData = new FormData();
     
-    // Adicionar campos do formulário
     const fields = [
         'nome_fantasia', 'razao_social', 'cnpj', 'descricao', 
         'polo', 'telefone', 'email', 'endereco', 'numero', 'cep'
@@ -381,7 +770,6 @@ function salvarInformacoes() {
         if (value) formData.append(field, value);
     });
     
-    // Adicionar imagem se houver
     const imageFile = document.getElementById('edit-company-image')?.files[0];
     if (imageFile) {
         formData.append('company_image', imageFile);
@@ -399,7 +787,7 @@ function salvarInformacoes() {
     .then(data => {
         if (data.success) {
             showSuccessToast(data.message);
-            loadCompanyData(); // Recarregar dados para atualizar a UI
+            loadCompanyData();
             fecharModalPerfil();
         } else {
             showErrorToast(data.message);
@@ -407,11 +795,9 @@ function salvarInformacoes() {
     })
     .catch(error => {
         showErrorToast('Erro ao salvar informações');
-        console.error('Erro:', error);
     });
 }
 
-// Formulário de Horário
 document.getElementById('form-horario')?.addEventListener('submit', function(e) {
     e.preventDefault();
     salvarHorario();
@@ -429,10 +815,6 @@ function salvarHorario() {
         fechamento: document.getElementById('edit-fechamento').value
     };
     
-    // Simulação de salvamento
-    console.log('Salvando horário:', formData);
-    
-    // Atualizar a interface
     document.querySelectorAll('input[name="dias"]').forEach(checkbox => {
         checkbox.checked = formData.dias.includes(checkbox.value);
     });
@@ -444,7 +826,6 @@ function salvarHorario() {
     fecharModalHorario();
 }
 
-// Formulário SAC
 function enviarSAC() {
     const formData = {
         nome: document.getElementById('sac-nome').value,
@@ -453,14 +834,10 @@ function enviarSAC() {
         mensagem: document.getElementById('sac-mensagem').value
     };
     
-    // Simulação de envio
-    console.log('Enviando SAC:', formData);
-    
     showSuccessToast('Mensagem enviada com sucesso! Entraremos em contato em breve.');
     fecharModalSAC();
 }
 
-// Formulário Contato
 function enviarContato() {
     const formData = {
         nome: document.getElementById('contato-nome').value,
@@ -470,16 +847,32 @@ function enviarContato() {
         mensagem: document.getElementById('contato-mensagem').value
     };
     
-    // Simulação de envio
-    console.log('Enviando contato:', formData);
-    
     showSuccessToast('Mensagem enviada com sucesso! Entraremos em contato em breve.');
     fecharModalContato();
 }
 
-// ========== UTILITÁRIOS ==========
+async function checkTrialPlanExpired() {
+    try {
+        const response = await fetch('/dashboard/configuracoes/check-trial-plan/', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                window.trialPlanExpired = data.trial_plan_expired;
+                return data.trial_plan_expired;
+            }
+        }
+        return false;
+    } catch (error) {
+        return false;
+    }
+}
+
 function getCSRFToken() {
-    // Tentar obter do cookie
     const cookieValue = document.cookie
         .split('; ')
         .find(row => row.startsWith('csrftoken='))
@@ -489,63 +882,93 @@ function getCSRFToken() {
         return cookieValue;
     }
     
-    // Tentar obter do meta tag
     const metaToken = document.querySelector('meta[name="csrf-token"]')?.content;
     if (metaToken) {
         return metaToken;
     }
     
-    // Tentar obter do input hidden
     const inputToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
     if (inputToken) {
         return inputToken;
     }
     
-    console.error('CSRF token não encontrado');
     return '';
 }
 
-// Toast notifications
 function showToast(message, type = 'success') {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-    }
+    const container = document.getElementById('toast-container') || createToastContainer();
     
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        padding: 15px 20px;
+        border-radius: 6px;
+        color: white;
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 300px;
+        max-width: 400px;
+        margin-bottom: 10px;
+        animation: slideInRight 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+    `;
+    
+    if (type === 'success') {
+        toast.style.background = '#189F4C';
+    } else if (type === 'error') {
+        toast.style.background = '#9C0202';
+    } else if (type === 'warning') {
+        toast.style.background = '#F2C12E';
+        toast.style.color = '#333';
+    }
     
     const messageSpan = document.createElement('span');
     messageSpan.textContent = message;
+    messageSpan.style.flex = '1';
     toast.appendChild(messageSpan);
     
     const closeButton = document.createElement('button');
-    closeButton.className = 'toast-close';
     closeButton.innerHTML = '&times;';
-    closeButton.onclick = () => removeToast(toast);
+    closeButton.style.cssText = `
+        background: none;
+        border: none;
+        color: inherit;
+        font-size: 18px;
+        cursor: pointer;
+        margin-left: 15px;
+        opacity: 0.7;
+    `;
+    closeButton.onclick = () => toast.remove();
     toast.appendChild(closeButton);
     
     container.appendChild(toast);
     
     setTimeout(() => {
         if (toast.parentNode) {
-            removeToast(toast);
+            toast.remove();
         }
     }, 3000);
     
     return toast;
 }
 
-function removeToast(toast) {
-    toast.style.animation = 'fadeOut 0.5s ease forwards';
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-        }
-    }, 500);
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    `;
+    document.body.appendChild(container);
+    return container;
 }
 
 function showSuccessToast(message) {
@@ -558,8 +981,4 @@ function showErrorToast(message) {
 
 function showWarningToast(message) {
     return showToast(message, 'warning');
-}
-
-function showInfoToast(message) {
-    return showToast(message, 'info');
 }

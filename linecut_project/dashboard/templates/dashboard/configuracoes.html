@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'dashboard/css/configuracoes.css' %}">
 </head>
-<body>
+<body data-default-image="{% static 'dashboard/images/perfil_default.png' %}">
     <aside class="menu-lateral">
         <div class="logo">
             <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
@@ -84,19 +84,27 @@
                 </div>
                 <div class="card-body">
                     <div class="perfil-info">
-                        <div class="perfil-imagem">
+                        <div class="perfil-imagem" id="perfil-imagem" onclick="document.getElementById('company-image-input').click()">
                             {% if company_data and company_data.image_url %}
                                 <img id="logo-lanchonete" src="{{ company_data.image_url }}" alt="Logo Lanchonete">
                             {% else %}
                                 <img id="logo-lanchonete" src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
                             {% endif %}
+                            <div class="perfil-imagem-overlay">
+                                <span class="perfil-imagem-texto">Alterar imagem</span>
+                            </div>
                         </div>
+                        <input type="file" id="company-image-input" name="company_image" accept="image/*" style="display: none;" onchange="handleCompanyImageUpload(this.files[0])">
                         <div class="perfil-detalhes">
                             <h3 id="nome-fantasia">{{ company_data.nome_fantasia|default:"Burger Queen" }}</h3>
                             <p id="categoria-lanchonete">{{ company_data.descricao|default:"Lanches e Salgados" }}</p>
                             <div class="plano-info">
-                                <div class="plano-badge">
-                                    <span class="icone-coroa">👑</span>
+                                <div class="plano-badge" id="plano-badge">
+                                    <span class="icone-plano">
+                                        {% if company_data.plano == 'trial' %}🧩{% endif %}
+                                        {% if company_data.plano == 'basic' %}💼{% endif %}
+                                        {% if company_data.plano == 'premium' %}👑{% endif %}
+                                    </span>
                                     <span id="tipo-plano">{{ company_data.plano|default:"premium"|capfirst }}</span>
                                 </div>
                                 <a href="#" class="link-mudar-plano" onclick="abrirModalPlanos()">Mudar plano</a>
@@ -298,6 +306,12 @@
                 <span class="fechar-modal" onclick="fecharModalPlanos()">&times;</span>
             </div>
             <div class="modal-corpo">
+                <div id="plano-bloqueado-alert" style="display: none; background: #fff3f3; border: 1px solid var(--vermelho); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <p style="color: var(--vermelho); margin: 0; font-size: 14px;">
+                        ⚠️ <strong>Seu período trial expirou.</strong> Você não pode mais usar o plano Trial. 
+                        Por favor, escolha entre os planos Basic ou Premium.
+                    </p>
+                </div>
                 <div class="planos-container">
                     <div class="plano-option" data-plano="trial">
                         <h3>Trial</h3>
@@ -659,6 +673,91 @@
             </div>
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharModalPolitica()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação Personalizado -->
+    <div id="modal-confirmacao" class="modal">
+        <div class="modal-conteudo" style="max-width: 500px;">
+            <div class="modal-cabecalho">
+                <h2>Confirmar Mudança de Plano</h2>
+                <span class="fechar-modal" onclick="fecharModalConfirmacao()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <p id="confirmacao-mensagem"></p>
+                <div id="confirmacao-detalhes" style="margin-top: 15px; padding: 10px; background: var(--cinza-background); border-radius: 8px; display: none;">
+                    <p id="confirmacao-detalhes-texto" style="margin: 0; font-size: 14px;"></p>
+                </div>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharModalConfirmacao()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="confirmarMudancaPlanoModal()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editor de Imagem da Empresa -->
+    <div id="modal-editor-imagem-empresa" class="modal">
+        <div class="modal-conteudo" style="max-width: 800px;">
+            <div class="modal-cabecalho">
+                <h2>Editar Logo da Empresa</h2>
+                <span class="fechar-modal" onclick="fecharEditorImagemEmpresa()">&times;</span>
+            </div>
+            
+            <div class="editor-imagem-corpo">
+                <div class="editor-toolbar">
+                    <button type="button" class="btn-editor" onclick="rotateCompanyImage()" title="Rotacionar 90°">
+                        ↻ Rotacionar
+                    </button>
+                    <button type="button" class="btn-editor" onclick="zoomInCompanyImage()" title="Zoom In">
+                        + Zoom In
+                    </button>
+                    <button type="button" class="btn-editor" onclick="zoomOutCompanyImage()" title="Zoom Out">
+                        - Zoom Out
+                    </button>
+                    <button type="button" class="btn-editor" onclick="resetCompanyImageEditor()" title="Resetar">
+                        ⟲ Resetar
+                    </button>
+                </div>
+                
+                <div class="editor-container">
+                    <div class="image-crop-container">
+                        <img id="editor-image-empresa" src="" alt="Imagem para editar">
+                    </div>
+                </div>
+                
+                <div class="editor-preview">
+                    <h4>Preview:</h4>
+                    <div class="preview-container">
+                        <img id="preview-edited-empresa" src="" alt="Preview">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharEditorImagemEmpresa()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="salvarImagemEditadaEmpresa()">Aplicar Edições</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Upload -->
+    <div id="modal-confirmacao-upload" class="modal">
+        <div class="modal-conteudo confirmacao" style="max-width: 500px;">
+            <div class="modal-cabecalho">
+                <h2>Confirmar Alteração</h2>
+                <span class="fechar-modal" onclick="fecharConfirmacaoUpload()">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <p id="confirmacao-upload-mensagem">Deseja salvar a nova imagem do perfil?</p>
+                <div class="preview-confirmacao">
+                    <img id="preview-confirmacao" src="" alt="Nova imagem" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                </div>
+            </div>
+            <div class="modal-rodape">
+                <button type="button" class="btn-cancelar" onclick="fecharConfirmacaoUpload()">Cancelar</button>
+                <button type="button" class="btn-salvar" onclick="confirmarUploadImagem()">Salvar Alterações</button>
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ app_name = 'dashboard'
 
 urlpatterns = [
     path('', views.dashboard_index, name='index'),
+    path('check-trial-expiration/', views.check_trial_expiration, name='check_trial_expiration'),
     path('produtos/', views.produtos, name='produtos'),
     path('produtos/criar/', views.criar_produto, name='criar_produto'),
     path('produtos/editar/<str:product_id>/', views.editar_produto, name='editar_produto'),
@@ -18,5 +19,7 @@ urlpatterns = [
     path('configuracoes/get-company-data/', views.get_company_data, name='get_company_data'),
     path('configuracoes/update-profile/', views.update_company_profile, name='update_company_profile'),
     path('configuracoes/update-plan/', views.update_company_plan, name='update_company_plan'),
-    path('logout/', views.dashboard_logout, name='logout'), 
+    path('configuracoes/check-trial-plan/', views.check_trial_plan_expired, name='check_trial_plan'),
+    path('configuracoes/update-image/', views.update_company_image, name='update_company_image'),
+    path('logout/', views.dashboard_logout, name='logout'),
 ]

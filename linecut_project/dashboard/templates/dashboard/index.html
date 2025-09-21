@@ -9,6 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'dashboard/css/style.css' %}">
+    <script>
+        var staticUrl = "{% static '' %}";
+    </script>
+    <script src="{% static 'dashboard/js/script.js' %}"></script>
 </head>
 <body>
     <aside class="menu-lateral">
@@ -230,7 +234,35 @@
             <button class="btn-ver-pedidos">Ver Pedidos</button>
         </section>
     </main>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            if (typeof checkTrialExpiration === 'function') {
+                checkTrialExpiration();
+            }
+        }, 2000);
+    });
+    </script>
 
-    <script src="{% static 'dashboard/js/script.js' %}"></script>
+    <div id="planoModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Alteração de Plano</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <img src="{% static 'dashboard/images/icone_info.png' %}" alt="Informação">
+                </div>
+                <div class="modal-message">
+                    <h3 id="modalTitle">Seu plano foi atualizado</h3>
+                    <p id="modalMessage">Seu período trial expirou. Seu plano foi alterado para Basic. Agora há uma taxa de 7% por venda.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modalConfirm" class="modal-btn confirm">Entendi</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

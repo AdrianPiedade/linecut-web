@@ -8,10 +8,14 @@ logger = logging.getLogger(__name__)
 
 class FirebaseStorageService:
     @staticmethod
-    def upload_image(file, user_id, product_id):
+    def upload_image(file, user_id, resource_type):
         try:
-            file_extension = file.name.split('.')[-1] if '.' in file.name else 'jpg'
-            filename = f"products/{user_id}/{product_id}_{uuid.uuid4().hex[:8]}.{file_extension}"
+            if resource_type == 'company_logo':
+                file_extension = file.name.split('.')[-1] if '.' in file.name else 'jpg'
+                filename = f"company/{user_id}/logo_{uuid.uuid4().hex[:8]}.{file_extension}"
+            else:
+                file_extension = file.name.split('.')[-1] if '.' in file.name else 'jpg'
+                filename = f"products/{user_id}/{resource_type}_{uuid.uuid4().hex[:8]}.{file_extension}"
             
             bucket = storage.bucket(settings.FIREBASE_STORAGE_BUCKET)
             blob = bucket.blob(filename)

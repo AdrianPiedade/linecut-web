@@ -272,6 +272,101 @@ class ProductFirebaseService:
         
 class CompanyFirebaseService:
     @staticmethod
+    def check_and_update_trial_expiration(user_id):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False, False
+                
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_data = company_ref.get()
+            
+            print(f"Dados da empresa para trial: {company_data}")
+            
+            if company_data and company_data.get('plano') == 'trial':
+                from datetime import datetime, timedelta
+                import re
+                
+                # Obter data de cadastro - verificar múltiplos campos possíveis
+                signup_date_str = (company_data.get('created_at') or 
+                                company_data.get('data_cadastro') or 
+                                company_data.get('signup_date'))
+                
+                print(f"Data de cadastro encontrada: {signup_date_str}")
+                
+                if not signup_date_str:
+                    print("Nenhuma data de cadastro encontrada, usando data atual - 31 dias")
+                    signup_date = datetime.now() - timedelta(days=31)
+                else:
+                    # Tentar parsear a data de diferentes formatos
+                    try:
+                        # Remover timezone se existir
+                        if 'Z' in signup_date_str:
+                            signup_date_str = signup_date_str.replace('Z', '')
+                        if '+' in signup_date_str:
+                            signup_date_str = signup_date_str.split('+')[0]
+                        
+                        # Remover microssegundos se existirem
+                        if '.' in signup_date_str:
+                            signup_date_str = signup_date_str.split('.')[0]
+                        
+                        # Tentar diferentes formatos
+                        formats = [
+                            '%Y-%m-%dT%H:%M:%S',
+                            '%Y-%m-%d %H:%M:%S',
+                            '%Y-%m-%d',
+                            '%d/%m/%Y %H:%M:%S',
+                            '%d/%m/%Y'
+                        ]
+                        
+                        signup_date = None
+                        for fmt in formats:
+                            try:
+                                signup_date = datetime.strptime(signup_date_str, fmt)
+                                break
+                            except ValueError:
+                                continue
+                        
+                        if not signup_date:
+                            print(f"Formato de data não reconhecido: {signup_date_str}")
+                            signup_date = datetime.now() - timedelta(days=31)
+                            
+                    except Exception as e:
+                        print(f"Erro ao parsear data: {e}")
+                        signup_date = datetime.now() - timedelta(days=31)
+                
+                print(f"Data de cadastro parseada: {signup_date}")
+                print(f"Data atual: {datetime.now()}")
+                
+                # Verificar se passaram mais de 30 dias
+                days_diff = (datetime.now() - signup_date).days
+                print(f"Dias desde o cadastro: {days_diff}")
+                
+                if days_diff >= 30:
+                    print("Trial expirado! Atualizando para plano basic...")
+                    # Atualizar para plano básico automaticamente
+                    update_data = {
+                        'plano': 'basic',
+                        'trial_plan_expired': True,
+                        'trial_expired_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat()
+                    }
+                    company_ref.update(update_data)
+                    print("Plano atualizado com sucesso!")
+                    return True, True  # Expirou e foi atualizado
+                
+                print("Trial ainda não expirou")
+                return False, False  # Não expirou
+                
+            print("Não é plano trial ou empresa não encontrada")
+            return False, False  # Não é trial
+        
+        except Exception as e:
+            print(f"Erro completo ao verificar expiração do trial: {e}")
+            import traceback
+            traceback.print_exc()
+            return False, False
+        
+    @staticmethod
     def _ensure_initialized():
         try:
             if not firebase_admin._apps:
@@ -310,15 +405,21 @@ class CompanyFirebaseService:
                 return False
             
             company_ref = db.reference(f'/empresas/{user_id}')
-            company_data['updated_at'] = datetime.now().isoformat()
             
-            company_ref.update(company_data)
+            # Primeiro buscar dados atuais
+            current_data = company_ref.get() or {}
+            
+            # Mesclar dados atuais com novos dados
+            updated_data = {**current_data, **company_data}
+            updated_data['updated_at'] = datetime.now().isoformat()
+            
+            company_ref.update(updated_data)
             return True
             
         except Exception as e:
             logger.error(f"Erro ao atualizar dados da empresa: {e}")
             return False
-
+        
     @staticmethod
     def update_company_plan(user_id, new_plan):
         try:
@@ -396,6 +497,44 @@ class CompanyFirebaseService:
                 
         except Exception as e:
             logger.error(f"Erro ao verificar expiração do trial: {e}")
+            return False
+        
+    @staticmethod
+    def check_trial_plan_expired(user_id):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False
+            
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_data = company_ref.get()
+            
+            if company_data and company_data.get('trial_plan_expired'):
+                return True
+            return False
+                
+        except Exception as e:
+            logger.error(f"Erro ao verificar expiração do plano trial: {e}")
+            return False
+        
+    @staticmethod
+    def update_company_field(user_id, field_name, field_value):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False
+            
+            company_ref = db.reference(f'/empresas/{user_id}')
+            
+            # Atualizar apenas o campo específico
+            update_data = {
+                field_name: field_value,
+                'updated_at': datetime.now().isoformat()
+            }
+            
+            company_ref.update(update_data)
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar campo {field_name}: {e}")
             return False
 
 company_service = CompanyFirebaseService()

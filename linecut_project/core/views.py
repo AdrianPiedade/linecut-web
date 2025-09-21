@@ -72,7 +72,9 @@ def cadastro(request):
                     'termos_condicoes': dados['termos_condicoes'],
                     'politica_privacidade': dados['politica_privacidade'],
                     'status': 'ativo',
-                    'data_cadastro': datetime.now().isoformat()
+                    'data_cadastro': datetime.now().isoformat(),
+                    'trial_plan_expired': False,
+                    'description': "Nova Lanchonete"
                 }
                 
                 user = FirebaseService.criar_usuario(email, senha, dados_empresa)
