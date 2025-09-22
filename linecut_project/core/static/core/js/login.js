@@ -1,70 +1,88 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('loginForm');
+    const form = document.querySelector('.login-form'); // Seleciona pela classe
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    const emailError = document.getElementById('emailError');
-    const passwordError = document.getElementById('passwordError');
-    const submitBtn = document.getElementById('submitBtn');
 
-    emailInput.addEventListener('blur', validateEmail);
-    passwordInput.addEventListener('blur', validatePassword);
+    if (form && emailInput && passwordInput) {
+        form.addEventListener('submit', function(e) {
+            if (emailInput.value.trim() === '' || passwordInput.value.trim() === '') {
+                e.preventDefault();
+                console.error("Formulário de login inválido.");
+            }
+        });
+    }
 
-    form.addEventListener('submit', function(e) {
-        let isValid = true;
+    const modal = document.getElementById('passwordResetModal');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const closeButton = document.querySelector('.close-button');
+    const resetForm = document.getElementById('passwordResetForm');
+    const sendBtn = document.getElementById('sendResetLinkBtn');
+    const messageArea = document.getElementById('modal-message-area');
 
-        if (!validateEmail()) isValid = false;
-        if (!validatePassword()) isValid = false;
-
-        if (!isValid) {
+    if (modal && forgotPasswordLink && closeButton && resetForm) {
+        forgotPasswordLink.addEventListener('click', function(e) {
             e.preventDefault();
-            showToast('error', 'Erro no formulário', 'Por favor, corrija os campos destacados.');
-        }
-    });
+            messageArea.innerHTML = '';
+            resetForm.reset();
+            resetForm.style.display = 'block';
+            modal.style.display = 'flex'; 
+        });
 
-    function validateEmail() {
-        const email = emailInput.value.trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        closeButton.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
 
-        if (!email) {
-            showError(emailInput, emailError, 'Por favor, digite seu email.');
-            return false;
-        }
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
 
-        if (!emailRegex.test(email)) {
-            showError(emailInput, emailError, 'Por favor, digite um email válido.');
-            return false;
-        }
+        resetForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Enviando...';
+            messageArea.innerHTML = '';
 
-        clearError(emailInput, emailError);
-        return true;
+            fetch('/password-reset-request/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', 'Se o e-mail estiver cadastrado, um link de redefinição será enviado. Por favor, verifique sua caixa de entrada.');
+                    resetForm.style.display = 'none';
+                } else {
+                    showMessage('error', data.message || 'Ocorreu um erro. Tente novamente.');
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Erro de conexão. Por favor, tente novamente.');
+            })
+            .finally(() => {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Enviar Link';
+            });
+        });
     }
 
-    function validatePassword() {
-        const password = passwordInput.value.trim();
-
-        if (!password) {
-            showError(passwordInput, passwordError, 'Por favor, digite sua senha.');
-            return false;
-        }
-
-        if (password.length < 6) {
-            showError(passwordInput, passwordError, 'A senha deve ter pelo menos 6 caracteres.');
-            return false;
-        }
-
-        clearError(passwordInput, passwordError);
-        return true;
+    function getCSRFToken() {
+        const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        return tokenElement ? tokenElement.value : '';
     }
 
-    function showError(input, errorElement, message) {
-        input.classList.add('error');
-        errorElement.textContent = message;
-        errorElement.classList.add('show');
-    }
-
-    function clearError(input, errorElement) {
-        input.classList.remove('error');
-        errorElement.classList.remove('show');
-        errorElement.textContent = '';
+    function showMessage(type, text) {
+        if (messageArea) {
+            const alertType = type === 'success' ? 'alert-success' : 'alert-error';
+            messageArea.innerHTML = `<div class="alert ${alertType}">${text}</div>`;
+        }
     }
 });

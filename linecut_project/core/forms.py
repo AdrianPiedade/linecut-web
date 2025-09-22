@@ -33,7 +33,7 @@ class CadastroForm(forms.Form):
         
         if len(cnpj_limpo) != 14:
             raise forms.ValidationError('CNPJ deve ter 14 dígitos.')
-   
+           
         return cnpj_limpo
 
     def clean_cep(self):

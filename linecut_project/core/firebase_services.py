@@ -3,6 +3,7 @@ import requests
 import firebase_admin
 from django.conf import settings
 from firebase_admin import auth, db
+from django.core.mail import send_mail
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,34 @@ class FirebaseService:
                 password=senha,
                 email_verified=False
             )
+            
+            link = auth.generate_email_verification_link(email)
+            
+            email_subject = 'Confirme seu cadastro no LineCut'
+            email_body = f"""
+            Olá,
+
+            Obrigado por se cadastrar no LineCut!
+            Por favor, clique no link abaixo para verificar seu e-mail e ativar sua conta:
+            {link}
+
+            Se você não se cadastrou, por favor ignore este e-mail.
+
+            Atenciosamente,
+            Equipe LineCut
+            """
+            
+            try:
+                send_mail(
+                    email_subject,
+                    email_body,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                print(f"--- E-mail de verificação enviado para {email} ---")
+            except Exception as email_error:
+                print(f"--- ERRO AO ENVIAR E-MAIL de verificação: {email_error} ---")
                         
             if dados_adicionais:
                 dados_db = dados_adicionais.copy()
@@ -127,3 +156,40 @@ class FirebaseService:
         except Exception as e:
             logger.error(f"Erro ao obter dados do usuário: {e}")
             return None
+        
+    @staticmethod
+    def verificar_cnpj_existe(cnpj):
+        try:
+            if not FirebaseService._ensure_initialized():
+                return False
+            
+            empresas_ref = db.reference('/empresas')
+            empresas = empresas_ref.order_by_child('cnpj').equal_to(cnpj).get()
+            
+            return bool(empresas)
+
+        except Exception as e:
+            logger.error(f"Erro ao verificar CNPJ: {e}")
+            return False
+        
+    @staticmethod
+    def enviar_email_redefinicao_senha(email):
+        try:
+            auth.get_user_by_email(email)
+            
+            link = auth.generate_password_reset_link(email)
+            
+            send_mail(
+                'Redefinição de Senha - LineCut',
+                f'Olá,\n\nRecebemos uma solicitação para redefinir sua senha. Clique no link abaixo para criar uma nova senha:\n{link}\n\nSe você não solicitou isso, ignore este e-mail.\n\nEquipe LineCut',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False
+            )
+            return True, "E-mail de redefinição enviado com sucesso."
+        except auth.UserNotFoundError:
+            print(f"Tentativa de redefinição para e-mail não cadastrado: {email}")
+            return True, "E-mail não encontrado, mas retornando sucesso por segurança."
+        except Exception as e:
+            logger.error(f"Erro ao enviar e-mail de redefinição: {e}")
+            return False, str(e)

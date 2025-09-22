@@ -62,8 +62,29 @@
             </form>
             
             <p class="register-link">Ainda não tem cadastro? <a href="{% url 'cadastro' %}">Cadastre-se</a></p>
+            <a href="#" id="forgotPasswordLink" class="forgot-password-link">Esqueceu sua senha?</a>
         </div>
     </main>
+
+    <div id="passwordResetModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Redefinir Senha</h2>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Digite seu e-mail abaixo para receber um link de redefinição de senha.</p>
+                <div id="modal-message-area"></div>
+                <form id="passwordResetForm">
+                    <div class="form-group">
+                        <label for="resetEmail">E-mail</label>
+                        <input type="email" id="resetEmail" name="email" placeholder="seu@email.com.br" required>
+                    </div>
+                    <button type="submit" id="sendResetLinkBtn" class="btn-login">Enviar Link</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -77,5 +98,6 @@
             });
         });
     </script>
+    <script src="{% static 'core/js/login.js' %}"></script>
 </body>
 </html>

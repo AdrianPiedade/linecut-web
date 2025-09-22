@@ -1,3 +1,5 @@
+import re
+import json
 import logging
 import requests
 from datetime import datetime
@@ -9,6 +11,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET
 
 from .forms import CadastroForm
+from firebase_admin import auth
 from .firebase_services import FirebaseService
 
 logger = logging.getLogger(__name__)
@@ -37,9 +40,24 @@ def como_funciona(request):
 
 def cadastro(request):
     if request.method == 'POST':
+        cnpj_raw = request.POST.get('cnpj', '')
+        cnpj_limpo = re.sub(r'[^0-9]', '', cnpj_raw)
+
+        if FirebaseService.verificar_cnpj_existe(cnpj_limpo):
+            error_message = 'Este CNPJ já está cadastrado.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'errors': {'cnpj': [{'message': error_message}]}
+                }, status=400)
+            
+            messages.error(request, error_message)
+            form = CadastroForm(request.POST)
+            return render(request, 'core/cadastro.html', {'form': form})
+
         form = CadastroForm(request.POST)
         if form.is_valid():
-            try:                
+            try:
                 dados = form.cleaned_data
                 
                 if FirebaseService.verificar_email_existe(dados['email']):
@@ -57,7 +75,7 @@ def cadastro(request):
                 dados_empresa = {
                     'nome_fantasia': dados['nome_fantasia'],
                     'razao_social': dados['razao_social'],
-                    'cnpj': dados['cnpj'],
+                    'cnpj': dados['cnpj'], 
                     'telefone': dados['telefone'],
                     'endereco': dados['endereco'],
                     'cep': dados['cep'],
@@ -74,16 +92,18 @@ def cadastro(request):
                 }
                 
                 user = FirebaseService.criar_usuario(email, senha, dados_empresa)
+
+                success_message = 'Cadastro realizado! Verifique sua caixa de entrada para confirmar seu e-mail.'
                 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({
                         'success': True,
                         'message': 'Cadastro realizado com sucesso!',
-                        'redirect_url': reverse('login_page')
+                        'redirect_url': reverse('login')
                     })
                 
-                messages.success(request, 'Cadastro realizado com sucesso!')
-                return redirect('login_page')
+                messages.success(request, success_message)
+                return redirect('login')
                 
             except Exception as e:
                 logger.error(f"Erro no cadastro: {e}")
@@ -96,7 +116,6 @@ def cadastro(request):
                 
                 messages.error(request, f'Erro ao realizar cadastro: {str(e)}')
         else:
-            
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': False,
@@ -110,6 +129,20 @@ def cadastro(request):
     
     return render(request, 'core/cadastro.html', {'form': form})
 
+@require_GET
+def verificar_cnpj(request):
+    cnpj = request.GET.get('cnpj', '')
+    
+    if not cnpj:
+        return JsonResponse({'disponivel': False, 'mensagem': 'CNPJ não fornecido.'})
+    
+    existe = FirebaseService.verificar_cnpj_existe(cnpj)
+    
+    if existe:
+        return JsonResponse({'disponivel': False, 'mensagem': 'Este CNPJ já está cadastrado em nosso sistema.'})
+    else:
+        return JsonResponse({'disponivel': True})
+
 def cadastro_submit(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         form = CadastroForm(request.POST)
@@ -117,7 +150,7 @@ def cadastro_submit(request):
             try:
                 return JsonResponse({
                     'success': True,
-                    'redirect_url': reverse('login_page'),
+                    'redirect_url': reverse('login'),
                     'message': 'Cadastro realizado com sucesso!'
                 })
             except Exception as e:
@@ -146,7 +179,10 @@ def login_submit(request):
             
             try:
                 user_data = FirebaseService.autenticar_usuario(email, senha)
-                
+                firebase_user = auth.get_user(user_data['uid'])
+                if not firebase_user.email_verified:
+                    messages.error(request, 'Seu e-mail ainda não foi verificado. Por favor, confirme seu cadastro no link que enviamos.')
+                    return render(request, 'core/login.html', {'email': email})
                 user_profile = FirebaseService.obter_dados_usuario(user_data)
                 
                 if user_profile:
@@ -188,6 +224,31 @@ def login_submit(request):
             return render(request, 'core/login.html', {'email': request.POST.get('email', '')})
     
     return redirect('login_page')
+
+def password_reset_request(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip()
+            
+            if not email:
+                return JsonResponse({'success': False, 'message': 'O campo de e-mail não pode estar vazio.'}, status=400)
+
+            # A lógica no serviço já lida com e-mails não encontrados por segurança
+            success, message = FirebaseService.enviar_email_redefinicao_senha(email)
+            
+            if success:
+                 # Sempre retornamos sucesso para o front-end para não revelar quais e-mails estão cadastrados
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'message': 'Ocorreu um erro ao tentar enviar o e-mail.'}, status=500)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Dados inválidos.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erro interno: {e}'}, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'Método não permitido.'}, status=405)
 
 def logout(request):
 
