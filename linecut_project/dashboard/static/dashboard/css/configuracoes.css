@@ -565,7 +565,10 @@ body {
     background-color: rgba(0, 0, 0, 0.5);
     animation: fadeIn 0.3s ease;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 5vh;
+    padding-bottom: 5vh;
+    overflow-y: hidden;
 }
 
 @keyframes fadeIn {
@@ -575,15 +578,17 @@ body {
 
 .modal-conteudo {
     background-color: var(--branco);
-    margin: 5% auto;
+    margin: 0 auto;
     padding: 0;
     border-radius: 10px;
     width: 95%;
     max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
+    max-height: 85vh;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     animation: slideIn 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 @keyframes slideIn {
@@ -617,7 +622,9 @@ body {
 }
 
 .modal-corpo {
-    padding: 20px;
+    padding: 30px;
+    line-height: 1.6;
+    overflow-y: auto;
 }
 
 .modal-rodape {
