@@ -464,17 +464,19 @@ function excluirProduto(produtoId, produtoNome) {
     const titulo = document.getElementById('confirmacao-titulo');
     const mensagem = document.getElementById('confirmacao-mensagem');
     const btnConfirmar = document.getElementById('btn-confirmar-acao');
-    
+
     titulo.textContent = 'Confirmar Exclusão';
     mensagem.textContent = `Tem certeza que deseja excluir o produto "${produtoNome}"? Esta ação não pode ser desfeita.`;
-    
+
+    reativarBotoesConfirmacao();
+
     btnConfirmar.onclick = function() {
-        setButtonLoading(btnConfirmar, true);
-        
+        setButtonLoading(btnConfirmar, true); 
+
         const linhaProduto = encontrarLinhaPorId(produtoId);
         const imagemUrl = linhaProduto ? linhaProduto.getAttribute('data-image-url') : null;
         const dados = { produto_id: produtoId, imagem_url: imagemUrl };
-        
+
         fetch(`/dashboard/produtos/excluir/${produtoId}/`, {
             method: 'POST',
             headers: {
@@ -484,11 +486,20 @@ function excluirProduto(produtoId, produtoNome) {
             },
             body: JSON.stringify(dados)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(errData.message || 'Erro na resposta do servidor');
+                }).catch(() => {
+                    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                });
+            }
+            return response.json(); 
+        })
         .then(data => {
             if (data.success) {
                 showSuccessToast('Produto excluído com sucesso!');
-                fecharConfirmacao();
+                fecharConfirmacao(); 
                 if (linhaProduto) {
                     linhaProduto.remove();
                     const produtosRestantes = document.querySelectorAll('.linha-produto').length;
@@ -502,25 +513,31 @@ function excluirProduto(produtoId, produtoNome) {
                 }
             } else {
                 showErrorToast('Erro: ' + data.message);
-                setButtonLoading(btnConfirmar, false);
             }
         })
         .catch(error => {
             showErrorToast('Erro ao excluir produto: ' + error.message);
+        })
+        .finally(() => {
             setButtonLoading(btnConfirmar, false);
+            reativarBotoesConfirmacao();
         });
     };
-    
+
     modal.style.display = 'block';
 }
 
 function reativarBotoesConfirmacao() {
     const btnConfirmar = document.getElementById('btn-confirmar-acao');
+    if (btnConfirmar) {
+        btnConfirmar.classList.remove('loading');
+        btnConfirmar.disabled = false;
+        btnConfirmar.textContent = 'Confirmar'; 
+    }
     const botoesContainer = document.querySelector('.botoes-confirmacao');
-    btnConfirmar.classList.remove('loading');
-    btnConfirmar.disabled = false;
-    botoesContainer.classList.remove('loading');
-    btnConfirmar.textContent = 'Sim';
+    if (botoesContainer) {
+        botoesContainer.classList.remove('loading');
+    }
 }
 
 function mostrarMensagemSucesso(mensagem) {
@@ -736,12 +753,14 @@ function hideLoading() {
 }
 
 function setButtonLoading(button, isLoading) {
-    if (isLoading) {
-        button.classList.add('btn-loading');
-        button.disabled = true;
-    } else {
-        button.classList.remove('btn-loading');
-        button.disabled = false;
+    if (button) {
+        if (isLoading) {
+            button.classList.add('btn-loading');
+            button.disabled = true;
+        } else {
+            button.classList.remove('btn-loading');
+            button.disabled = false;
+        }
     }
 }
 
@@ -750,4 +769,4 @@ window.onclick = function(event) {
     const modalConfirmacao = document.getElementById('modal-confirmacao');
     if (event.target === modal) fecharModal();
     if (event.target === modalConfirmacao) fecharConfirmacao();
-}
+} 
