@@ -29,7 +29,7 @@
                 <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
                 <span>Início</span>
             </a>
-            <a href="#" class="menu-item">
+            <a href="{% url 'dashboard:pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'pedidos' %}selected{% endif %}">
                 <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
                 <span>Pedidos</span>
             </a>

@@ -1,10 +1,12 @@
 import json
+import traceback
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
+from django.views.decorators.http import require_POST, require_GET
 from .firebase_storage import storage_service
-from .firebase_services import product_service, company_service
+from .firebase_services import product_service, company_service, order_service
 
 def check_dashboard_auth(request):
     if not all(key in request.session for key in ['firebase_uid', 'user_email', 'logged_in']):
@@ -596,6 +598,172 @@ def update_company_image(request):
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
+
+def pedidos_view(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    return render(request, 'dashboard/pedidos.html')
+
+@require_GET
+def get_pedidos_data(request):
+    print(f"\n--- [View] Iniciando get_pedidos_data ---")
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        print(f"--- [View] ERRO: Autenticação necessária.")
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    print(f"--- [View] firebase_uid da sessão: {firebase_uid}")
+    if not firebase_uid:
+        print(f"--- [View] ERRO: firebase_uid não encontrado na sessão.")
+        return JsonResponse({'success': False, 'error': 'User session not found'}, status=400)
+
+    try:
+        active_tab = request.GET.get('tab', 'preparo')
+        search_term = request.GET.get('search', '').lower().replace('#', '')
+        sort_order = request.GET.get('sort', 'desc')
+        print(f"--- [View] Parâmetros recebidos: tab={active_tab}, search={search_term}, sort={sort_order}")
+
+        status_map = {
+            'preparo': ['pendente', 'pago', 'preparando'],
+            'retirada': ['pronto'],
+            'historico': ['retirado', 'concluido', 'cancelado']
+        }
+        status_filter = status_map.get(active_tab)
+        print(f"--- [View] Filtro de status determinado: {status_filter}")
+
+        print(f"--- [View] Chamando order_service.get_orders_for_lanchonete...")
+        orders = order_service.get_orders_for_lanchonete(firebase_uid, status_filter=status_filter, sort_order=sort_order)
+        print(f"--- [View] Resultado de get_orders_for_lanchonete (tipo: {type(orders)}):\n{orders}\n---")
+
+
+        if orders is None:
+             print(f"--- [View] ERRO: get_orders_for_lanchonete retornou None.")
+             return JsonResponse({'success': False, 'error': 'Falha ao buscar pedidos no banco de dados.'}, status=500)
+
+        original_count = len(orders)
+        if search_term:
+             print(f"--- [View] Aplicando filtro de busca: '{search_term}'")
+             orders_filtrados = [
+                 o for o in orders if search_term in o.get('id', '').lower() or o.get('id', '').endswith(search_term)
+             ]
+             print(f"--- [View] Pedidos após filtro de busca: {len(orders_filtrados)} (original: {original_count})")
+             orders = orders_filtrados # Atualiza a lista
+        else:
+             print(f"--- [View] Nenhum filtro de busca aplicado.")
+
+
+        print(f"--- [View] Retornando JsonResponse com success=True e {len(orders)} pedidos.")
+        return JsonResponse({'success': True, 'orders': orders})
+
+    except Exception as e:
+        print(f"--- [View] ERRO GERAL em get_pedidos_data: {e}")
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': 'Ocorreu um erro interno no servidor.'}, status=500)
+
+@require_GET
+def get_pedido_details(request, order_id):
+    print(f"\n--- [View] Iniciando get_pedido_details para order_id: {order_id}")
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        print(f"--- [View] ERRO: Autenticação necessária.")
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    try:
+        print(f"--- [View] Chamando order_service.get_order_details...")
+        order_details = order_service.get_order_details(order_id)
+        print(f"--- [View] Resultado de get_order_details (tipo: {type(order_details)}):\n{order_details}\n---")
+
+        if order_details:
+            print(f"--- [View] Retornando JsonResponse com success=True.")
+            return JsonResponse({'success': True, 'order': order_details})
+        else:
+            print(f"--- [View] ERRO: Pedido {order_id} não encontrado.")
+            return JsonResponse({'success': False, 'error': 'Pedido não encontrado'}, status=404)
+    except Exception as e:
+        print(f"--- [View] ERRO GERAL em get_pedido_details: {e}")
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+
+@require_POST
+def update_pedido_status(request, order_id):
+    print(f"\n--- [View] Iniciando update_pedido_status para order_id: {order_id}")
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        print(f"--- [View] ERRO: Autenticação necessária.")
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        print(f"--- [View] ERRO: firebase_uid não encontrado na sessão.")
+        return JsonResponse({'success': False, 'error': 'User session not found'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        new_status = data.get('new_status')
+        print(f"--- [View] Recebido pedido para mudar status para: {new_status}")
+
+        allowed_statuses = ['pendente', 'pago', 'preparando', 'pronto', 'retirado', 'cancelado']
+        if not new_status or new_status not in allowed_statuses:
+            print(f"--- [View] ERRO: Status inválido '{new_status}'.")
+            return JsonResponse({'success': False, 'error': 'Status inválido fornecido'}, status=400)
+
+        print(f"--- [View] Chamando order_service.update_order_status...")
+        success = order_service.update_order_status(firebase_uid, order_id, new_status)
+        print(f"--- [View] Resultado de update_order_status: {success}")
+
+        if success:
+            print(f"--- [View] Retornando JsonResponse com success=True.")
+            return JsonResponse({'success': True, 'message': f'Status do pedido atualizado para {new_status}'})
+        else:
+            print(f"--- [View] ERRO: Falha ao atualizar status no service.")
+            return JsonResponse({'success': False, 'error': 'Falha ao atualizar o status do pedido no banco de dados'}, status=500)
+
+    except json.JSONDecodeError:
+        print(f"--- [View] ERRO: JSON inválido recebido.")
+        return JsonResponse({'success': False, 'error': 'Dados JSON inválidos'}, status=400)
+    except Exception as e:
+        print(f"--- [View] ERRO GERAL em update_pedido_status: {e}")
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+
+@require_POST
+def cancel_pedido(request, order_id):
+    print(f"\n--- [View] Iniciando cancel_pedido para order_id: {order_id}")
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        print(f"--- [View] ERRO: Autenticação necessária.")
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        print(f"--- [View] ERRO: firebase_uid não encontrado na sessão.")
+        return JsonResponse({'success': False, 'error': 'User session not found'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason', 'Cancelado pelo restaurante')
+        print(f"--- [View] Motivo do cancelamento: {reason}")
+
+        print(f"--- [View] Chamando order_service.update_order_status para 'cancelado'...")
+        success = order_service.update_order_status(firebase_uid, order_id, 'cancelado')
+        print(f"--- [View] Resultado de update_order_status (cancelamento): {success}")
+
+        if success:
+            print(f"--- [View] Retornando JsonResponse com success=True.")
+            return JsonResponse({'success': True, 'message': 'Pedido cancelado com sucesso.'})
+        else:
+            print(f"--- [View] ERRO: Falha ao cancelar no service.")
+            return JsonResponse({'success': False, 'error': 'Falha ao cancelar o pedido no banco de dados'}, status=500)
+
+    except json.JSONDecodeError:
+        print(f"--- [View] ERRO: JSON inválido recebido.")
+        return JsonResponse({'success': False, 'error': 'Dados JSON inválidos'}, status=400)
+    except Exception as e:
+        print(f"--- [View] ERRO GERAL em cancel_pedido: {e}")
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
 
 def dashboard_logout(request):
     dashboard_keys = ['firebase_uid', 'user_email', 'logged_in', 'user_profile']

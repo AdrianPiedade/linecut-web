@@ -1,5 +1,7 @@
 import uuid
+import pytz
 import logging
+import traceback
 import firebase_admin
 from datetime import datetime
 from firebase_admin import db
@@ -504,6 +506,242 @@ class CompanyFirebaseService:
         except Exception as e:
             logger.error(f"Erro ao atualizar campo {field_name}: {e}")
             return False
+        
+class OrderFirebaseService:
+    @staticmethod
+    def _ensure_initialized():
+        return ProductFirebaseService._ensure_initialized()
 
-company_service = CompanyFirebaseService()
+    @staticmethod
+    def get_orders_for_lanchonete(user_id, status_filter=None, sort_order='desc'):
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                logger.error("Firebase não inicializado ao buscar pedidos.")
+                return None
+
+            lanchonete_id = user_id
+            if not lanchonete_id:
+                 logger.error("user_id (lanchonete_id) está vazio.")
+                 return None
+
+            orders_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}')
+            orders_summary = None
+
+            try:
+                query = orders_summary_ref.order_by_child('data_criacao')
+                orders_summary = query.get()
+            except firebase_admin.exceptions.InvalidArgumentError as index_error:
+                 logger.error(f"Erro de índice ao buscar pedidos para {lanchonete_id}: {index_error}.")
+                 logger.warning(f"Tentando buscar pedidos para {lanchonete_id} sem ordenação.")
+                 try:
+                     orders_summary = orders_summary_ref.get()
+                 except Exception as fallback_error:
+                      logger.error(f"Erro na busca fallback sem ordenação: {fallback_error}")
+                      traceback.print_exc()
+                      return None
+            except Exception as query_error:
+                 logger.error(f"Erro inesperado na query do Firebase para {lanchonete_id}: {query_error}")
+                 traceback.print_exc()
+                 return None
+
+            if not orders_summary:
+                logger.info(f"Nenhum pedido encontrado para lanchonete {lanchonete_id}.")
+                return []
+
+            order_list = []
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+
+            if not isinstance(orders_summary, dict):
+                logger.error(f"Estrutura inesperada retornada pelo Firebase para {lanchonete_id}: {type(orders_summary)}")
+                return []
+
+            # Obter detalhes dos pedidos principais para pegar os campos novos
+            pedidos_principais_ref = db.reference('/pedidos')
+            pedidos_principais_data = pedidos_principais_ref.get() or {}
+
+            for order_id, summary_data in orders_summary.items():
+                 if not isinstance(summary_data, dict):
+                     logger.warning(f"Item inválido encontrado no pedido {order_id} para lanchonete {lanchonete_id}. Pulando item.")
+                     continue
+
+                 summary_data['id'] = order_id
+                 current_status = summary_data.get('status')
+                 if status_filter and current_status not in status_filter:
+                    continue
+
+                 # Pega dados adicionais do nó principal /pedidos/{order_id}
+                 pedido_principal = pedidos_principais_data.get(order_id, {})
+                 summary_data['metodo_pagamento'] = pedido_principal.get('metodo_pagamento') # Adicionado
+                 summary_data['status_pagamento'] = pedido_principal.get('status_pagamento', 'pendente') # Adicionado com default
+
+                 data_criacao_str = summary_data.get('data_criacao')
+                 if data_criacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(data_criacao_str.replace('Z', '+00:00'))
+                        dt_local = dt_utc.astimezone(sao_paulo_tz)
+                        summary_data['data_criacao_dt'] = dt_local
+                        summary_data['data_criacao_display'] = dt_local.strftime('%d/%m/%Y')
+                        summary_data['hora_criacao_display'] = dt_local.strftime('%H:%M')
+                    except (ValueError, TypeError) as date_error:
+                         logger.warning(f"Erro ao parsear data '{data_criacao_str}' para pedido {order_id}: {date_error}")
+                         summary_data['data_criacao_dt'] = datetime.min.replace(tzinfo=sao_paulo_tz)
+                         summary_data['data_criacao_display'] = "Data inválida"
+                         summary_data['hora_criacao_display'] = "--:--"
+                 else:
+                    logger.warning(f"Pedido {order_id} sem 'data_criacao'. Usando data mínima.")
+                    summary_data['data_criacao_dt'] = datetime.min.replace(tzinfo=sao_paulo_tz)
+                    summary_data['data_criacao_display'] = "Sem data"
+                    summary_data['hora_criacao_display'] = "--:--"
+
+                 order_list.append(summary_data)
+
+            try:
+                reverse_sort = sort_order == 'desc'
+                order_list.sort(key=lambda x: x.get('data_criacao_dt', datetime.min.replace(tzinfo=sao_paulo_tz)), reverse=reverse_sort)
+            except Exception as sort_error:
+                 logger.error(f"Erro ao ordenar lista de pedidos em memória: {sort_error}")
+
+            return order_list
+
+        except Exception as e:
+            logger.error(f"Erro GERAL ao buscar pedidos por lanchonete ({user_id}): {e}")
+            traceback.print_exc()
+            return None
+
+    @staticmethod
+    def get_order_details(order_id):
+        print(f"\n--- [OrderService] Iniciando get_order_details para order_id: {order_id}")
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                print("--- [OrderService] ERRO: Firebase não inicializado.")
+                return None
+
+            order_ref = db.reference(f'/pedidos/{order_id}')
+            print(f"--- [OrderService] Referência Firebase: {order_ref.path}")
+            order_data = order_ref.get()
+            print(f"--- [OrderService] Dados brutos recebidos para detalhes:\n{order_data}\n---")
+
+            if order_data:
+                order_data['id'] = order_id
+                sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+                datahora_criacao_str = order_data.get('datahora_criacao')
+                if datahora_criacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(datahora_criacao_str.replace('Z', '+00:00'))
+                        dt_local = dt_utc.astimezone(sao_paulo_tz)
+                        order_data['data_criacao_display'] = dt_local.strftime('%d/%m/%Y')
+                        order_data['hora_criacao_display'] = dt_local.strftime('%H:%M')
+                    except (ValueError, TypeError):
+                         order_data['data_criacao_display'] = "Data inválida"
+                         order_data['hora_criacao_display'] = "--:--"
+                else:
+                    order_data['data_criacao_display'] = "Sem data"
+                    order_data['hora_criacao_display'] = "--:--"
+
+
+                if 'items' in order_data and isinstance(order_data['items'], dict):
+                    order_data['items_list'] = list(order_data['items'].values())
+                else:
+                    order_data['items_list'] = []
+                print(f"--- [OrderService] Lista de itens processada: {len(order_data['items_list'])} itens")
+
+                order_data.setdefault('status_history', [])
+                if isinstance(order_data['status_history'], dict):
+                     # Converte o histórico de dict (com chaves push) para lista ordenada
+                     history_list = list(order_data['status_history'].values())
+                     history_list.sort(key=lambda x: x.get('timestamp_iso', ''), reverse=True)
+                     order_data['status_history'] = history_list
+                     print(f"--- [OrderService] Histórico de status processado (dict -> list): {len(order_data['status_history'])} entradas")
+                elif isinstance(order_data['status_history'], list):
+                    order_data['status_history'].sort(key=lambda x: x.get('timestamp_iso', ''), reverse=True)
+                    print(f"--- [OrderService] Histórico de status processado (list): {len(order_data['status_history'])} entradas")
+                else:
+                     order_data['status_history'] = []
+                     print(f"--- [OrderService] Histórico de status não encontrado ou inválido.")
+
+
+                print(f"--- [OrderService] Retornando detalhes processados do pedido {order_id}.")
+                return order_data
+            else:
+                print(f"--- [OrderService] Nenhum detalhe encontrado para o pedido {order_id}.")
+                return None
+
+        except Exception as e:
+            print(f"--- [OrderService] ERRO GERAL em get_order_details para {order_id}: {e}")
+            traceback.print_exc()
+            return None
+
+    @staticmethod
+    def update_order_status(user_id, order_id, new_status):
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                logger.error("Firebase não inicializado ao atualizar status.")
+                return False
+
+            lanchonete_id = user_id
+            if not lanchonete_id:
+                logger.error("user_id (lanchonete_id) vazio ao atualizar status.")
+                return False
+
+            now_utc = datetime.now(pytz.utc)
+            now_iso = now_utc.isoformat()
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            now_local_str = now_utc.astimezone(sao_paulo_tz).strftime('%d/%m %H:%M')
+
+            order_ref = db.reference(f'/pedidos/{order_id}')
+            order_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}/{order_id}')
+
+            updates_main = {
+                'status_pedido': new_status,
+                'datahora_ultima_atualizacao': now_iso
+            }
+            updates_summary = {'status': new_status}
+
+            status_history_entry = {
+                'status': new_status,
+                'timestamp_iso': now_iso,
+                'timestamp_display': now_local_str
+            }
+
+            # Lógica específica para atualização de status de pagamento
+            if new_status == 'pago':
+                    # ATUALIZAÇÃO: Muda status_pagamento para 'pago' (ou 'efetuado')
+                    updates_main['status_pagamento'] = 'pago' # Ou 'efetuado', se preferir
+                    updates_main['datahora_pagamento'] = now_iso
+                    updates_summary['status_pagamento'] = 'pago' # Atualiza também no sumário
+                    logger.info(f"Pedido {order_id} atualizado para PAGO.")
+                    # NÃO MUDAR status_pedido para 'pago', mantém o status atual do fluxo (ex: pendente)
+                    # O status_pedido só avança com 'preparando', 'pronto', 'retirado'
+                    del updates_main['status_pedido'] # Remove a mudança de status_pedido
+                    del updates_summary['status']     # Remove a mudança de status do sumário
+                    # Adiciona uma entrada de histórico específica para pagamento, se desejado
+                    pay_history_entry = { 'status': 'pagamento_confirmado', 'timestamp_iso': now_iso, 'timestamp_display': now_local_str }
+                    order_ref.child('status_history').push(pay_history_entry)
+            elif new_status == 'retirado':
+                    updates_main['datahora_retirada'] = now_iso
+                    order_ref.child('status_history').push(status_history_entry)
+            elif new_status == 'cancelado':
+                    updates_main['datahora_cancelamento'] = now_iso
+                    order_ref.child('status_history').push(status_history_entry)
+            else:
+                    # Para 'preparando', 'pronto', adiciona ao histórico normalmente
+                    order_ref.child('status_history').push(status_history_entry)
+
+            # Aplica as atualizações
+            if updates_main:
+                order_ref.update(updates_main)
+            if updates_summary:
+                order_summary_ref.update(updates_summary)
+
+
+            logger.info(f"Atualização para pedido {order_id} concluída. Updates main: {updates_main}, Updates summary: {updates_summary}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Erro GERAL em update_order_status: {e}")
+            traceback.print_exc()
+            return False
+
+order_service = OrderFirebaseService()
 product_service = ProductFirebaseService()
+company_service = CompanyFirebaseService()

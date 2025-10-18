@@ -1,0 +1,247 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LineCut - Pedidos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'dashboard/css/pedidos.css' %}">
+</head>
+<body>
+    <aside class="menu-lateral">
+        <div class="logo">
+            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+        </div>
+        <div class="restaurant-info">
+            <h3>Meu Restaurante</h3>
+            <div class="status-loja">
+                <div class="status-indicator"></div>
+                <span>Loja Aberta</span>
+            </div>
+        </div>
+        <nav class="menu-nav">
+            <a href="{% url 'dashboard:index' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
+                <span>Início</span>
+            </a>
+            <a href="{% url 'dashboard:pedidos' %}" class="menu-item selected">
+                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
+                <span>Pedidos</span>
+            </a>
+            <a href="{% url 'dashboard:produtos' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
+                <span>Produtos</span>
+            </a>
+            <a href="{% url 'dashboard:estoque' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
+                <span>Estoque</span>
+            </a>
+            <a href="#" class="menu-item disabled">
+                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                <span>Dashboard</span>
+                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
+                <span>Avaliações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
+                <span>Notificações</span>
+            </a>
+            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
+                <span>Configurações</span>
+            </a>
+        </nav>
+        <div class="menu-sair">
+             <a href="{% url 'dashboard:logout' %}" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
+                <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="conteudo-principal">
+        <header class="cabecalho-pedidos">
+            <nav class="tabs-pedidos">
+                <button class="tab-link active" data-tab="preparo">Preparo</button>
+                <button class="tab-link" data-tab="retirada">Retirada</button>
+                <button class="tab-link" data-tab="historico">Histórico de Pedidos</button>
+            </nav>
+        </header>
+
+        <div class="filtros">
+            <div class="filtro-item filtro-busca">
+                 <i class="bi bi-search"></i>
+                 <input type="text" id="search-input" placeholder="Número do Pedido">
+            </div>
+             <div class="filtro-item filtro-ordenar">
+                <label for="sort-order">Ordenar</label>
+                <select id="sort-order">
+                    <option value="desc" selected>Mais recentes</option>
+                    <option value="asc">Mais antigos</option>
+                </select>
+            </div>
+            <button class="btn-filtrar" id="apply-filters-btn"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+        </div>
+
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+            <div class="spinner"></div> Carregando pedidos...
+        </div>
+
+        <div id="tab-content">
+            <div id="preparo-content" class="tab-pane active">
+                <div class="tabela-pedidos">
+                    <div class="cabecalho-tabela">
+                        <span class="col-status">Status</span>
+                        <span class="col-numero">Id Pedido</span>
+                        <span class="col-pagamento-status">Pgto Status</span>
+                        <span class="col-metodo-pagamento">Método Pgto</span>
+                        <span class="col-valor">Valor</span>
+                        <span class="col-data">Data</span>
+                        <span class="col-acoes">Ações</span>
+                    </div>
+                    <div class="corpo-tabela" id="preparo-table-body">
+                        <div class="linha-vazia">Nenhum pedido em preparo no momento.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="retirada-content" class="tab-pane">
+                 <div class="tabela-pedidos">
+                    <div class="cabecalho-tabela">
+                        <span class="col-status">Status</span>
+                        <span class="col-numero">Id Pedido</span>
+                        <span class="col-valor">Valor</span>
+                        <span class="col-horario">Pronto às</span>
+                        <span class="col-pagamento-status">Pgto Status</span>
+                        <span class="col-metodo-pagamento">Método Pgto</span>
+                        <span class="col-acoes">Ações</span>
+                    </div>
+                    <div class="corpo-tabela" id="retirada-table-body">
+                        <div class="linha-vazia">Nenhum pedido pronto para retirada.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historico-content" class="tab-pane">
+                 <div class="tabela-pedidos">
+                    <div class="cabecalho-tabela">
+                        <span class="col-status">Status</span>
+                        <span class="col-numero">Id Pedido</span>
+                        <span class="col-valor">Valor</span>
+                        <span class="col-data">Data</span>
+                        <span class="col-avaliacao">Avaliação</span>
+                        <span class="col-acoes">Detalhes</span>
+                    </div>
+                    <div class="corpo-tabela" id="historico-table-body">
+                        <div class="linha-vazia">Nenhum pedido no histórico.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template id="pedido-row-template">
+            <div class="linha-pedido">
+                <div class="col-status">
+                    <div class="status-wrapper">
+                        <span class="status-dot"></span>
+                        <span class="status-text"></span>
+                    </div>
+                    <span class="hora"></span>
+                </div>
+                <div class="col-numero">
+                    <span class="numero-id"></span>
+                </div>
+                <div class="col-pagamento-status">
+                    <div class="pagamento-wrapper">
+                        <span class="pagamento-dot"></span>
+                        <span class="pagamento-text-principal"></span>
+                    </div>
+                </div>
+                 <div class="col-metodo-pagamento">
+                    <span class="metodo-texto"></span>
+                </div>
+                <div class="col-valor"></div>
+                <div class="col-data"></div>
+                <div class="col-acoes"></div>
+                <div class="col-horario" style="display:none;"></div>
+                <div class="col-avaliacao" style="display:none;"><span class="avaliacao-badge"></span></div>
+            </div>
+        </template>
+
+    </main>
+
+    <div id="modal-detalhes-pedido" class="modal">
+        <div class="modal-conteudo modal-detalhes">
+            <div class="modal-cabecalho">
+                <h2 id="detalhes-titulo">Pedido Nº #0000</h2>
+                <span class="fechar-modal" onclick="closeModal('modal-detalhes-pedido')">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <div class="detalhes-header">
+                     <span id="detalhes-pagamento-info">Pgto. via linecut</span>
+                     <span id="detalhes-pagamento-status" class="pagamento-status"><i class="bi"></i> </span>
+                 </div>
+                <div class="detalhes-status-historico">
+                    <h4>Histórico do Pedido</h4>
+                    <ul id="detalhes-status-lista"><li>Carregando...</li></ul>
+                </div>
+                <div class="detalhes-itens">
+                    <h4>Itens do Pedido</h4>
+                    <table id="detalhes-itens-tabela">
+                        <thead><tr><th>Qtd.</th><th>Item</th><th>Valor Unit.</th><th>Subtotal</th></tr></thead>
+                        <tbody><tr><td colspan="4">Carregando...</td></tr></tbody>
+                        <tfoot><tr><td colspan="3" class="total-label">Total</td><td class="total-valor" id="detalhes-total">R$ --,--</td></tr></tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-rodape modal-rodape-detalhes"><div id="detalhes-acoes-pedido"></div></div>
+        </div>
+    </div>
+    <div id="modal-confirmacao-pagamento" class="modal">
+         <div class="modal-conteudo modal-confirmacao">
+             <div class="modal-cabecalho">
+                 <h2>Confirmação de Pagamento Recebido</h2>
+                 <span class="fechar-modal" onclick="closeModal('modal-confirmacao-pagamento')">&times;</span>
+             </div>
+             <div class="modal-corpo">
+                <p>Você deseja confirmar o recebimento do pagamento para este pedido?</p>
+                <p class="confirmacao-subtexto">Esta ação registrará o pedido como pago (status: 'pago') e atualizará o status na plataforma.</p>
+             </div>
+             <div class="modal-rodape">
+                 <button class="btn-modal btn-neutro" onclick="closeModal('modal-confirmacao-pagamento')">Voltar</button>
+                <button class="btn-modal btn-confirmar" id="btn-confirma-pagamento-modal">Confirmar Pagamento</button>
+             </div>
+        </div>
+    </div>
+    <div id="modal-confirmacao-cancelamento" class="modal">
+         <div class="modal-conteudo modal-confirmacao">
+             <div class="modal-cabecalho">
+                 <h2>Confirmação Cancelamento</h2>
+                 <span class="fechar-modal" onclick="closeModal('modal-confirmacao-cancelamento')">&times;</span>
+             </div>
+             <div class="modal-corpo">
+                <p>Você tem certeza que deseja cancelar este pedido?</p>
+                 <label for="motivo-cancelamento">Para continuar com o cancelamento, informe o motivo:</label>
+                <textarea id="motivo-cancelamento" rows="3" placeholder="Digite o motivo do cancelamento..."></textarea>
+                <p class="confirmacao-subtexto">O cancelamento do pedido não poderá ser revertido.</p>
+             </div>
+             <div class="modal-rodape">
+                <button class="btn-modal btn-neutro" onclick="closeModal('modal-confirmacao-cancelamento')">Voltar</button>
+                <button class="btn-modal btn-cancelar" id="btn-confirma-cancelamento">Cancelar Pedido</button>
+             </div>
+        </div>
+    </div>
+
+     <div id="toast-container" class="toast-container"></div>
+
+    <script>const CSRF_TOKEN = "{{ csrf_token }}";</script>
+    <script src="{% static 'dashboard/js/pedidos.js' %}"></script>
+</body>
+</html>
