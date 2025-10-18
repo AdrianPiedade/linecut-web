@@ -36,20 +36,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function filtrarEstoque() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const removerAcentos = (str) => {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    };
+
+    const searchTerm = removerAcentos(document.getElementById('search-input').value.toLowerCase());
     const categoria = document.getElementById('categoria-filter').value;
     const statusEstoque = document.getElementById('status-estoque-filter').value;
     const linhas = document.querySelectorAll('.linha-estoque');
     let produtosVisiveis = 0;
-    
+
     linhas.forEach(linha => {
-        const nome = linha.querySelector('.col-nome').textContent.toLowerCase();
+        const nomeProduto = linha.querySelector('.col-nome').textContent;
+        const nomeNormalizado = removerAcentos(nomeProduto.toLowerCase());
         const productCategoria = linha.getAttribute('data-category');
         const productStatusEstoque = linha.getAttribute('data-status-estoque');
-        const matchesSearch = nome.includes(searchTerm) || searchTerm === '';
+
+        const matchesSearch = nomeNormalizado.includes(searchTerm) || searchTerm === '';
         const matchesCategoria = !categoria || productCategoria === categoria;
         const matchesStatusEstoque = !statusEstoque || productStatusEstoque === statusEstoque;
-        
+
         if (matchesSearch && matchesCategoria && matchesStatusEstoque) {
             linha.style.display = 'grid';
             produtosVisiveis++;
@@ -57,7 +63,7 @@ function filtrarEstoque() {
             linha.style.display = 'none';
         }
     });
-    
+
     const linhaVazia = document.querySelector('.linha-vazia');
     if (linhaVazia) {
         if (produtosVisiveis === 0 && searchTerm !== '') {

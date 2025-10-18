@@ -208,20 +208,26 @@ function fecharEditorImagem() {
 }
 
 function filtrarProdutos() {
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const removerAcentos = (str) => {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    };
+
+    const searchTerm = removerAcentos(document.getElementById('search-input').value.toLowerCase());
     const categoria = document.getElementById('categoria-filter').value;
     const status = document.getElementById('status-filter').value;
     const linhas = document.querySelectorAll('.linha-produto');
     let produtosVisiveis = 0;
-    
+
     linhas.forEach(linha => {
-        const nome = linha.querySelector('.col-nome').textContent.toLowerCase();
+        const nomeProduto = linha.querySelector('.col-nome').textContent;
+        const nomeNormalizado = removerAcentos(nomeProduto.toLowerCase());
         const productCategoria = linha.getAttribute('data-category');
         const productStatus = linha.getAttribute('data-status');
-        const matchesSearch = nome.includes(searchTerm) || searchTerm === '';
+
+        const matchesSearch = nomeNormalizado.includes(searchTerm) || searchTerm === '';
         const matchesCategoria = !categoria || productCategoria === categoria;
         const matchesStatus = !status || productStatus === status;
-        
+
         if (matchesSearch && matchesCategoria && matchesStatus) {
             linha.style.display = 'grid';
             produtosVisiveis++;
@@ -229,7 +235,7 @@ function filtrarProdutos() {
             linha.style.display = 'none';
         }
     });
-    
+
     const linhaVazia = document.querySelector('.linha-vazia');
     if (linhaVazia) {
         if (produtosVisiveis === 0 && searchTerm !== '') {
