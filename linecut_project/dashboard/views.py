@@ -679,23 +679,40 @@ def update_pedido_status(request, order_id):
     try:
         data = json.loads(request.body)
         new_status = data.get('new_status')
+        new_payment_status = data.get('new_payment_status')
 
-        allowed_statuses = ['pendente', 'pago', 'preparando', 'pronto', 'retirado', 'cancelado']
-        if not new_status or new_status not in allowed_statuses:
-            return JsonResponse({'success': False, 'error': 'Status inválido fornecido'}, status=400)
+        if new_payment_status:
+            # Atualiza apenas o status de pagamento
+            allowed_payment_statuses = ['pago', 'pendente'] # Adicione outros se necessário
+            if new_payment_status not in allowed_payment_statuses:
+                return JsonResponse({'success': False, 'error': 'Status de pagamento inválido'}, status=400)
 
-        success = order_service.update_order_status(firebase_uid, order_id, new_status)
+            success = order_service.update_order_payment_status(firebase_uid, order_id, new_payment_status)
+            if success:
+                return JsonResponse({'success': True, 'message': f'Status de pagamento atualizado para {new_payment_status}'})
+            else:
+                return JsonResponse({'success': False, 'error': 'Falha ao atualizar status de pagamento'}, status=500)
 
-        if success:
-            return JsonResponse({'success': True, 'message': f'Status do pedido atualizado para {new_status}'})
+        elif new_status:
+            # Atualiza o status do pedido
+            allowed_statuses = ['pendente', 'pago', 'preparando', 'pronto', 'retirado', 'cancelado']
+            if new_status not in allowed_statuses:
+                return JsonResponse({'success': False, 'error': 'Status de pedido inválido fornecido'}, status=400)
+
+            success = order_service.update_order_status(firebase_uid, order_id, new_status)
+            if success:
+                return JsonResponse({'success': True, 'message': f'Status do pedido atualizado para {new_status}'})
+            else:
+                return JsonResponse({'success': False, 'error': 'Falha ao atualizar o status do pedido no banco de dados'}, status=500)
         else:
-            return JsonResponse({'success': False, 'error': 'Falha ao atualizar o status do pedido no banco de dados'}, status=500)
+            return JsonResponse({'success': False, 'error': 'Nenhum status válido fornecido para atualização'}, status=400)
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Dados JSON inválidos'}, status=400)
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+
 
 @require_POST
 def cancel_pedido(request, order_id):
@@ -709,9 +726,10 @@ def cancel_pedido(request, order_id):
 
     try:
         data = json.loads(request.body)
-        reason = data.get('reason', 'Cancelado pelo restaurante')
+        reason = data.get('reason', 'Cancelado pelo restaurante') # Obtém o motivo do corpo da requisição
 
-        success = order_service.update_order_status(firebase_uid, order_id, 'cancelado')
+        # Passa o motivo para o service
+        success = order_service.update_order_status(firebase_uid, order_id, 'cancelado', reason=reason)
 
         if success:
             return JsonResponse({'success': True, 'message': 'Pedido cancelado com sucesso.'})

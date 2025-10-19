@@ -17,14 +17,13 @@ class ProductFirebaseService:
                 initialize_firebase()
             return True
         except Exception as e:
-            logger.error(f"Erro ao inicializar Firebase: {e}")
             return False
 
     @staticmethod
     def _get_restaurant_ref(user_id):
         try:
             if not ProductFirebaseService._ensure_initialized():
-                return None
+                return None, None
 
             user_ref = db.reference(f'/users/{user_id}')
             user_data = user_ref.get()
@@ -36,7 +35,6 @@ class ProductFirebaseService:
                 return db.reference(f'/restaurants/{user_id}'), user_id
 
         except Exception as e:
-            logger.error(f"Erro ao obter referência do restaurante: {e}")
             return None, None
 
     @staticmethod
@@ -66,7 +64,6 @@ class ProductFirebaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Erro ao buscar produtos: {e}")
             return None
 
     @staticmethod
@@ -92,7 +89,6 @@ class ProductFirebaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Erro ao buscar produto: {e}")
             return None
 
     @staticmethod
@@ -118,7 +114,6 @@ class ProductFirebaseService:
             return True, product_id
 
         except Exception as e:
-            logger.error(f"Erro ao criar produto: {e}")
             return False, None
 
     @staticmethod
@@ -143,7 +138,6 @@ class ProductFirebaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao atualizar produto: {e}")
             return False
 
     @staticmethod
@@ -159,7 +153,6 @@ class ProductFirebaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao excluir produto: {e}")
             return False
 
     @staticmethod
@@ -179,7 +172,6 @@ class ProductFirebaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao alternar status do produto: {e}")
             return False
 
     @staticmethod
@@ -267,7 +259,6 @@ class ProductFirebaseService:
             return alerts
 
         except Exception as e:
-            logger.error(f"Erro ao verificar estoque baixo: {e}")
             return {}
 
 class CompanyFirebaseService:
@@ -350,7 +341,6 @@ class CompanyFirebaseService:
                 initialize_firebase()
             return True
         except Exception as e:
-            logger.error(f"Erro ao inicializar Firebase: {e}")
             return False
 
     @staticmethod
@@ -369,7 +359,6 @@ class CompanyFirebaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Erro ao buscar dados da empresa: {e}")
             return None
 
     @staticmethod
@@ -389,7 +378,6 @@ class CompanyFirebaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao atualizar dados da empresa: {e}")
             return False
 
     @staticmethod
@@ -406,7 +394,6 @@ class CompanyFirebaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao atualizar plano da empresa: {e}")
             return False
 
     @staticmethod
@@ -466,7 +453,6 @@ class CompanyFirebaseService:
             return False
 
         except Exception as e:
-            logger.error(f"Erro ao verificar expiração do trial: {e}")
             return False
 
     @staticmethod
@@ -483,7 +469,6 @@ class CompanyFirebaseService:
             return False
 
         except Exception as e:
-            logger.error(f"Erro ao verificar expiração do plano trial: {e}")
             return False
 
     @staticmethod
@@ -503,7 +488,6 @@ class CompanyFirebaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Erro ao atualizar campo {field_name}: {e}")
             return False
 
 class OrderFirebaseService:
@@ -515,12 +499,10 @@ class OrderFirebaseService:
     def get_orders_for_lanchonete(user_id, status_filter=None, sort_order='desc'):
         try:
             if not OrderFirebaseService._ensure_initialized():
-                logger.error("Firebase não inicializado ao buscar pedidos.")
                 return None
 
             lanchonete_id = user_id
             if not lanchonete_id:
-                 logger.error("user_id (lanchonete_id) está vazio.")
                  return None
 
             orders_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}')
@@ -530,28 +512,22 @@ class OrderFirebaseService:
                 query = orders_summary_ref.order_by_child('data_criacao')
                 orders_summary = query.get()
             except firebase_admin.exceptions.InvalidArgumentError as index_error:
-                 logger.error(f"Erro de índice ao buscar pedidos para {lanchonete_id}: {index_error}.")
-                 logger.warning(f"Tentando buscar pedidos para {lanchonete_id} sem ordenação.")
                  try:
                      orders_summary = orders_summary_ref.get()
                  except Exception as fallback_error:
-                      logger.error(f"Erro na busca fallback sem ordenação: {fallback_error}")
                       traceback.print_exc()
                       return None
             except Exception as query_error:
-                 logger.error(f"Erro inesperado na query do Firebase para {lanchonete_id}: {query_error}")
                  traceback.print_exc()
                  return None
 
             if not orders_summary:
-                logger.info(f"Nenhum pedido encontrado para lanchonete {lanchonete_id}.")
                 return []
 
             order_list = []
             sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
 
             if not isinstance(orders_summary, dict):
-                logger.error(f"Estrutura inesperada retornada pelo Firebase para {lanchonete_id}: {type(orders_summary)}")
                 return []
 
             pedidos_principais_ref = db.reference('/pedidos')
@@ -559,7 +535,6 @@ class OrderFirebaseService:
 
             for order_id, summary_data in orders_summary.items():
                  if not isinstance(summary_data, dict):
-                     logger.warning(f"Item inválido encontrado no pedido {order_id} para lanchonete {lanchonete_id}. Pulando item.")
                      continue
 
                  summary_data['id'] = order_id
@@ -580,12 +555,10 @@ class OrderFirebaseService:
                         summary_data['data_criacao_display'] = dt_local.strftime('%d/%m/%Y')
                         summary_data['hora_criacao_display'] = dt_local.strftime('%H:%M')
                     except (ValueError, TypeError) as date_error:
-                         logger.warning(f"Erro ao parsear data '{data_criacao_str}' para pedido {order_id}: {date_error}")
                          summary_data['data_criacao_dt'] = datetime.min.replace(tzinfo=sao_paulo_tz)
                          summary_data['data_criacao_display'] = "Data inválida"
                          summary_data['hora_criacao_display'] = "--:--"
                  else:
-                    logger.warning(f"Pedido {order_id} sem 'data_criacao'. Usando data mínima.")
                     summary_data['data_criacao_dt'] = datetime.min.replace(tzinfo=sao_paulo_tz)
                     summary_data['data_criacao_display'] = "Sem data"
                     summary_data['hora_criacao_display'] = "--:--"
@@ -596,12 +569,11 @@ class OrderFirebaseService:
                 reverse_sort = sort_order == 'desc'
                 order_list.sort(key=lambda x: x.get('data_criacao_dt', datetime.min.replace(tzinfo=sao_paulo_tz)), reverse=reverse_sort)
             except Exception as sort_error:
-                 logger.error(f"Erro ao ordenar lista de pedidos em memória: {sort_error}")
+                 pass
 
             return order_list
 
         except Exception as e:
-            logger.error(f"Erro GERAL ao buscar pedidos por lanchonete ({user_id}): {e}")
             traceback.print_exc()
             return None
 
@@ -657,7 +629,7 @@ class OrderFirebaseService:
             return None
 
     @staticmethod
-    def update_order_status(user_id, order_id, new_status):
+    def update_order_status(user_id, order_id, new_status, reason=None): # Adiciona reason=None
         try:
             if not OrderFirebaseService._ensure_initialized():
                 logger.error("Firebase não inicializado ao atualizar status.")
@@ -688,20 +660,14 @@ class OrderFirebaseService:
                 'timestamp_display': now_local_str
             }
 
-            if new_status == 'pago':
-                    updates_main['status_pagamento'] = 'pago'
-                    updates_main['datahora_pagamento'] = now_iso
-                    updates_summary['status_pagamento'] = 'pago'
-                    logger.info(f"Pedido {order_id} atualizado para PAGO.")
-                    del updates_main['status_pedido']
-                    del updates_summary['status']
-                    pay_history_entry = { 'status': 'pagamento_confirmado', 'timestamp_iso': now_iso, 'timestamp_display': now_local_str }
-                    order_ref.child('status_history').push(pay_history_entry)
-            elif new_status == 'retirado':
+            if new_status == 'retirado':
                     updates_main['datahora_retirada'] = now_iso
                     order_ref.child('status_history').push(status_history_entry)
             elif new_status == 'cancelado':
                     updates_main['datahora_cancelamento'] = now_iso
+                    if reason: # Salva o motivo se ele foi fornecido
+                        updates_main['motivo_cancelamento'] = reason
+                        status_history_entry['reason'] = reason # Opcional: Adicionar ao histórico também
                     order_ref.child('status_history').push(status_history_entry)
             else:
                 order_ref.child('status_history').push(status_history_entry)
@@ -745,6 +711,55 @@ class OrderFirebaseService:
             logger.error(f"Erro GERAL em update_order_status: {e}")
             traceback.print_exc()
             return False
+
+    @staticmethod
+    def update_order_payment_status(user_id, order_id, new_payment_status):
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                return False
+
+            lanchonete_id = user_id
+            if not lanchonete_id:
+                return False
+
+            now_utc = datetime.now(pytz.utc)
+            now_iso = now_utc.isoformat()
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            now_local_str = now_utc.astimezone(sao_paulo_tz).strftime('%d/%m %H:%M')
+
+            order_ref = db.reference(f'/pedidos/{order_id}')
+            order_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}/{order_id}')
+
+            updates_main = {
+                'status_pagamento': new_payment_status,
+                'datahora_ultima_atualizacao': now_iso
+            }
+            updates_summary = {'status_pagamento': new_payment_status}
+
+            # Adiciona entrada ao histórico se o status for 'pago'
+            if new_payment_status == 'pago':
+                updates_main['datahora_pagamento'] = now_iso # Registra hora do pagamento
+                payment_history_entry = {
+                    'status': 'pagamento_confirmado', # Status específico para histórico
+                    'timestamp_iso': now_iso,
+                    'timestamp_display': now_local_str
+                }
+                try:
+                    order_ref.child('status_history').push(payment_history_entry)
+                except Exception as e:
+                     # Continua mesmo se falhar em adicionar ao histórico
+                     pass
+
+            # Realiza as atualizações
+            order_ref.update(updates_main)
+            order_summary_ref.update(updates_summary)
+
+            return True
+
+        except Exception as e:
+            traceback.print_exc()
+            return False
+
 
 order_service = OrderFirebaseService()
 product_service = ProductFirebaseService()

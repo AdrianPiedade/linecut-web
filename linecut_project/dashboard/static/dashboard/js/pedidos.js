@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    addButtonStyleOverrides(); // Adiciona os estilos CSS para botões desabilitados
 });
 
 let currentOrdersData = [];
@@ -99,7 +100,6 @@ async function loadOrders() {
         const data = await response.json();
         currentOrdersData = data.success ? (data.orders || []) : [];
     } catch (error) {
-        console.error("Fetch Error:", error);
         showErrorToast(`Erro ao carregar pedidos: ${error.message}`);
         currentOrdersData = [];
     } finally {
@@ -162,8 +162,14 @@ function renderOrders(activeTab) {
                 const colValor = newRow.querySelector('.col-valor');
                 if (colValor) colValor.textContent = `R$ ${parseFloat(order.preco_total || 0).toFixed(2).replace('.', ',')}`;
 
+                // A coluna 'col-data' existe no template mas não será preenchida na aba 'retirada'
                 const colData = newRow.querySelector('.col-data');
-                if (colData) colData.textContent = order.data_criacao_display || '--/--/----';
+                if (colData && activeTab !== 'retirada') {
+                    colData.style.display = 'block'; // Garante que seja visível se não for 'retirada'
+                    colData.textContent = order.data_criacao_display || '--/--/----';
+                } else if (colData && activeTab === 'retirada') {
+                    colData.style.display = 'none'; // Esconde na aba 'retirada'
+                }
 
                 const acoesCol = newRow.querySelector('.col-acoes');
                 if (acoesCol) {
@@ -173,7 +179,6 @@ function renderOrders(activeTab) {
                     const isCanceladoOuFinalizado = ['retirado', 'concluido', 'cancelado'].includes(order.status);
 
                     if (activeTab === 'preparo') {
-                        // Botão Pronto (Sempre visível se não finalizado/cancelado, desabilitado se pgto pendente)
                         if (!isCanceladoOuFinalizado && order.status !== 'pronto') {
                             const prontoDisabled = false;
                             const prontoTitle = 'Marcar pedido como Pronto para Retirada';
@@ -185,29 +190,42 @@ function renderOrders(activeTab) {
                          </button>`;
                         }
 
-                        // Botão Cancelar (Se não finalizado/cancelado)
                         if(!isCanceladoOuFinalizado) {
                             actionsHTML += ` <button class="btn-acao btn-cancelar-pedido" onclick="confirmCancelOrder('${order.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>`;
                         }
                     } else if (activeTab === 'retirada') {
-                         const colHorarioRetirada = newRow.querySelector('.col-horario');
-                         if(colHorarioRetirada) {
-                            colHorarioRetirada.style.display = 'block';
-                            colHorarioRetirada.textContent = order.hora_pronto_display || order.hora_criacao_display || '--:--';
-                         }
-                         const colPagamentoStatusRetirada = newRow.querySelector('.col-pagamento-status');
-                         if (colPagamentoStatusRetirada) {
-                             const pagamentoInfo = PAGAMENTO_MAP[order.status_pagamento] || PAGAMENTO_MAP['pendente'];
-                             colPagamentoStatusRetirada.querySelector('.pagamento-dot').className = `pagamento-dot ${pagamentoInfo.dotClass}`;
-                             colPagamentoStatusRetirada.querySelector('.pagamento-text-principal').textContent = pagamentoInfo.text;
-                         }
-                         const colMetodoPagamentoRetirada = newRow.querySelector('.col-metodo-pagamento');
-                         if (colMetodoPagamentoRetirada) {
-                             const metodoPagamentoTexto = METODO_PAGAMENTO_MAP[order.metodo_pagamento] || order.metodo_pagamento || 'Não info.';
-                             colMetodoPagamentoRetirada.querySelector('.metodo-texto').textContent = metodoPagamentoTexto;
-                         }
-                         actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Ver</button>`;
-                         actionsHTML += ` <button class="btn-acao btn-marcar-retirado" onclick="confirmUpdateStatus('${order.id}', 'retirado')"><i class="bi bi-bag-check"></i> Retirado</button>`;
+                            // Coluna de Pagamento Status já é tratada acima
+                            // Coluna de Método Pagamento já é tratada acima
+
+                            actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Ver</button>`;
+
+                            const retiradoDisabled = !isPago;
+                            const retiradoTitle = retiradoDisabled ? 'Pagamento pendente. Confirme o pagamento local antes.' : 'Marcar pedido como Retirado/Entregue';
+
+                            actionsHTML += ` <button
+                                class="btn-acao btn-marcar-retirado"
+                                onclick="confirmUpdateStatus('${order.id}', 'retirado')"
+                                ${retiradoDisabled ? 'disabled title="' + retiradoTitle + '"' : 'title="' + retiradoTitle + '"'}>
+                                    <i class="bi bi-bag-check"></i> Retirado
+                             </button>`;
+
+                            const pagamentoRealizadoDisabled = !isMetodoLocal || isPago;
+                            let pagamentoRealizadoTitle = 'Confirmar recebimento do pagamento local';
+                            if (!isMetodoLocal) {
+                                pagamentoRealizadoTitle = 'Ação disponível apenas para pagamento local.';
+                            } else if (isPago) {
+                                pagamentoRealizadoTitle = 'Pagamento já foi confirmado.';
+                            }
+
+                            actionsHTML += ` <button
+                                class="btn-acao btn-confirmar-pagamento-local"
+                                onclick="confirmUpdatePaymentStatus('${order.id}', 'pago')"
+                                ${pagamentoRealizadoDisabled ? 'disabled title="' + pagamentoRealizadoTitle + '"' : 'title="' + pagamentoRealizadoTitle + '"'}>
+                                    <i class="bi bi-cash-coin"></i> Pgto OK
+                                </button>`;
+
+                            actionsHTML += ` <button class="btn-acao btn-cancelar-pedido" onclick="confirmCancelOrder('${order.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>`;
+
                     } else if (activeTab === 'historico') {
                         const colAvaliacao = newRow.querySelector('.col-avaliacao');
                          if(colAvaliacao) {
@@ -219,6 +237,11 @@ function renderOrders(activeTab) {
                                 badge.className = `avaliacao-badge ${avaliacaoInfo.badgeClass}`;
                              }
                          }
+                         // Reativa a coluna Data para o Histórico
+                         if(colData) {
+                             colData.style.display = 'block';
+                             colData.textContent = order.data_criacao_display || '--/--/----';
+                         }
                          actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Detalhes</button>`;
                     }
                     acoesCol.innerHTML = actionsHTML;
@@ -226,7 +249,6 @@ function renderOrders(activeTab) {
                 tableBody.appendChild(newRow);
                 rowsAddedCount++;
             } catch (error) {
-                console.error(`ERRO ao renderizar pedido ${order.id}:`, error);
                  tableBody.innerHTML += `<div class="linha-pedido erro-render" style="grid-column: 1 / -1; color: red; text-align: center; padding: 10px;">Erro ao renderizar pedido ${order.id}</div>`;
             }
         });
@@ -492,7 +514,6 @@ function getCSRFToken() {
     if (metaToken) return metaToken;
     const inputToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
     if (inputToken) return inputToken;
-    console.warn('CSRF token não encontrado.');
     return '';
 }
 
@@ -538,6 +559,7 @@ function setButtonLoading(button, isLoading, loadingText = 'Aguarde...') {
              button.innerHTML = button.dataset.originalTextHTML;
              delete button.dataset.originalTextHTML;
          } else {
+              // Fallback para textContent se innerHTML não for o desejado
               button.innerHTML = button.textContent || originalTextHTML;
          }
      }
@@ -552,4 +574,115 @@ if (!document.getElementById('spinner-styles')) {
     @keyframes spinner-border { to { transform: rotate(360deg); } }
     button > .spinner-border { margin-right: 5px; }`;
     document.head.appendChild(styleSheet);
+}
+
+function confirmUpdatePaymentStatus(orderId, newPaymentStatus) {
+    const statusText = PAGAMENTO_MAP[newPaymentStatus]?.text || newPaymentStatus;
+    const message = `Confirmar pagamento do pedido #${orderId.substring(Math.max(0, orderId.length - 8))} como "${statusText}"?`;
+    const subtext = 'Esta ação registrará que o pagamento foi recebido localmente.';
+
+    currentActionInfo = { orderId: orderId, newStatus: newPaymentStatus, action: 'update_payment' };
+    document.getElementById('confirmacao-status-titulo').textContent = `Confirmar Pagamento Local`;
+    document.getElementById('confirmacao-status-mensagem').textContent = message;
+
+    const subtextoElement = document.getElementById('confirmacao-status-subtexto');
+    if (subtextoElement) {
+        subtextoElement.textContent = subtext;
+        subtextoElement.style.display = 'block';
+    }
+
+    const confirmBtn = document.getElementById('btn-confirma-status-modal');
+    confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+    document.getElementById('btn-confirma-status-modal').addEventListener('click', executeUpdatePaymentStatus);
+
+    openModal('modal-confirmacao-status');
+}
+
+async function executeUpdatePaymentStatus() {
+    const { orderId, newStatus } = currentActionInfo;
+    if (!orderId || !newStatus) return;
+
+    const confirmBtn = document.getElementById('btn-confirma-status-modal');
+    setButtonLoading(confirmBtn, true, 'Confirmando...');
+
+    try {
+        const response = await fetch(`/dashboard/pedidos/update_status/${orderId}/`, { // Reutiliza a URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF_TOKEN,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ new_payment_status: newStatus }) // Envia o novo status de pagamento
+        });
+        const data = await response.json();
+        if (data.success) {
+            showSuccessToast(data.message || 'Status de pagamento atualizado!');
+            closeModal('modal-detalhes-pedido');
+            loadOrders();
+        } else {
+            showErrorToast(data.error || 'Falha ao atualizar status de pagamento.');
+        }
+    } catch (error) {
+        showErrorToast(`Erro de comunicação: ${error.message}`);
+    } finally {
+        setButtonLoading(confirmBtn, false, 'Confirmar');
+        closeModal('modal-confirmacao-status');
+        currentActionInfo = {};
+    }
+}
+
+function addButtonStyleOverrides() {
+    if (!document.getElementById('button-style-overrides')) {
+        const styleSheet = document.createElement("style");
+        styleSheet.id = 'button-style-overrides';
+        styleSheet.innerText = `
+        /* Estilo para Botão Retirado (Verde) */
+        .btn-marcar-retirado {
+            background-color: #e8f5e9; /* Verde claro */
+            color: var(--verde); /* Verde principal */
+            border: 1px solid #a9d1aa; /* Borda verde mais escura */
+        }
+        .btn-marcar-retirado:hover:not(:disabled) {
+            background-color: #c8e6c9; /* Hover verde mais claro */
+            box-shadow: 0 2px 4px rgba(24, 159, 76, 0.2);
+        }
+        /* Override para estado desabilitado do Retirado */
+        .btn-marcar-retirado:disabled {
+            background-color: #f0f0f0 !important; /* Cinza bem claro */
+            color: #bdbdbd !important; /* Cinza médio */
+            border-color: #e0e0e0 !important; /* Cinza claro */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .btn-marcar-retirado:disabled:hover {
+             transform: none;
+             box-shadow: none;
+        }
+
+        /* Estilo para Botão Pgto OK (Amarelo) */
+        .btn-confirmar-pagamento-local {
+            background-color: #fff8e1; /* Amarelo bem claro */
+            color: #ffab00; /* Amarelo/Laranja */
+            border: 1px solid #ffecb3; /* Borda amarela clara */
+        }
+        .btn-confirmar-pagamento-local:hover:not(:disabled) {
+            background-color: #ffecb3; /* Amarelo mais claro no hover */
+            box-shadow: 0 2px 4px rgba(255, 171, 0, 0.2);
+        }
+         /* Override para estado desabilitado do Pgto OK */
+        .btn-confirmar-pagamento-local:disabled {
+            background-color: #f0f0f0 !important; /* Cinza bem claro */
+            color: #bdbdbd !important; /* Cinza médio */
+            border-color: #e0e0e0 !important; /* Cinza claro */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+         .btn-confirmar-pagamento-local:disabled:hover {
+             transform: none;
+             box-shadow: none;
+        }
+        `;
+        document.head.appendChild(styleSheet);
+    }
 }

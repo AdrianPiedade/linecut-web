@@ -6,12 +6,17 @@
     --cinza-background: #F4F4F4;
     --branco: #FFFFFF;
     --verde: #189F4C;
-    --amarelo: #F2C12E;
+    --amarelo: #F2C12E; /* Cor base para pagamento */
+    --amarelo-claro-bg: #fff8e1; /* Fundo botão pagamento */
+    --amarelo-texto: #ffab00; /* Texto/Icone botão pagamento */
+    --amarelo-borda: #ffecb3; /* Borda botão pagamento */
+    --amarelo-hover: #ffecb3; /* Hover botão pagamento */
     --azul: #1976d2;
     --laranja: #f57c00;
     --vermelho-erro: #d32f2f;
-    --cinza-desabilitado: #b0b0b0;
-    --cinza-texto-desabilitado: #757575;
+    --cinza-desabilitado-bg: #f0f0f0; /* Fundo botão desabilitado */
+    --cinza-desabilitado-texto: #bdbdbd; /* Texto botão desabilitado */
+    --cinza-desabilitado-borda: #e0e0e0; /* Borda botão desabilitado */
     --sombra-clara: rgba(0, 0, 0, 0.1);
     --sombra-media: rgba(0, 0, 0, 0.15);
 }
@@ -113,9 +118,9 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
 #preparo-content .cabecalho-tabela {
     grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(110px, 1.1fr) minmax(110px, 1.1fr) minmax(70px, 0.7fr) minmax(90px, 0.9fr) minmax(200px, 1.5fr);
 }
-/* Colunas Header: Status | Id Pedido | Valor | Pronto às | Pgto Status | Método Pgto | Ações */
+/* Colunas Header: Status | Id Pedido | Pgto Status | Método Pgto | Valor | Ações */
 #retirada-content .cabecalho-tabela {
-    grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(80px, 0.8fr) minmax(80px, 0.8fr) minmax(110px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr);
+    grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(110px, 1.1fr) minmax(110px, 1.1fr) minmax(80px, 0.8fr) minmax(240px, 1.8fr); /* Ajustado Ações */
 }
 /* Colunas Header: Status | Id Pedido | Valor | Data | Avaliação | Detalhes */
 #historico-content .cabecalho-tabela {
@@ -141,9 +146,9 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
 #preparo-content .linha-pedido {
     grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(110px, 1.1fr) minmax(110px, 1.1fr) minmax(70px, 0.7fr) minmax(90px, 0.9fr) minmax(200px, 1.5fr);
 }
-/* Colunas Linha: Status | Id Pedido | Valor | Pronto às | Pgto Status | Método Pgto | Ações */
+/* Colunas Linha: Status | Id Pedido | Pgto Status | Método Pgto | Valor | Ações */
 #retirada-content .linha-pedido {
-    grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(80px, 0.8fr) minmax(80px, 0.8fr) minmax(110px, 1fr) minmax(110px, 1fr) minmax(120px, 1fr);
+    grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(110px, 1.1fr) minmax(110px, 1.1fr) minmax(80px, 0.8fr) minmax(240px, 1.8fr); /* Ajustado Ações */
 }
 /* Colunas Linha: Status | Id Pedido | Valor | Data | Avaliação | Detalhes */
 #historico-content .linha-pedido {
@@ -161,7 +166,7 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
     align-self: center;
 }
 .col-numero .numero-id {
-    font-weight: 400; 
+    font-weight: 400;
 }
 
 .col-pagamento-status { display: flex; align-items: center; gap: 8px; }
@@ -172,7 +177,6 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
 
 .col-valor, .col-data { white-space: nowrap; text-align: left; }
 .col-valor { font-weight: 500; }
-.col-horario { display: none; }
 .col-avaliacao { text-align: center; }
 .col-acoes { text-align: right; white-space: nowrap; }
 
@@ -193,103 +197,40 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
 .avaliacao-badge.avaliado { background-color: #e8f5e9; color: var(--verde); border-color: #c8e6c9; }
 .avaliacao-badge.nao_avaliado { background-color: #fce4ec; color: #d32f2f; border-color: #f8bbd0; }
 
-.btn-acao { padding: 5px 12px; border: 1px solid transparent; border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease, border-color 0.2s ease; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; position: relative; }
+.btn-acao { padding: 5px 12px; border: 1px solid transparent; border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; position: relative; letter-spacing: 0.5px; white-space: nowrap;}
 .btn-acao:hover:not(:disabled) { transform: translateY(-1px); }
-.btn-acao:disabled { background-color: var(--cinza-claro); color: var(--cinza-texto-desabilitado); cursor: not-allowed; opacity: 0.7; border-color: var(--cinza-desabilitado); }
-.btn-acao:disabled:hover { transform: none; }
+.btn-acao:disabled { cursor: not-allowed; opacity: 0.7; }
+.btn-acao:disabled:hover { transform: none; box-shadow: none; } /* Impede hover em desabilitado */
 .btn-acao i { font-size: 14px; }
-.btn-ver-detalhes {
-    background-color: #e3f2fd; /* Azul claro */
-    color: #1976d2; /* Azul escuro */
-    border: 1px solid #a0c4e1; /* Borda azul mais escura */
-    padding: 5px 12px;
-    margin-left: 0;
-    text-decoration: none;
-}
-.btn-ver-detalhes:hover {
-    background-color: #bbdefb; /* Hover azul mais claro */
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2);
-    /* A borda não precisa mudar no hover se já está correta */
-}
 
-/* Regras para .btn-confirmar-pagamento-local foram removidas anteriormente */
+/* Estilos específicos para cada botão */
+.btn-ver-detalhes { background-color: #e3f2fd; color: #1976d2; border: 1px solid #a0c4e1; margin-left: 0; text-decoration: none;}
+.btn-ver-detalhes:hover { background-color: #bbdefb; box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2); }
 
-.btn-marcar-pronto {
-    background-color: #e8f5e9; /* Verde claro */
-    color: var(--verde); /* Verde principal */
-    border: 1px solid #a9d1aa; /* Borda verde mais escura */
-}
-.btn-marcar-pronto:hover:not(:disabled) {
-    background-color: #c8e6c9; /* Hover verde mais claro */
-    box-shadow: 0 2px 4px rgba(24, 159, 76, 0.2);
-}
-.btn-marcar-pronto:disabled {
-    background-color: #e0f2f1; /* Verde muito claro */
-    color: #81c784; /* Verde claro */
-    border: 1px solid #b3d9b4; /* Borda verde um pouco mais escura (para o fundo claro) */
-    cursor: not-allowed;
-    opacity: 0.8;
-}
+.btn-marcar-pronto { background-color: #e8f5e9; color: var(--verde); border: 1px solid #a9d1aa; }
+.btn-marcar-pronto:hover:not(:disabled) { background-color: #c8e6c9; box-shadow: 0 2px 4px rgba(24, 159, 76, 0.2); }
+.btn-marcar-pronto:disabled { background-color: var(--cinza-desabilitado-bg) !important; color: var(--cinza-desabilitado-texto) !important; border-color: var(--cinza-desabilitado-borda) !important; }
 
-.btn-marcar-retirado {
-    background-color: var(--verde);
-    color: white;
-    border: 1px solid #148c41; /* Verde mais escuro */
-}
-.btn-marcar-retirado:hover:not(:disabled) {
-    background-color: #148c41;
-}
+.btn-marcar-retirado { background-color: #e8f5e9; color: var(--verde); border: 1px solid #a9d1aa; }
+.btn-marcar-retirado:hover:not(:disabled) { background-color: #c8e6c9; box-shadow: 0 2px 4px rgba(24, 159, 76, 0.2); }
+.btn-marcar-retirado:disabled { background-color: var(--cinza-desabilitado-bg) !important; color: var(--cinza-desabilitado-texto) !important; border-color: var(--cinza-desabilitado-borda) !important; }
 
-.btn-cancelar-pedido {
-    background-color: #ffebee; /* Vermelho claro */
-    color: #d32f2f; /* Vermelho escuro */
-    border: 1px solid #f0b6bc; /* Borda vermelha mais escura */
-}
-.btn-cancelar-pedido:hover:not(:disabled) {
-    background-color: #ffcdd2; /* Hover vermelho mais claro */
-    box-shadow: 0 2px 4px rgba(211, 47, 47, 0.2);
-}
+.btn-confirmar-pagamento-local { background-color: var(--amarelo-claro-bg); color: var(--amarelo-texto); border: 1px solid var(--amarelo-borda); }
+.btn-confirmar-pagamento-local:hover:not(:disabled) { background-color: var(--amarelo-hover); box-shadow: 0 2px 4px rgba(255, 171, 0, 0.2); }
+.btn-confirmar-pagamento-local:disabled { background-color: var(--cinza-desabilitado-bg) !important; color: var(--cinza-desabilitado-texto) !important; border-color: var(--cinza-desabilitado-borda) !important; }
 
-/* Regra geral .btn-acao ajustada */
-.btn-acao {
-    padding: 5px 12px;
-    /* border: 1px solid transparent; <- REMOVER ou deixar como está, será sobrescrito */
-    border-radius: 15px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    transition: background-color 0.2s ease, transform 0.1s ease, opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: 6px;
-    position: relative;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-}
+.btn-cancelar-pedido { background-color: #ffebee; color: #d32f2f; border: 1px solid #f0b6bc; }
+.btn-cancelar-pedido:hover:not(:disabled) { background-color: #ffcdd2; box-shadow: 0 2px 4px rgba(211, 47, 47, 0.2); }
+/* Botão cancelar não precisa de estilo :disabled customizado, o padrão serve */
 
-/* O restante das regras :disabled, :hover, ::after permanecem iguais */
-.btn-acao:hover:not(:disabled) {
-    transform: translateY(-1px);
-}
-
-.btn-acao:disabled {
-    cursor: not-allowed;
-}
-
-.btn-acao:disabled:hover {
-    transform: none;
-    box-shadow: none;
-}
-
+/* Tooltip para botões desabilitados */
 .btn-acao[disabled]:hover::after {
     content: attr(title);
     position: absolute;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 4px 8px;
     border-radius: 4px;
@@ -297,7 +238,7 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
     white-space: nowrap;
     margin-bottom: 5px;
     z-index: 10;
-    display: block;
+    display: block; /* Garante que seja visível */
 }
 
 .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); animation: fadeIn 0.3s ease; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
@@ -387,9 +328,10 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
     .filtro-busca input { width: auto; }
     .btn-filtrar { width: 100%; justify-content: center; }
     .tabela-pedidos { overflow-x: auto; }
-    .cabecalho-tabela, .linha-pedido { min-width: 1050px; }
+    .cabecalho-tabela, .linha-pedido { min-width: 1050px; } /* Ajuste geral */
+    /* Tamanhos mínimos específicos mantidos */
     #preparo-content .cabecalho-tabela, #preparo-content .linha-pedido { min-width: 1050px; }
-    #retirada-content .cabecalho-tabela, #retirada-content .linha-pedido { min-width: 950px; }
+    #retirada-content .cabecalho-tabela, #retirada-content .linha-pedido { min-width: 980px; } /* Recalculado sem data */
     #historico-content .cabecalho-tabela, #historico-content .linha-pedido { min-width: 850px; }
 }
 @media (max-width: 768px) {
