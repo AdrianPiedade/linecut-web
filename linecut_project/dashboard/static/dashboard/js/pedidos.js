@@ -173,31 +173,16 @@ function renderOrders(activeTab) {
                     const isCanceladoOuFinalizado = ['retirado', 'concluido', 'cancelado'].includes(order.status);
 
                     if (activeTab === 'preparo') {
-                        // Botão Pagamento Realizado (Sempre visível, desabilitado se não for local ou se já pago)
-                        const pagamentoDisabled = !isMetodoLocal || isPago;
-                        const pagamentoTitle = isPago ? 'Pagamento já realizado' : (!isMetodoLocal ? 'Pagamento via App (PIX)' : 'Confirmar pagamento recebido no local');
-                        actionsHTML += ` <button
-                            class="btn-acao btn-confirmar-pagamento-local"
-                            onclick="${pagamentoDisabled ? '' : `confirmPaymentLocal('${order.id}')`}"
-                            ${pagamentoDisabled ? 'disabled title="' + pagamentoTitle + '"' : 'title="Confirmar Pagamento Local"'} >
-                                <i class="bi bi-cash-coin"></i> Pagamento
-                         </button>`;
-
-                         // Botão Preparando (Sempre ativo se não finalizado/cancelado/pronto/preparando)
-                         if (!isCanceladoOuFinalizado && order.status !== 'preparando' && order.status !== 'pronto') {
-                             actionsHTML += ` <button class="btn-acao btn-marcar-preparando" onclick="confirmUpdateStatus('${order.id}', 'preparando')" title="Marcar pedido como Em Preparação"><i class="bi bi-egg-fried"></i> Preparar</button>`;
-                         }
-
                         // Botão Pronto (Sempre visível se não finalizado/cancelado, desabilitado se pgto pendente)
                         if (!isCanceladoOuFinalizado && order.status !== 'pronto') {
-                            const prontoDisabled = !isPago;
-                            const prontoTitle = prontoDisabled ? 'Pagamento pendente para liberar esta ação' : 'Marcar pedido como Pronto para Retirada';
-                            actionsHTML += ` <button
-                                class="btn-acao btn-marcar-pronto"
-                                onclick="${prontoDisabled ? '' : `confirmUpdateStatus('${order.id}', 'pronto')`}"
-                                ${prontoDisabled ? 'disabled title="' + prontoTitle + '"' : 'title="Marcar como Pronto"'} >
-                                    <i class="bi bi-check-lg"></i> Pronto
-                             </button>`;
+                            const prontoDisabled = false;
+                            const prontoTitle = 'Marcar pedido como Pronto para Retirada';
+                        actionsHTML += ` <button
+                            class="btn-acao btn-marcar-pronto"
+                            onclick="confirmUpdateStatus('${order.id}', 'pronto')"
+                            title="${prontoTitle}" >
+                                <i class="bi bi-check-lg"></i> Pronto
+                         </button>`;
                         }
 
                         // Botão Cancelar (Se não finalizado/cancelado)
@@ -384,48 +369,49 @@ async function showOrderDetails(orderId) {
     }
 }
 
-function confirmPaymentLocal(orderId) {
-    currentActionInfo = { orderId: orderId, action: 'confirm_payment_local' };
-    openModal('modal-confirmacao-pagamento');
-    const confirmBtn = document.getElementById('btn-confirma-pagamento-modal');
-    confirmBtn.replaceWith(confirmBtn.cloneNode(true));
-    document.getElementById('btn-confirma-pagamento-modal').addEventListener('click', executePaymentConfirmationLocal);
-}
-
-async function executePaymentConfirmationLocal() {
-    const orderId = currentActionInfo.orderId;
-    if (!orderId) return;
-    const confirmBtn = document.getElementById('btn-confirma-pagamento-modal');
-    setButtonLoading(confirmBtn, true, 'Confirmando...');
-    await updateStatus(orderId, 'pago');
-    setButtonLoading(confirmBtn, false, 'Confirmar Pagamento');
-    closeModal('modal-confirmacao-pagamento');
-}
-
-
 function confirmUpdateStatus(orderId, newStatus) {
     const statusText = STATUS_MAP[newStatus]?.text || newStatus;
-     const messages = {
-         pago: `Confirmar pagamento local para o pedido #${orderId.substring(Math.max(0, orderId.length - 8))}?`,
+    const messages = {
          preparando: `Marcar pedido #${orderId.substring(Math.max(0, orderId.length - 8))} como "Preparando"?`,
          pronto: `Marcar pedido #${orderId.substring(Math.max(0, orderId.length - 8))} como "Pronto para Retirada"?`,
          retirado: `Confirmar retirada do pedido #${orderId.substring(Math.max(0, orderId.length - 8))}?`
+         // Adicione outras mensagens se necessário
      };
+    const message = messages[newStatus] || `Mudar status para "${statusText}"?`;
 
-     if (newStatus === 'pago') {
-         const orderData = currentOrdersData.find(o => o.id === orderId);
-         if (orderData && orderData.metodo_pagamento === 'local') {
-             confirmPaymentLocal(orderId);
-             return;
-         }
-     }
+    // Configura e abre o modal genérico de confirmação de status
+    currentActionInfo = { orderId: orderId, newStatus: newStatus, action: 'update_status' };
+    document.getElementById('confirmacao-status-titulo').textContent = `Confirmar Mudança de Status`;
+    document.getElementById('confirmacao-status-mensagem').textContent = message;
 
-    if (confirm(messages[newStatus] || `Mudar status para "${statusText}"?`)) {
-        updateStatus(orderId, newStatus);
-    }
+    // Oculta subtexto (pode ser usado para adicionar mais info se quiser)
+    const subtextoElement = document.getElementById('confirmacao-status-subtexto');
+    if (subtextoElement) subtextoElement.style.display = 'none';
+
+    // Garante que o listener do botão é atualizado
+    const confirmBtn = document.getElementById('btn-confirma-status-modal');
+    confirmBtn.replaceWith(confirmBtn.cloneNode(true)); // Remove listeners antigos
+    document.getElementById('btn-confirma-status-modal').addEventListener('click', executeStatusUpdate); // Adiciona novo listener
+
+    openModal('modal-confirmacao-status');
+}
+
+async function executeStatusUpdate() {
+    const { orderId, newStatus } = currentActionInfo;
+    if (!orderId || !newStatus) return;
+
+    const confirmBtn = document.getElementById('btn-confirma-status-modal');
+    setButtonLoading(confirmBtn, true, 'Confirmando...');
+
+    await updateStatus(orderId, newStatus); // Chama a função que faz o fetch
+
+    setButtonLoading(confirmBtn, false, 'Confirmar'); // Restaura o botão
+    closeModal('modal-confirmacao-status'); // Fecha o modal
+    currentActionInfo = {}; // Limpa a ação
 }
 
 async function updateStatus(orderId, newStatus) {
+    // Mantém o indicador de loading geral da página, se desejado
     showLoadingIndicator(true);
     try {
         const response = await fetch(`/dashboard/pedidos/update_status/${orderId}/`, {
@@ -439,9 +425,9 @@ async function updateStatus(orderId, newStatus) {
         });
         const data = await response.json();
         if (data.success) {
-            showSuccessToast(data.message);
-            closeModal('modal-detalhes-pedido');
-            loadOrders();
+            showSuccessToast(data.message); // <--- TOAST DE SUCESSO AQUI
+            closeModal('modal-detalhes-pedido'); // Fecha detalhes se estiver aberto
+            loadOrders(); // Recarrega a lista
         } else {
             showErrorToast(data.error || 'Falha ao atualizar status.');
         }

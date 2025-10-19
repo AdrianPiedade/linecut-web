@@ -76,9 +76,7 @@
         </header>
 
         <div class="filtros">
-            <div class="filtro-item filtro-busca">
-                 <i class="bi bi-search"></i>
-                 <input type="text" id="search-input" placeholder="Número do Pedido">
+            <div class="filtro-item"> <input type="text" id="search-input" placeholder="Id do Pedido">
             </div>
              <div class="filtro-item filtro-ordenar">
                 <label for="sort-order">Ordenar</label>
@@ -204,22 +202,6 @@
             <div class="modal-rodape modal-rodape-detalhes"><div id="detalhes-acoes-pedido"></div></div>
         </div>
     </div>
-    <div id="modal-confirmacao-pagamento" class="modal">
-         <div class="modal-conteudo modal-confirmacao">
-             <div class="modal-cabecalho">
-                 <h2>Confirmação de Pagamento Recebido</h2>
-                 <span class="fechar-modal" onclick="closeModal('modal-confirmacao-pagamento')">&times;</span>
-             </div>
-             <div class="modal-corpo">
-                <p>Você deseja confirmar o recebimento do pagamento para este pedido?</p>
-                <p class="confirmacao-subtexto">Esta ação registrará o pedido como pago (status: 'pago') e atualizará o status na plataforma.</p>
-             </div>
-             <div class="modal-rodape">
-                 <button class="btn-modal btn-neutro" onclick="closeModal('modal-confirmacao-pagamento')">Voltar</button>
-                <button class="btn-modal btn-confirmar" id="btn-confirma-pagamento-modal">Confirmar Pagamento</button>
-             </div>
-        </div>
-    </div>
     <div id="modal-confirmacao-cancelamento" class="modal">
          <div class="modal-conteudo modal-confirmacao">
              <div class="modal-cabecalho">
@@ -235,6 +217,21 @@
              <div class="modal-rodape">
                 <button class="btn-modal btn-neutro" onclick="closeModal('modal-confirmacao-cancelamento')">Voltar</button>
                 <button class="btn-modal btn-cancelar" id="btn-confirma-cancelamento">Cancelar Pedido</button>
+             </div>
+        </div>
+    </div>
+    <div id="modal-confirmacao-status" class="modal">
+         <div class="modal-conteudo modal-confirmacao">
+             <div class="modal-cabecalho">
+                 <h2 id="confirmacao-status-titulo">Confirmar Ação</h2>
+                 <span class="fechar-modal" onclick="closeModal('modal-confirmacao-status')">&times;</span>
+             </div>
+             <div class="modal-corpo">
+                <p id="confirmacao-status-mensagem">Tem certeza?</p>
+                <p id="confirmacao-status-subtexto" class="confirmacao-subtexto" style="display: none;"></p> </div>
+             <div class="modal-rodape">
+                <button class="btn-modal btn-neutro" onclick="closeModal('modal-confirmacao-status')">Voltar</button>
+                <button class="btn-modal btn-confirmar" id="btn-confirma-status-modal">Confirmar</button>
              </div>
         </div>
     </div>

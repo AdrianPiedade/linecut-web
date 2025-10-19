@@ -17,7 +17,7 @@ def dashboard_index(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     context = {
         'nome_restaurante': 'Museoh',
         'categoria': 'Lanches e Salgados',
@@ -33,18 +33,18 @@ def check_trial_expiration(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     try:
         firebase_uid = request.session.get('firebase_uid')
-        
+
         company_data = company_service.get_company_data(firebase_uid)
-        
+
         if not company_data:
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'message': 'Empresa não encontrada'
             })
-                
+
         if company_data.get('plano') != 'trial':
             return JsonResponse({
                 'success': True,
@@ -53,7 +53,7 @@ def check_trial_expiration(request):
                 'is_trial': False,
                 'message': 'Não é plano trial'
             })
-        
+
         if company_data.get('trial_plan_expired'):
             return JsonResponse({
                 'success': True,
@@ -62,33 +62,32 @@ def check_trial_expiration(request):
                 'is_trial': False,
                 'message': 'Seu período trial expirou anteriormente.'
             })
-        
+
         expired, was_updated = company_service.check_and_update_trial_expiration(firebase_uid)
-        
+
         response_data = {
             'success': True,
             'trial_expired': expired,
             'was_updated': was_updated,
             'is_trial': not expired
         }
-        
+
         if expired and was_updated:
             response_data['message'] = 'Seu período trial expirou. Seu plano foi alterado para Basic. Agora há uma taxa de 7% por venda.'
         elif expired:
             response_data['message'] = 'Seu período trial já havia expirado anteriormente.'
         else:
             response_data['message'] = 'Seu trial ainda está ativo.'
-        
+
         return JsonResponse(response_data)
-            
+
     except Exception as e:
-        import traceback
         traceback.print_exc()
         return JsonResponse({
-            'success': False, 
+            'success': False,
             'message': f'Erro ao verificar expiração do trial: {str(e)}'
         })
-    
+
 
 def pedidos(request):
     auth_redirect = check_dashboard_auth(request)
@@ -100,10 +99,10 @@ def produtos(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     firebase_uid = request.session.get('firebase_uid')
     products = product_service.get_all_products(firebase_uid)
-    
+
     context = {'products': products}
     return render(request, 'dashboard/produtos.html', context)
 
@@ -111,14 +110,14 @@ def criar_produto(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
-            
+
             ideal_quantity = request.POST.get('ideal_quantity')
             critical_quantity = request.POST.get('critical_quantity')
-            
+
             product_data = {
                 'name': request.POST.get('name'),
                 'description': request.POST.get('description'),
@@ -128,46 +127,46 @@ def criar_produto(request):
                 'is_available': request.POST.get('is_available') == 'true',
                 'image_url': ''
             }
-            
+
             if ideal_quantity and ideal_quantity.strip():
                 product_data['ideal_quantity'] = int(ideal_quantity)
-            
+
             if critical_quantity and critical_quantity.strip():
                 product_data['critical_quantity'] = int(critical_quantity)
-            
+
             image_file = request.FILES.get('image')
-            
+
             success, product_id = product_service.create_product(firebase_uid, product_data)
-            
+
             if success and image_file and product_id:
                 image_path = storage_service.upload_image(image_file, firebase_uid, product_id)
                 if image_path:
                     product_service.update_product(firebase_uid, product_id, {'image_url': image_path})
-            
+
             if success:
                 return JsonResponse({'success': True, 'message': 'Produto criado com sucesso!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao criar produto'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def editar_produto(request, product_id):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
             produto_atual = product_service.get_product(firebase_uid, product_id)
             imagem_antiga = produto_atual.get('image_url') if produto_atual else None
-            
+
             ideal_quantity = request.POST.get('ideal_quantity')
             critical_quantity = request.POST.get('critical_quantity')
-            
+
             product_data = {
                 'name': request.POST.get('name'),
                 'description': request.POST.get('description'),
@@ -176,95 +175,95 @@ def editar_produto(request, product_id):
                 'quantity': int(request.POST.get('quantity', 0)),
                 'is_available': request.POST.get('is_available') == 'true'
             }
-            
+
             if ideal_quantity and ideal_quantity.strip():
                 product_data['ideal_quantity'] = int(ideal_quantity)
             elif 'ideal_quantity' in produto_atual:
                 product_data['ideal_quantity'] = None
-            
+
             if critical_quantity and critical_quantity.strip():
                 product_data['critical_quantity'] = int(critical_quantity)
             elif 'critical_quantity' in produto_atual:
                 product_data['critical_quantity'] = None
-            
+
             image_file = request.FILES.get('image')
             if image_file:
                 if imagem_antiga:
                     storage_service.delete_image(imagem_antiga)
-                
+
                 image_path = storage_service.upload_image(image_file, firebase_uid, product_id)
                 if image_path:
                     product_data['image_url'] = image_path
-            
+
             success = product_service.update_product(firebase_uid, product_id, product_data)
-            
+
             if success:
                 return JsonResponse({'success': True, 'message': 'Produto atualizado com sucesso!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar produto'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def excluir_produto(request, product_id):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
             product = product_service.get_product(firebase_uid, product_id)
-            
+
             if product and 'image_url' in product and product['image_url']:
                 storage_service.delete_image(product['image_url'])
-            
+
             success = product_service.delete_product(firebase_uid, product_id)
-            
+
             if success:
                 return JsonResponse({'success': True, 'message': 'Produto excluído com sucesso!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao excluir produto'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def toggle_status_produto(request, product_id):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
             data = json.loads(request.body)
             current_status = data.get('current_status', False)
-            
+
             success = product_service.toggle_product_status(firebase_uid, product_id, current_status)
-            
+
             if success:
                 return JsonResponse({'success': True, 'message': 'Status alterado com sucesso!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao alterar status'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def detalhes_produto(request, product_id):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     try:
         firebase_uid = request.session.get('firebase_uid')
         product = product_service.get_product(firebase_uid, product_id)
-        
+
         if product:
             return JsonResponse({
                 'success': True,
@@ -282,7 +281,7 @@ def detalhes_produto(request, product_id):
             })
         else:
             return JsonResponse({'success': False, 'message': 'Produto não encontrado'})
-            
+
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
 
@@ -290,14 +289,14 @@ def estoque(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     firebase_uid = request.session.get('firebase_uid')
     products = product_service.get_all_products(firebase_uid)
-    
+
     paginator = Paginator(products, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'products': page_obj,
         'page_obj': page_obj,
@@ -309,65 +308,65 @@ def atualizar_estoque(request, product_id):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
-                        
+
             quantity = request.POST.get('quantity', '0')
             ideal_quantity = request.POST.get('ideal_quantity', '0')
             critical_quantity = request.POST.get('critical_quantity', '0')
-            
+
             try:
                 quantity_int = int(quantity) if quantity else 0
             except ValueError:
                 quantity_int = 0
-                
+
             try:
                 ideal_quantity_int = int(ideal_quantity) if ideal_quantity else 0
             except ValueError:
                 ideal_quantity_int = 0
-                
+
             try:
                 critical_quantity_int = int(critical_quantity) if critical_quantity else 0
             except ValueError:
                 critical_quantity_int = 0
-                        
+
             product_data = {
                 'quantity': quantity_int,
             }
-            
+
             if ideal_quantity_int > 0:
                 product_data['ideal_quantity'] = ideal_quantity_int
             else:
                 product_data['ideal_quantity'] = None
-                
+
             if critical_quantity_int > 0:
                 product_data['critical_quantity'] = critical_quantity_int
             else:
                 product_data['critical_quantity'] = None
-                        
+
             success = product_service.update_product(firebase_uid, product_id, product_data)
-            
+
             if success:
                 return JsonResponse({'success': True, 'message': 'Estoque atualizado com sucesso!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar estoque'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def detalhes_estoque(request, product_id):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     try:
         firebase_uid = request.session.get('firebase_uid')
         product = product_service.get_product(firebase_uid, product_id)
-        
+
         if product:
             return JsonResponse({
                 'success': True,
@@ -381,19 +380,19 @@ def detalhes_estoque(request, product_id):
             })
         else:
             return JsonResponse({'success': False, 'message': 'Produto não encontrado'})
-            
+
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
 def configuracoes(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     firebase_uid = request.session.get('firebase_uid')
-    
+
     company_data = company_service.get_company_data(firebase_uid)
-    
+
     context = {
         'company_data': company_data
     }
@@ -403,44 +402,44 @@ def update_company_profile(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
             current_company = company_service.get_company_data(firebase_uid)
-            
+
             if not current_company:
                 return JsonResponse({'success': False, 'message': 'Empresa não encontrada'})
-            
+
             company_data = {}
             valid_fields = [
                 'nome_lanchonete', 'description', 'telefone'
             ]
-            
+
             for field in valid_fields:
                 if field in request.POST:
                     company_data[field] = request.POST[field]
-            
+
             if current_company.get('image_url'):
                 company_data['image_url'] = current_company['image_url']
-            
+
             success = company_service.update_company_data(firebase_uid, company_data)
-            
+
             if success:
                 return JsonResponse({'success': True, 'message': 'Perfil atualizado com sucesso!'})
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar perfil'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def update_horario_funcionamento(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
@@ -462,50 +461,50 @@ def update_company_plan(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Requisição inválida'})
-            
+
             firebase_uid = request.session.get('firebase_uid')
             data = json.loads(request.body)
             new_plan = data.get('new_plan')
-            
+
             valid_plans = ['trial', 'basic', 'premium']
             if new_plan not in valid_plans:
                 return JsonResponse({'success': False, 'message': 'Plano inválido'})
-            
+
             current_company = company_service.get_company_data(firebase_uid)
             if current_company and current_company.get('plano') == 'trial' and new_plan == 'trial':
                 return JsonResponse({'success': False, 'message': 'Você já está no plano Trial'})
-            
+
             success = company_service.update_company_plan(firebase_uid, new_plan)
-            
+
             if success:
                 return JsonResponse({
-                    'success': True, 
+                    'success': True,
                     'message': f'Plano alterado para {new_plan.capitalize()} com sucesso!'
                 })
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao alterar plano'})
-                
+
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Dados inválidos'})
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def get_company_data(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     try:
         firebase_uid = request.session.get('firebase_uid')
         company_data = company_service.get_company_data(firebase_uid)
-        
+
         if company_data:
             return JsonResponse({
                 'success': True,
@@ -513,90 +512,91 @@ def get_company_data(request):
             })
         else:
             return JsonResponse({'success': True, 'company_data': {}})
-            
+
     except Exception as e:
         return JsonResponse({
-            'success': False, 
+            'success': False,
             'message': f'Erro ao carregar dados: {str(e)}'
         })
-    
+
 def check_trial_plan_expired(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     try:
         firebase_uid = request.session.get('firebase_uid')
         is_expired = company_service.check_trial_plan_expired(firebase_uid)
-        
+
         return JsonResponse({
             'success': True,
             'trial_plan_expired': is_expired
         })
-            
+
     except Exception as e:
         return JsonResponse({
-            'success': False, 
+            'success': False,
             'message': f'Erro ao verificar plano: {str(e)}'
         })
-    
+
 def update_company_image(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return auth_redirect
-    
+
     if request.method == 'POST':
         try:
             firebase_uid = request.session.get('firebase_uid')
-            
+
             current_company = company_service.get_company_data(firebase_uid)
             if not current_company:
                 return JsonResponse({'success': False, 'message': 'Empresa não encontrada'})
-            
+
             image_file = request.FILES.get('company_image')
-            
+
             if not image_file:
                 return JsonResponse({'success': False, 'message': 'Nenhuma imagem enviada'})
-            
+
             old_image_url = current_company.get('image_url')
             if old_image_url:
                 try:
                     storage_service.delete_image(old_image_url)
                 except Exception as e:
-                    print(f"Erro ao deletar imagem antiga: {e}")
-            
+                    # Log error instead of printing
+                    pass
+
             image_path = storage_service.upload_image(image_file, firebase_uid, 'company_logo')
             if not image_path:
                 return JsonResponse({'success': False, 'message': 'Erro ao fazer upload da imagem'})
-            
+
             try:
                 from firebase_admin import storage
                 from datetime import timedelta
-                
+
                 bucket = storage.bucket(settings.FIREBASE_STORAGE_BUCKET)
                 blob = bucket.blob(image_path)
-                
+
                 signed_url = blob.generate_signed_url(
                     expiration=timedelta(days=7),
                     method='GET'
                 )
             except Exception as e:
-                signed_url = image_path 
-            
+                signed_url = image_path
+
             success = company_service.update_company_field(firebase_uid, 'image_url', image_path)
-            
+
             if success:
                 return JsonResponse({
-                    'success': True, 
+                    'success': True,
                     'message': 'Imagem atualizada com sucesso!',
                     'image_url': signed_url
                 })
             else:
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar imagem no banco'})
-                
+
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
-    
+
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 def pedidos_view(request):
@@ -607,23 +607,18 @@ def pedidos_view(request):
 
 @require_GET
 def get_pedidos_data(request):
-    print(f"\n--- [View] Iniciando get_pedidos_data ---")
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
-        print(f"--- [View] ERRO: Autenticação necessária.")
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
 
     firebase_uid = request.session.get('firebase_uid')
-    print(f"--- [View] firebase_uid da sessão: {firebase_uid}")
     if not firebase_uid:
-        print(f"--- [View] ERRO: firebase_uid não encontrado na sessão.")
         return JsonResponse({'success': False, 'error': 'User session not found'}, status=400)
 
     try:
         active_tab = request.GET.get('tab', 'preparo')
         search_term = request.GET.get('search', '').lower().replace('#', '')
         sort_order = request.GET.get('sort', 'desc')
-        print(f"--- [View] Parâmetros recebidos: tab={active_tab}, search={search_term}, sort={sort_order}")
 
         status_map = {
             'preparo': ['pendente', 'pago', 'preparando'],
@@ -631,137 +626,101 @@ def get_pedidos_data(request):
             'historico': ['retirado', 'concluido', 'cancelado']
         }
         status_filter = status_map.get(active_tab)
-        print(f"--- [View] Filtro de status determinado: {status_filter}")
 
-        print(f"--- [View] Chamando order_service.get_orders_for_lanchonete...")
         orders = order_service.get_orders_for_lanchonete(firebase_uid, status_filter=status_filter, sort_order=sort_order)
-        print(f"--- [View] Resultado de get_orders_for_lanchonete (tipo: {type(orders)}):\n{orders}\n---")
 
 
         if orders is None:
-             print(f"--- [View] ERRO: get_orders_for_lanchonete retornou None.")
              return JsonResponse({'success': False, 'error': 'Falha ao buscar pedidos no banco de dados.'}, status=500)
 
         original_count = len(orders)
         if search_term:
-             print(f"--- [View] Aplicando filtro de busca: '{search_term}'")
              orders_filtrados = [
                  o for o in orders if search_term in o.get('id', '').lower() or o.get('id', '').endswith(search_term)
              ]
-             print(f"--- [View] Pedidos após filtro de busca: {len(orders_filtrados)} (original: {original_count})")
-             orders = orders_filtrados # Atualiza a lista
+             orders = orders_filtrados
         else:
-             print(f"--- [View] Nenhum filtro de busca aplicado.")
+             pass
 
 
-        print(f"--- [View] Retornando JsonResponse com success=True e {len(orders)} pedidos.")
         return JsonResponse({'success': True, 'orders': orders})
 
     except Exception as e:
-        print(f"--- [View] ERRO GERAL em get_pedidos_data: {e}")
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Ocorreu um erro interno no servidor.'}, status=500)
 
 @require_GET
 def get_pedido_details(request, order_id):
-    print(f"\n--- [View] Iniciando get_pedido_details para order_id: {order_id}")
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
-        print(f"--- [View] ERRO: Autenticação necessária.")
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
 
     try:
-        print(f"--- [View] Chamando order_service.get_order_details...")
         order_details = order_service.get_order_details(order_id)
-        print(f"--- [View] Resultado de get_order_details (tipo: {type(order_details)}):\n{order_details}\n---")
 
         if order_details:
-            print(f"--- [View] Retornando JsonResponse com success=True.")
             return JsonResponse({'success': True, 'order': order_details})
         else:
-            print(f"--- [View] ERRO: Pedido {order_id} não encontrado.")
             return JsonResponse({'success': False, 'error': 'Pedido não encontrado'}, status=404)
     except Exception as e:
-        print(f"--- [View] ERRO GERAL em get_pedido_details: {e}")
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
 
 @require_POST
 def update_pedido_status(request, order_id):
-    print(f"\n--- [View] Iniciando update_pedido_status para order_id: {order_id}")
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
-        print(f"--- [View] ERRO: Autenticação necessária.")
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
 
     firebase_uid = request.session.get('firebase_uid')
     if not firebase_uid:
-        print(f"--- [View] ERRO: firebase_uid não encontrado na sessão.")
         return JsonResponse({'success': False, 'error': 'User session not found'}, status=400)
 
     try:
         data = json.loads(request.body)
         new_status = data.get('new_status')
-        print(f"--- [View] Recebido pedido para mudar status para: {new_status}")
 
         allowed_statuses = ['pendente', 'pago', 'preparando', 'pronto', 'retirado', 'cancelado']
         if not new_status or new_status not in allowed_statuses:
-            print(f"--- [View] ERRO: Status inválido '{new_status}'.")
             return JsonResponse({'success': False, 'error': 'Status inválido fornecido'}, status=400)
 
-        print(f"--- [View] Chamando order_service.update_order_status...")
         success = order_service.update_order_status(firebase_uid, order_id, new_status)
-        print(f"--- [View] Resultado de update_order_status: {success}")
 
         if success:
-            print(f"--- [View] Retornando JsonResponse com success=True.")
             return JsonResponse({'success': True, 'message': f'Status do pedido atualizado para {new_status}'})
         else:
-            print(f"--- [View] ERRO: Falha ao atualizar status no service.")
             return JsonResponse({'success': False, 'error': 'Falha ao atualizar o status do pedido no banco de dados'}, status=500)
 
     except json.JSONDecodeError:
-        print(f"--- [View] ERRO: JSON inválido recebido.")
         return JsonResponse({'success': False, 'error': 'Dados JSON inválidos'}, status=400)
     except Exception as e:
-        print(f"--- [View] ERRO GERAL em update_pedido_status: {e}")
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
 
 @require_POST
 def cancel_pedido(request, order_id):
-    print(f"\n--- [View] Iniciando cancel_pedido para order_id: {order_id}")
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
-        print(f"--- [View] ERRO: Autenticação necessária.")
         return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
 
     firebase_uid = request.session.get('firebase_uid')
     if not firebase_uid:
-        print(f"--- [View] ERRO: firebase_uid não encontrado na sessão.")
         return JsonResponse({'success': False, 'error': 'User session not found'}, status=400)
 
     try:
         data = json.loads(request.body)
         reason = data.get('reason', 'Cancelado pelo restaurante')
-        print(f"--- [View] Motivo do cancelamento: {reason}")
 
-        print(f"--- [View] Chamando order_service.update_order_status para 'cancelado'...")
         success = order_service.update_order_status(firebase_uid, order_id, 'cancelado')
-        print(f"--- [View] Resultado de update_order_status (cancelamento): {success}")
 
         if success:
-            print(f"--- [View] Retornando JsonResponse com success=True.")
             return JsonResponse({'success': True, 'message': 'Pedido cancelado com sucesso.'})
         else:
-            print(f"--- [View] ERRO: Falha ao cancelar no service.")
             return JsonResponse({'success': False, 'error': 'Falha ao cancelar o pedido no banco de dados'}, status=500)
 
     except json.JSONDecodeError:
-        print(f"--- [View] ERRO: JSON inválido recebido.")
         return JsonResponse({'success': False, 'error': 'Dados JSON inválidos'}, status=400)
     except Exception as e:
-        print(f"--- [View] ERRO GERAL em cancel_pedido: {e}")
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
 

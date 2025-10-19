@@ -25,16 +25,16 @@ class ProductFirebaseService:
         try:
             if not ProductFirebaseService._ensure_initialized():
                 return None
-                
+
             user_ref = db.reference(f'/users/{user_id}')
             user_data = user_ref.get()
-            
+
             if user_data and 'restaurant_id' in user_data:
                 restaurant_id = user_data['restaurant_id']
                 return db.reference(f'/restaurants/{restaurant_id}'), restaurant_id
             else:
                 return db.reference(f'/restaurants/{user_id}'), user_id
-                
+
         except Exception as e:
             logger.error(f"Erro ao obter referência do restaurante: {e}")
             return None, None
@@ -45,26 +45,26 @@ class ProductFirebaseService:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
                 return None
-            
+
             products_ref = restaurant_ref.child('products')
             products_data = products_ref.get()
-            
+
             if products_data:
                 products_list = []
                 for product_id, product_data in products_data.items():
                     product_data['id'] = product_id
-                    
+
                     if 'image_url' in product_data:
                         product_data['image_url'] = ProductFirebaseService._process_image_url(product_data['image_url'])
-                    
+
                     product_data.setdefault('ideal_quantity', None)
                     product_data.setdefault('critical_quantity', None)
-                    
+
                     products_list.append(product_data)
-                
+
                 return products_list
             return None
-            
+
         except Exception as e:
             logger.error(f"Erro ao buscar produtos: {e}")
             return None
@@ -75,22 +75,22 @@ class ProductFirebaseService:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
                 return None
-            
+
             product_ref = restaurant_ref.child('products').child(product_id)
             product_data = product_ref.get()
-            
+
             if product_data:
                 product_data['id'] = product_id
-                
+
                 if 'image_url' in product_data:
                     product_data['image_url'] = ProductFirebaseService._process_image_url(product_data['image_url'])
-                
+
                 product_data.setdefault('ideal_quantity', None)
                 product_data.setdefault('critical_quantity', None)
-                    
+
                 return product_data
             return None
-            
+
         except Exception as e:
             logger.error(f"Erro ao buscar produto: {e}")
             return None
@@ -101,22 +101,22 @@ class ProductFirebaseService:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
                 return False, None
-            
+
             product_id = str(uuid.uuid4())[:8]
             product_data['created_at'] = datetime.now().isoformat()
             product_data['updated_at'] = datetime.now().isoformat()
-            
+
             cleaned_product_data = product_data.copy()
             if cleaned_product_data.get('ideal_quantity') in [None, '', 0]:
                 cleaned_product_data.pop('ideal_quantity', None)
             if cleaned_product_data.get('critical_quantity') in [None, '', 0]:
                 cleaned_product_data.pop('critical_quantity', None)
-            
+
             products_ref = restaurant_ref.child('products')
             products_ref.child(product_id).set(cleaned_product_data)
-            
+
             return True, product_id
-            
+
         except Exception as e:
             logger.error(f"Erro ao criar produto: {e}")
             return False, None
@@ -127,21 +127,21 @@ class ProductFirebaseService:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
                 return False
-            
+
             product_data['updated_at'] = datetime.now().isoformat()
-            
+
             cleaned_product_data = {}
             for key, value in product_data.items():
                 if value is not None:
                     cleaned_product_data[key] = value
                 else:
                     cleaned_product_data[key] = None
-                        
+
             product_ref = restaurant_ref.child('products').child(product_id)
             product_ref.update(cleaned_product_data)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Erro ao atualizar produto: {e}")
             return False
@@ -152,12 +152,12 @@ class ProductFirebaseService:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
                 return False
-            
+
             product_ref = restaurant_ref.child('products').child(product_id)
             product_ref.delete()
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Erro ao excluir produto: {e}")
             return False
@@ -168,50 +168,50 @@ class ProductFirebaseService:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
                 return False
-            
+
             new_status = not current_status
             product_ref = restaurant_ref.child('products').child(product_id)
             product_ref.update({
                 'is_available': new_status,
                 'updated_at': datetime.now().isoformat()
             })
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Erro ao alternar status do produto: {e}")
             return False
-        
+
     @staticmethod
     def _process_image_url(image_path):
         if not image_path:
             return ""
-        
+
         try:
             from firebase_admin import storage
             from datetime import timedelta
             from urllib.parse import urlparse, unquote
-            
+
             if image_path.startswith('http'):
                 parsed_url = urlparse(image_path)
                 path = unquote(parsed_url.path)
-                
+
                 if '/o/' in path:
                     image_path = path.split('/o/')[1].split('?')[0]
-            
+
             bucket = storage.bucket('linecut-3bf2b.firebasestorage.app')
             blob = bucket.blob(image_path)
-            
+
             if not blob.exists():
                 return ""
-            
+
             signed_url = blob.generate_signed_url(
                 expiration=timedelta(days=7),
                 method='GET'
             )
-            
+
             return signed_url
-            
+
         except Exception as e:
             return ""
 
@@ -221,19 +221,19 @@ class ProductFirebaseService:
             products = ProductFirebaseService.get_all_products(user_id)
             if not products:
                 return {}
-            
+
             alerts = {
                 'ideal_alerts': [],
                 'critical_alerts': []
             }
-            
+
             for product in products:
                 current_quantity = product.get('quantity', 0)
                 ideal_quantity = product.get('ideal_quantity')
                 critical_quantity = product.get('critical_quantity')
-                
-                if (critical_quantity is not None and 
-                    current_quantity <= critical_quantity and 
+
+                if (critical_quantity is not None and
+                    current_quantity <= critical_quantity and
                     current_quantity > 0):
                     alerts['critical_alerts'].append({
                         'product_id': product['id'],
@@ -241,10 +241,10 @@ class ProductFirebaseService:
                         'current_quantity': current_quantity,
                         'critical_quantity': critical_quantity
                     })
-                
-                elif (ideal_quantity is not None and 
+
+                elif (ideal_quantity is not None and
                       critical_quantity is not None and
-                      current_quantity <= ideal_quantity and 
+                      current_quantity <= ideal_quantity and
                       current_quantity > critical_quantity):
                     alerts['ideal_alerts'].append({
                         'product_id': product['id'],
@@ -252,10 +252,10 @@ class ProductFirebaseService:
                         'current_quantity': current_quantity,
                         'ideal_quantity': ideal_quantity
                     })
-                
-                elif (ideal_quantity is not None and 
+
+                elif (ideal_quantity is not None and
                       critical_quantity is None and
-                      current_quantity <= ideal_quantity and 
+                      current_quantity <= ideal_quantity and
                       current_quantity > 0):
                     alerts['ideal_alerts'].append({
                         'product_id': product['id'],
@@ -263,31 +263,31 @@ class ProductFirebaseService:
                         'current_quantity': current_quantity,
                         'ideal_quantity': ideal_quantity
                     })
-            
+
             return alerts
-            
+
         except Exception as e:
             logger.error(f"Erro ao verificar estoque baixo: {e}")
             return {}
-        
+
 class CompanyFirebaseService:
     @staticmethod
     def check_and_update_trial_expiration(user_id):
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return False, False
-                
+
             company_ref = db.reference(f'/empresas/{user_id}')
             company_data = company_ref.get()
-                        
+
             if company_data and company_data.get('plano') == 'trial':
                 from datetime import datetime, timedelta
                 import re
-                
-                signup_date_str = (company_data.get('created_at') or 
-                                company_data.get('data_cadastro') or 
+
+                signup_date_str = (company_data.get('created_at') or
+                                company_data.get('data_cadastro') or
                                 company_data.get('signup_date'))
-                                
+
                 if not signup_date_str:
                     signup_date = datetime.now() - timedelta(days=31)
                 else:
@@ -296,10 +296,10 @@ class CompanyFirebaseService:
                             signup_date_str = signup_date_str.replace('Z', '')
                         if '+' in signup_date_str:
                             signup_date_str = signup_date_str.split('+')[0]
-                        
+
                         if '.' in signup_date_str:
                             signup_date_str = signup_date_str.split('.')[0]
-                        
+
                         formats = [
                             '%Y-%m-%dT%H:%M:%S',
                             '%Y-%m-%d %H:%M:%S',
@@ -307,7 +307,7 @@ class CompanyFirebaseService:
                             '%d/%m/%Y %H:%M:%S',
                             '%d/%m/%Y'
                         ]
-                        
+
                         signup_date = None
                         for fmt in formats:
                             try:
@@ -315,15 +315,15 @@ class CompanyFirebaseService:
                                 break
                             except ValueError:
                                 continue
-                        
+
                         if not signup_date:
                             signup_date = datetime.now() - timedelta(days=31)
-                            
+
                     except Exception as e:
                         signup_date = datetime.now() - timedelta(days=31)
-                                
+
                 days_diff = (datetime.now() - signup_date).days
-                
+
                 if days_diff >= 30:
                     update_data = {
                         'plano': 'basic',
@@ -333,16 +333,15 @@ class CompanyFirebaseService:
                     }
                     company_ref.update(update_data)
                     return True, True
-                
-                return False, False 
-                
-            return False, False 
-        
+
+                return False, False
+
+            return False, False
+
         except Exception as e:
-            import traceback
             traceback.print_exc()
             return False, False
-        
+
     @staticmethod
     def _ensure_initialized():
         try:
@@ -359,16 +358,16 @@ class CompanyFirebaseService:
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return None
-            
+
             company_ref = db.reference(f'/empresas/{user_id}')
             company_data = company_ref.get()
-            
+
             if company_data:
                 if 'image_url' in company_data:
                     company_data['image_url'] = CompanyFirebaseService._process_image_url(company_data['image_url'])
                 return company_data
             return None
-            
+
         except Exception as e:
             logger.error(f"Erro ao buscar dados da empresa: {e}")
             return None
@@ -378,34 +377,34 @@ class CompanyFirebaseService:
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return False
-            
+
             company_ref = db.reference(f'/empresas/{user_id}')
-            
+
             current_data = company_ref.get() or {}
-            
+
             updated_data = {**current_data, **company_data}
             updated_data['updated_at'] = datetime.now().isoformat()
-            
+
             company_ref.update(updated_data)
             return True
-            
+
         except Exception as e:
             logger.error(f"Erro ao atualizar dados da empresa: {e}")
             return False
-        
+
     @staticmethod
     def update_company_plan(user_id, new_plan):
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return False
-            
+
             company_ref = db.reference(f'/empresas/{user_id}')
             company_ref.update({
                 'plano': new_plan,
                 'updated_at': datetime.now().isoformat()
             })
             return True
-            
+
         except Exception as e:
             logger.error(f"Erro ao atualizar plano da empresa: {e}")
             return False
@@ -414,48 +413,48 @@ class CompanyFirebaseService:
     def _process_image_url(image_path):
         if not image_path:
             return ""
-        
+
         try:
             from firebase_admin import storage
             from datetime import timedelta
             from urllib.parse import urlparse, unquote
-            
+
             if image_path.startswith('http'):
                 parsed_url = urlparse(image_path)
                 path = unquote(parsed_url.path)
-                
+
                 if '/o/' in path:
                     image_path = path.split('/o/')[1].split('?')[0]
-            
+
             bucket = storage.bucket('linecut-3bf2b.firebasestorage.app')
             blob = bucket.blob(image_path)
-            
+
             if not blob.exists():
                 return ""
-            
+
             signed_url = blob.generate_signed_url(
                 expiration=timedelta(days=7),
                 method='GET'
             )
-            
+
             return signed_url
-            
+
         except Exception as e:
             return ""
-        
+
     @staticmethod
     def check_trial_expiration(user_id):
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return False
-            
+
             company_ref = db.reference(f'/empresas/{user_id}')
             company_data = company_ref.get()
-            
+
             if company_data and company_data.get('plano') == 'trial':
                 from datetime import datetime, timedelta
                 signup_date = datetime.fromisoformat(company_data.get('data_cadastro', datetime.now().isoformat()))
-                
+
                 if datetime.now() > signup_date + timedelta(days=30):
                     company_ref.update({
                         'plano': 'basic',
@@ -463,50 +462,50 @@ class CompanyFirebaseService:
                         'updated_at': datetime.now().isoformat()
                     })
                     return True
-            
+
             return False
-                
+
         except Exception as e:
             logger.error(f"Erro ao verificar expiração do trial: {e}")
             return False
-        
+
     @staticmethod
     def check_trial_plan_expired(user_id):
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return False
-            
+
             company_ref = db.reference(f'/empresas/{user_id}')
             company_data = company_ref.get()
-            
+
             if company_data and company_data.get('trial_plan_expired'):
                 return True
             return False
-                
+
         except Exception as e:
             logger.error(f"Erro ao verificar expiração do plano trial: {e}")
             return False
-        
+
     @staticmethod
     def update_company_field(user_id, field_name, field_value):
         try:
             if not CompanyFirebaseService._ensure_initialized():
                 return False
-            
+
             company_ref = db.reference(f'/empresas/{user_id}')
-            
+
             update_data = {
                 field_name: field_value,
                 'updated_at': datetime.now().isoformat()
             }
-            
+
             company_ref.update(update_data)
             return True
-            
+
         except Exception as e:
             logger.error(f"Erro ao atualizar campo {field_name}: {e}")
             return False
-        
+
 class OrderFirebaseService:
     @staticmethod
     def _ensure_initialized():
@@ -555,7 +554,6 @@ class OrderFirebaseService:
                 logger.error(f"Estrutura inesperada retornada pelo Firebase para {lanchonete_id}: {type(orders_summary)}")
                 return []
 
-            # Obter detalhes dos pedidos principais para pegar os campos novos
             pedidos_principais_ref = db.reference('/pedidos')
             pedidos_principais_data = pedidos_principais_ref.get() or {}
 
@@ -569,10 +567,9 @@ class OrderFirebaseService:
                  if status_filter and current_status not in status_filter:
                     continue
 
-                 # Pega dados adicionais do nó principal /pedidos/{order_id}
                  pedido_principal = pedidos_principais_data.get(order_id, {})
-                 summary_data['metodo_pagamento'] = pedido_principal.get('metodo_pagamento') # Adicionado
-                 summary_data['status_pagamento'] = pedido_principal.get('status_pagamento', 'pendente') # Adicionado com default
+                 summary_data['metodo_pagamento'] = pedido_principal.get('metodo_pagamento')
+                 summary_data['status_pagamento'] = pedido_principal.get('status_pagamento', 'pendente')
 
                  data_criacao_str = summary_data.get('data_criacao')
                  if data_criacao_str:
@@ -610,16 +607,12 @@ class OrderFirebaseService:
 
     @staticmethod
     def get_order_details(order_id):
-        print(f"\n--- [OrderService] Iniciando get_order_details para order_id: {order_id}")
         try:
             if not OrderFirebaseService._ensure_initialized():
-                print("--- [OrderService] ERRO: Firebase não inicializado.")
                 return None
 
             order_ref = db.reference(f'/pedidos/{order_id}')
-            print(f"--- [OrderService] Referência Firebase: {order_ref.path}")
             order_data = order_ref.get()
-            print(f"--- [OrderService] Dados brutos recebidos para detalhes:\n{order_data}\n---")
 
             if order_data:
                 order_data['id'] = order_id
@@ -643,31 +636,23 @@ class OrderFirebaseService:
                     order_data['items_list'] = list(order_data['items'].values())
                 else:
                     order_data['items_list'] = []
-                print(f"--- [OrderService] Lista de itens processada: {len(order_data['items_list'])} itens")
 
                 order_data.setdefault('status_history', [])
                 if isinstance(order_data['status_history'], dict):
-                     # Converte o histórico de dict (com chaves push) para lista ordenada
                      history_list = list(order_data['status_history'].values())
                      history_list.sort(key=lambda x: x.get('timestamp_iso', ''), reverse=True)
                      order_data['status_history'] = history_list
-                     print(f"--- [OrderService] Histórico de status processado (dict -> list): {len(order_data['status_history'])} entradas")
                 elif isinstance(order_data['status_history'], list):
                     order_data['status_history'].sort(key=lambda x: x.get('timestamp_iso', ''), reverse=True)
-                    print(f"--- [OrderService] Histórico de status processado (list): {len(order_data['status_history'])} entradas")
                 else:
                      order_data['status_history'] = []
-                     print(f"--- [OrderService] Histórico de status não encontrado ou inválido.")
 
 
-                print(f"--- [OrderService] Retornando detalhes processados do pedido {order_id}.")
                 return order_data
             else:
-                print(f"--- [OrderService] Nenhum detalhe encontrado para o pedido {order_id}.")
                 return None
 
         except Exception as e:
-            print(f"--- [OrderService] ERRO GERAL em get_order_details para {order_id}: {e}")
             traceback.print_exc()
             return None
 
@@ -703,18 +688,13 @@ class OrderFirebaseService:
                 'timestamp_display': now_local_str
             }
 
-            # Lógica específica para atualização de status de pagamento
             if new_status == 'pago':
-                    # ATUALIZAÇÃO: Muda status_pagamento para 'pago' (ou 'efetuado')
-                    updates_main['status_pagamento'] = 'pago' # Ou 'efetuado', se preferir
+                    updates_main['status_pagamento'] = 'pago'
                     updates_main['datahora_pagamento'] = now_iso
-                    updates_summary['status_pagamento'] = 'pago' # Atualiza também no sumário
+                    updates_summary['status_pagamento'] = 'pago'
                     logger.info(f"Pedido {order_id} atualizado para PAGO.")
-                    # NÃO MUDAR status_pedido para 'pago', mantém o status atual do fluxo (ex: pendente)
-                    # O status_pedido só avança com 'preparando', 'pronto', 'retirado'
-                    del updates_main['status_pedido'] # Remove a mudança de status_pedido
-                    del updates_summary['status']     # Remove a mudança de status do sumário
-                    # Adiciona uma entrada de histórico específica para pagamento, se desejado
+                    del updates_main['status_pedido']
+                    del updates_summary['status']
                     pay_history_entry = { 'status': 'pagamento_confirmado', 'timestamp_iso': now_iso, 'timestamp_display': now_local_str }
                     order_ref.child('status_history').push(pay_history_entry)
             elif new_status == 'retirado':
@@ -724,10 +704,34 @@ class OrderFirebaseService:
                     updates_main['datahora_cancelamento'] = now_iso
                     order_ref.child('status_history').push(status_history_entry)
             else:
-                    # Para 'preparando', 'pronto', adiciona ao histórico normalmente
-                    order_ref.child('status_history').push(status_history_entry)
+                order_ref.child('status_history').push(status_history_entry)
+                if new_status == 'pronto':
+                    try:
+                        order_data = order_ref.get()
+                        if order_data and 'datahora_criacao' in order_data:
+                            creation_iso = order_data['datahora_criacao']
+                            creation_display = ""
+                            try:
+                                dt_utc = datetime.fromisoformat(creation_iso.replace('Z', '+00:00'))
+                                dt_local = dt_utc.astimezone(sao_paulo_tz)
+                                creation_display = dt_local.strftime('%d/%m %H:%M')
+                            except (ValueError, TypeError) as date_error:
+                                logger.warning(f"Erro ao formatar data de criação {creation_iso} para histórico: {date_error}")
+                                creation_display = "Data criação inválida"
 
-            # Aplica as atualizações
+                            creation_history_entry = {
+                                'status': 'pedido_realizado',
+                                'timestamp_iso': creation_iso,
+                                'timestamp_display': creation_display
+                            }
+                            order_ref.child('status_history').push(creation_history_entry)
+                            logger.info(f"Adicionado status 'pedido_realizado' ao histórico do pedido {order_id}")
+                        else:
+                            logger.warning(f"Não foi possível adicionar 'pedido_realizado' ao histórico: 'datahora_criacao' não encontrada para o pedido {order_id}.")
+                    except Exception as history_error:
+                        logger.error(f"Erro ao tentar adicionar 'pedido_realizado' ao histórico do pedido {order_id}: {history_error}")
+
+
             if updates_main:
                 order_ref.update(updates_main)
             if updates_summary:
