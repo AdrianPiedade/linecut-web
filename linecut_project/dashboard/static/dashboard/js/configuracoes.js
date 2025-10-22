@@ -427,7 +427,8 @@ function updateCompanyUI() {
         'info-endereco': window.companyData.endereco,
         'info-numero': window.companyData.numero,
         'info-cep': window.companyData.cep,
-        'info-data-cadastro': window.companyData.data_cadastro ? new Date(window.companyData.data_cadastro).toLocaleDateString('pt-BR') : 'Não disponível'
+        'info-data-cadastro': window.companyData.data_cadastro ? new Date(window.companyData.data_cadastro).toLocaleDateString('pt-BR') : 'Não disponível',
+        'info-chave-pix': window.companyData.chave_pix || 'Não configurado',
     };
     
     Object.entries(elementsToUpdate).forEach(([id, value]) => {
@@ -452,7 +453,8 @@ function updateCompanyUI() {
     const formFields = {
         'edit-nome-lanchonete': window.companyData.nome_lanchonete,
         'edit-description': window.companyData.description,
-        'edit-telefone': window.companyData.telefone
+        'edit-telefone': window.companyData.telefone,
+        'edit-chave-pix': window.companyData.chave_pix,
     };
     
     Object.entries(formFields).forEach(([id, value]) => {
@@ -754,13 +756,27 @@ document.getElementById('form-perfil')?.addEventListener('submit', function(e) {
 
 function salvarInformacoes() {
     const formData = new FormData();
-    const fields = ['nome_lanchonete', 'description', 'telefone'];
-    
+    const fields = ['nome_lanchonete', 'description', 'telefone', 'chave_pix'];
+
     fields.forEach(field => {
-        const value = document.getElementById(`edit-${field}`)?.value;
-        if (value) formData.append(field, value);
+        const elementId = `edit-${field.replace(/_/g, '-')}`;
+        const element = document.getElementById(elementId);
+
+        if (element) {
+            const value = element.value;
+            formData.append(field, value);
+        } else {
+            console.warn(`Elemento com ID ${elementId} não encontrado no formulário.`);
+        }
     });
-    
+
+    console.log("FormData a ser enviado:");
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+
+    const loadingOverlay = showLoading('Salvando informações...');
+
     fetch('/dashboard/configuracoes/update-profile/', {
         method: 'POST',
         headers: {
@@ -772,20 +788,18 @@ function salvarInformacoes() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showSuccessToast(data.message);
+            showSuccessToast(data.message || 'Perfil atualizado com sucesso!'); 
             loadCompanyData();
             closeModal('modal-perfil');
         } else {
-            showErrorToast(data.message);
+            showErrorToast(data.message || 'Erro ao salvar informações'); 
         }
     })
-    .catch(error => showErrorToast('Erro ao salvar informações'));
+    .catch(error => showErrorToast('Erro de comunicação ao salvar informações: ' + error)) 
+    .finally(() => {
+        hideLoading();
+    });
 }
-
-document.getElementById('form-horario')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    salvarHorario();
-});
 
 function salvarHorario() {
     if (isSavingHorario) return;

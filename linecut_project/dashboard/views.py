@@ -413,7 +413,7 @@ def update_company_profile(request):
 
             company_data = {}
             valid_fields = [
-                'nome_lanchonete', 'description', 'telefone'
+                'nome_lanchonete', 'description', 'telefone', 'chave_pix'
             ]
 
             for field in valid_fields:
