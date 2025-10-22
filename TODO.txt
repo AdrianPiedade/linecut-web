@@ -1,2 +1,4 @@
+- Implementar abertura da loja (automatica ou não)
 - Adicionar campo "chave pix" nas configurações e só permitir a abertura da loja se esse campo for preenchido com uma chave válida
-- levar limitações de escolha para
+- levar limitações de escolha para o firebase
+- Implementar o bloqueio o bloqueio do dashboard para contas não premium

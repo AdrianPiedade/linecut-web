@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     setupTabs();
     setupFilters();
-    loadOrders();
+    loadOrders().then(() => {
+        startOrderPolling();
+    });
 
     window.addEventListener('click', (event) => {
         const modals = document.querySelectorAll('.modal');
@@ -11,12 +13,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    addButtonStyleOverrides(); // Adiciona os estilos CSS para botões desabilitados
+    addButtonStyleOverrides();
+
+    const menuPedidos = document.getElementById('menu-pedidos');
+    if (menuPedidos) {
+        menuPedidos.addEventListener('click', () => {
+             removeNewOrderIndicator();
+             if (window.location.pathname.includes('/dashboard/pedidos/')) {
+                 setTimeout(() => switchTab('preparo'), 50);
+             }
+        });
+    }
 });
 
 let currentOrdersData = [];
 let currentOrderDetails = null;
 let currentActionInfo = {};
+let pedidoPollingInterval = null;
+const POLLING_INTERVAL_MS = 10000;
+let lastPreparoOrderIds = new Set();
+let hasNewOrders = false;
 
 const STATUS_MAP = {
     pendente: { text: 'Pendente', dotClass: 'pendente', sortOrder: 1 },
@@ -31,7 +47,7 @@ const STATUS_MAP = {
 const PAGAMENTO_MAP = {
     pendente: { text: 'Aguardando', dotClass: 'pendente'},
     efetuado: { text: 'Efetuado', dotClass: 'efetuado'},
-    pago: { text: 'Efetuado', dotClass: 'efetuado'}, // Usa 'Efetuado' para status 'pago'
+    pago: { text: 'Efetuado', dotClass: 'efetuado'},
     nao_aplicavel: { text: 'N/A', dotClass: 'nao_aplicavel'},
 };
 
@@ -61,7 +77,17 @@ function switchTab(tabId) {
     const tabPanes = document.querySelectorAll('.tab-pane');
     tabLinks.forEach(link => link.classList.toggle('active', link.getAttribute('data-tab') === tabId));
     tabPanes.forEach(pane => pane.classList.toggle('active', pane.id === `${tabId}-content`));
-    loadOrders();
+
+    if (tabId === 'preparo') {
+        removeNewOrderIndicator();
+        hasNewOrders = false;
+        loadOrders();
+    } else {
+        if (hasNewOrders) {
+             addNewOrderIndicator();
+        }
+        loadOrders();
+    }
 }
 
 function setupFilters() {
@@ -99,9 +125,19 @@ async function loadOrders() {
         }
         const data = await response.json();
         currentOrdersData = data.success ? (data.orders || []) : [];
+
+        if (activeTab === 'preparo') {
+            lastPreparoOrderIds = new Set(currentOrdersData.map(order => order.id));
+            removeNewOrderIndicator();
+            hasNewOrders = false;
+        }
+
     } catch (error) {
         showErrorToast(`Erro ao carregar pedidos: ${error.message}`);
         currentOrdersData = [];
+         if (activeTab === 'preparo') {
+             lastPreparoOrderIds = new Set();
+         }
     } finally {
         renderOrders(activeTab);
         showLoadingIndicator(false);
@@ -143,23 +179,21 @@ function renderOrders(activeTab) {
 
                 const colNumero = newRow.querySelector('.col-numero');
                 if (colNumero) {
-                    colNumero.querySelector('.numero-id').textContent = order.id ? `#${order.id}` : '#ERRO'; // ID Completo
+                    colNumero.querySelector('.numero-id').textContent = order.id ? `#${order.id}` : '#ERRO';
                 }
 
-                 // Coluna Status Pagamento (oculta no Histórico pelo template/CSS)
                 const colPagamentoStatus = newRow.querySelector('.col-pagamento-status');
                 if (colPagamentoStatus) {
-                     if (activeTab !== 'historico') { // Só exibe se não for histórico
-                        colPagamentoStatus.style.display = 'flex'; // Garante visibilidade
+                     if (activeTab !== 'historico') {
+                        colPagamentoStatus.style.display = 'flex';
                         const pagamentoInfo = PAGAMENTO_MAP[order.status_pagamento] || PAGAMENTO_MAP['pendente'];
                         colPagamentoStatus.querySelector('.pagamento-dot').className = `pagamento-dot ${pagamentoInfo.dotClass}`;
                         colPagamentoStatus.querySelector('.pagamento-text-principal').textContent = pagamentoInfo.text;
                      } else {
-                        colPagamentoStatus.style.display = 'none'; // Esconde no histórico
+                        colPagamentoStatus.style.display = 'none';
                      }
                 }
 
-                // Coluna Método Pagamento
                 const colMetodoPagamento = newRow.querySelector('.col-metodo-pagamento');
                  if (colMetodoPagamento) {
                      const metodoPagamentoTexto = METODO_PAGAMENTO_MAP[order.metodo_pagamento] || order.metodo_pagamento || 'Não info.';
@@ -170,18 +204,16 @@ function renderOrders(activeTab) {
                 const colValor = newRow.querySelector('.col-valor');
                 if (colValor) colValor.textContent = `R$ ${parseFloat(order.preco_total || 0).toFixed(2).replace('.', ',')}`;
 
-                // Coluna Data (garante visibilidade correta)
                 const colData = newRow.querySelector('.col-data');
                 if (colData) {
                     if (activeTab !== 'retirada') {
-                        colData.style.display = 'block'; // Garante visibilidade se não for 'retirada'
+                        colData.style.display = 'block';
                         colData.textContent = order.data_criacao_display || '--/--/----';
                     } else {
-                        colData.style.display = 'none'; // Esconde na aba 'retirada'
+                        colData.style.display = 'none';
                     }
                 }
 
-                // Coluna Avaliação (oculta sempre agora pelo template)
                 const colAvaliacao = newRow.querySelector('.col-avaliacao');
                 if (colAvaliacao) {
                     colAvaliacao.style.display = 'none';
@@ -211,7 +243,6 @@ function renderOrders(activeTab) {
                             actionsHTML += ` <button class="btn-acao btn-cancelar-pedido" onclick="confirmCancelOrder('${order.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>`;
                         }
                     } else if (activeTab === 'retirada') {
-                            // Colunas já tratadas acima
 
                             actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Ver</button>`;
 
@@ -243,7 +274,6 @@ function renderOrders(activeTab) {
                             actionsHTML += ` <button class="btn-acao btn-cancelar-pedido" onclick="confirmCancelOrder('${order.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>`;
 
                     } else if (activeTab === 'historico') {
-                        // Ação é apenas ver detalhes
                          actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Detalhes</button>`;
                     }
                     acoesCol.innerHTML = actionsHTML;
@@ -377,10 +407,8 @@ async function showOrderDetails(orderId) {
                  actionsContainer.innerHTML += `<button class="btn-modal btn-cancelar-detalhes" onclick="confirmCancelOrder('${orderId}')"><i class="bi bi-x-lg"></i> Cancelar pedido</button>`;
              }
              if (actionsContainer.innerHTML === '') {
-                 // Adiciona botão neutro para fechar se não houver ações
                  actionsContainer.innerHTML = `<button class="btn-modal btn-neutro" onclick="closeModal('modal-detalhes-pedido')">Fechar</button>`;
              } else {
-                 // Adiciona botão neutro para fechar além das outras ações
                   actionsContainer.innerHTML += `<button class="btn-modal btn-neutro" onclick="closeModal('modal-detalhes-pedido')">Fechar</button>`;
              }
 
@@ -405,23 +433,19 @@ function confirmUpdateStatus(orderId, newStatus) {
          preparando: `Marcar pedido #${orderId.substring(Math.max(0, orderId.length - 8))} como "Preparando"?`,
          pronto: `Marcar pedido #${orderId.substring(Math.max(0, orderId.length - 8))} como "Pronto para Retirada"?`,
          retirado: `Confirmar retirada do pedido #${orderId.substring(Math.max(0, orderId.length - 8))}?`
-         // Adicione outras mensagens se necessário
      };
     const message = messages[newStatus] || `Mudar status para "${statusText}"?`;
 
-    // Configura e abre o modal genérico de confirmação de status
     currentActionInfo = { orderId: orderId, newStatus: newStatus, action: 'update_status' };
     document.getElementById('confirmacao-status-titulo').textContent = `Confirmar Mudança de Status`;
     document.getElementById('confirmacao-status-mensagem').textContent = message;
 
-    // Oculta subtexto (pode ser usado para adicionar mais info se quiser)
     const subtextoElement = document.getElementById('confirmacao-status-subtexto');
     if (subtextoElement) subtextoElement.style.display = 'none';
 
-    // Garante que o listener do botão é atualizado
     const confirmBtn = document.getElementById('btn-confirma-status-modal');
-    confirmBtn.replaceWith(confirmBtn.cloneNode(true)); // Remove listeners antigos
-    document.getElementById('btn-confirma-status-modal').addEventListener('click', executeStatusUpdate); // Adiciona novo listener
+    confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+    document.getElementById('btn-confirma-status-modal').addEventListener('click', executeStatusUpdate);
 
     openModal('modal-confirmacao-status');
 }
@@ -433,15 +457,14 @@ async function executeStatusUpdate() {
     const confirmBtn = document.getElementById('btn-confirma-status-modal');
     setButtonLoading(confirmBtn, true, 'Confirmando...');
 
-    await updateStatus(orderId, newStatus); // Chama a função que faz o fetch
+    await updateStatus(orderId, newStatus);
 
-    setButtonLoading(confirmBtn, false, 'Confirmar'); // Restaura o botão
-    closeModal('modal-confirmacao-status'); // Fecha o modal
-    currentActionInfo = {}; // Limpa a ação
+    setButtonLoading(confirmBtn, false, 'Confirmar');
+    closeModal('modal-confirmacao-status');
+    currentActionInfo = {};
 }
 
 async function updateStatus(orderId, newStatus) {
-    // Mantém o indicador de loading geral da página, se desejado
     showLoadingIndicator(true);
     try {
         const response = await fetch(`/dashboard/pedidos/update_status/${orderId}/`, {
@@ -455,9 +478,9 @@ async function updateStatus(orderId, newStatus) {
         });
         const data = await response.json();
         if (data.success) {
-            showSuccessToast(data.message); // <--- TOAST DE SUCESSO AQUI
-            closeModal('modal-detalhes-pedido'); // Fecha detalhes se estiver aberto
-            loadOrders(); // Recarrega a lista
+            showSuccessToast(data.message);
+            closeModal('modal-detalhes-pedido');
+            loadOrders();
         } else {
             showErrorToast(data.error || 'Falha ao atualizar status.');
         }
@@ -567,7 +590,6 @@ function setButtonLoading(button, isLoading, loadingText = 'Aguarde...') {
              button.innerHTML = button.dataset.originalTextHTML;
              delete button.dataset.originalTextHTML;
          } else {
-              // Fallback para textContent se innerHTML não for o desejado
               button.innerHTML = button.textContent || originalTextHTML;
          }
      }
@@ -614,14 +636,14 @@ async function executeUpdatePaymentStatus() {
     setButtonLoading(confirmBtn, true, 'Confirmando...');
 
     try {
-        const response = await fetch(`/dashboard/pedidos/update_status/${orderId}/`, { // Reutiliza a URL
+        const response = await fetch(`/dashboard/pedidos/update_status/${orderId}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': CSRF_TOKEN,
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ new_payment_status: newStatus }) // Envia o novo status de pagamento
+            body: JSON.stringify({ new_payment_status: newStatus })
         });
         const data = await response.json();
         if (data.success) {
@@ -645,21 +667,19 @@ function addButtonStyleOverrides() {
         const styleSheet = document.createElement("style");
         styleSheet.id = 'button-style-overrides';
         styleSheet.innerText = `
-        /* Estilo para Botão Retirado (Verde) */
         .btn-marcar-retirado {
-            background-color: #e8f5e9; /* Verde claro */
-            color: var(--verde); /* Verde principal */
-            border: 1px solid #a9d1aa; /* Borda verde mais escura */
+            background-color: #e8f5e9;
+            color: var(--verde);
+            border: 1px solid #a9d1aa;
         }
         .btn-marcar-retirado:hover:not(:disabled) {
-            background-color: #c8e6c9; /* Hover verde mais claro */
+            background-color: #c8e6c9;
             box-shadow: 0 2px 4px rgba(24, 159, 76, 0.2);
         }
-        /* Override para estado desabilitado do Retirado */
         .btn-marcar-retirado:disabled {
-            background-color: #f0f0f0 !important; /* Cinza bem claro */
-            color: #bdbdbd !important; /* Cinza médio */
-            border-color: #e0e0e0 !important; /* Cinza claro */
+            background-color: #f0f0f0 !important;
+            color: #bdbdbd !important;
+            border-color: #e0e0e0 !important;
             cursor: not-allowed;
             opacity: 0.7;
         }
@@ -668,21 +688,19 @@ function addButtonStyleOverrides() {
              box-shadow: none;
         }
 
-        /* Estilo para Botão Pgto OK (Amarelo) */
         .btn-confirmar-pagamento-local {
-            background-color: #fff8e1; /* Amarelo bem claro */
-            color: #ffab00; /* Amarelo/Laranja */
-            border: 1px solid #ffecb3; /* Borda amarela clara */
+            background-color: #fff8e1;
+            color: #ffab00;
+            border: 1px solid #ffecb3;
         }
         .btn-confirmar-pagamento-local:hover:not(:disabled) {
-            background-color: #ffecb3; /* Amarelo mais claro no hover */
+            background-color: #ffecb3;
             box-shadow: 0 2px 4px rgba(255, 171, 0, 0.2);
         }
-         /* Override para estado desabilitado do Pgto OK */
         .btn-confirmar-pagamento-local:disabled {
-            background-color: #f0f0f0 !important; /* Cinza bem claro */
-            color: #bdbdbd !important; /* Cinza médio */
-            border-color: #e0e0e0 !important; /* Cinza claro */
+            background-color: #f0f0f0 !important;
+            color: #bdbdbd !important;
+            border-color: #e0e0e0 !important;
             cursor: not-allowed;
             opacity: 0.7;
         }
@@ -692,5 +710,75 @@ function addButtonStyleOverrides() {
         }
         `;
         document.head.appendChild(styleSheet);
+    }
+}
+
+function startOrderPolling() {
+    if (pedidoPollingInterval) {
+        clearInterval(pedidoPollingInterval);
+    }
+    pedidoPollingInterval = setInterval(checkForNewOrders, POLLING_INTERVAL_MS);
+}
+
+function stopOrderPolling() {
+    if (pedidoPollingInterval) {
+        clearInterval(pedidoPollingInterval);
+        pedidoPollingInterval = null;
+    }
+}
+
+async function checkForNewOrders() {
+    try {
+        const response = await fetch(`/dashboard/pedidos/data/?tab=preparo&sort=desc`);
+        if (!response.ok) {
+            console.error("Erro ao verificar novos pedidos:", response.statusText);
+            return;
+        }
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.orders)) {
+            const currentPreparoOrders = data.orders;
+            const currentPreparoOrderIds = new Set(currentPreparoOrders.map(order => order.id));
+
+            let newOrdersDetected = false;
+            if (lastPreparoOrderIds.size > 0) {
+                 currentPreparoOrderIds.forEach(id => {
+                     if (!lastPreparoOrderIds.has(id)) {
+                         newOrdersDetected = true;
+                     }
+                 });
+            }
+
+            lastPreparoOrderIds = currentPreparoOrderIds;
+            const activeTab = getActiveTabId();
+
+            if (activeTab === 'preparo') {
+                currentOrdersData = currentPreparoOrders;
+                renderOrders('preparo');
+                removeNewOrderIndicator();
+                hasNewOrders = false;
+            } else {
+                if (newOrdersDetected) {
+                     hasNewOrders = true;
+                     addNewOrderIndicator();
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Erro na função checkForNewOrders:", error);
+    }
+}
+
+function addNewOrderIndicator() {
+    const menuPedidos = document.getElementById('menu-pedidos');
+    if (menuPedidos && !menuPedidos.classList.contains('has-new-orders')) {
+        menuPedidos.classList.add('has-new-orders');
+    }
+}
+
+function removeNewOrderIndicator() {
+    const menuPedidos = document.getElementById('menu-pedidos');
+    if (menuPedidos) {
+        menuPedidos.classList.remove('has-new-orders');
     }
 }
