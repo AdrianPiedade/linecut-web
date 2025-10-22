@@ -135,5 +135,5 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'linecut.service@gmail.com'
-EMAIL_HOST_PASSWORD = 'wtip mimi feop kprq'
+EMAIL_HOST_PASSWORD = 'ieau eaoj nnqk eplf'
 DEFAULT_FROM_EMAIL = 'LineCut <linecut.service@gmail.com>'

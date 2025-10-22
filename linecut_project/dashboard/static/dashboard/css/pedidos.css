@@ -122,9 +122,9 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
 #retirada-content .cabecalho-tabela {
     grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(110px, 1.1fr) minmax(110px, 1.1fr) minmax(80px, 0.8fr) minmax(240px, 1.8fr); /* Ajustado Ações */
 }
-/* Colunas Header: Status | Id Pedido | Valor | Data | Avaliação | Detalhes */
+/* Colunas Header: Status | Id Pedido | Método Pgto | Valor | Data | Ações */
 #historico-content .cabecalho-tabela {
-    grid-template-columns: minmax(100px, 0.9fr) minmax(140px, 1.2fr) minmax(80px, 0.8fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(80px, 0.8fr);
+    grid-template-columns: minmax(100px, 1fr) minmax(200px, 1.5fr) minmax(110px, 1.1fr) minmax(60px, 0.8fr) minmax(90px, 1fr) minmax(60px, 0.8fr);
 }
 
 .corpo-tabela { max-height: 70vh; overflow-y: auto; display: block; }
@@ -150,9 +150,9 @@ body { font-family: 'Poppins', sans-serif; background: #F9F9F9; display: flex; m
 #retirada-content .linha-pedido {
     grid-template-columns: minmax(90px, 0.9fr) minmax(140px, 1.2fr) minmax(110px, 1.1fr) minmax(110px, 1.1fr) minmax(80px, 0.8fr) minmax(240px, 1.8fr); /* Ajustado Ações */
 }
-/* Colunas Linha: Status | Id Pedido | Valor | Data | Avaliação | Detalhes */
+/* Colunas Linha: Status | Id Pedido | Método Pgto | Valor | Data | Ações */
 #historico-content .linha-pedido {
-    grid-template-columns: minmax(100px, 0.9fr) minmax(140px, 1.2fr) minmax(80px, 0.8fr) minmax(90px, 1fr) minmax(100px, 1fr) minmax(80px, 0.8fr);
+    grid-template-columns: minmax(100px, 1fr) minmax(200px, 1.5fr) minmax(110px, 1.1fr) minmax(60px, 0.8fr) minmax(90px, 1fr) minmax(60px, 0.8fr);
 }
 
 .linha-vazia { text-align: center; padding: 40px; color: var(--cinza-escuro); font-style: italic; grid-column: 1 / -1; }

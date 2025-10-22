@@ -1,0 +1,2 @@
+- Adicionar campo "chave pix" nas configurações e só permitir a abertura da loja se esse campo for preenchido com uma chave válida
+- levar limitações de escolha para

@@ -131,10 +131,10 @@
                     <div class="cabecalho-tabela">
                         <span class="col-status">Status</span>
                         <span class="col-numero">Id Pedido</span>
+                        <span class="col-metodo-pagamento">Método Pgto</span>
                         <span class="col-valor">Valor</span>
                         <span class="col-data">Data</span>
-                        <span class="col-avaliacao">Avaliação</span>
-                        <span class="col-acoes">Detalhes</span>
+                        <span class="col-acoes">Ações</span>
                     </div>
                     <div class="corpo-tabela" id="historico-table-body">
                         <div class="linha-vazia">Nenhum pedido no histórico.</div>
@@ -155,7 +155,7 @@
                 <div class="col-numero">
                     <span class="numero-id"></span>
                 </div>
-                <div class="col-pagamento-status">
+                <div class="col-pagamento-status" style="display:none;">
                     <div class="pagamento-wrapper">
                         <span class="pagamento-dot"></span>
                         <span class="pagamento-text-principal"></span>
@@ -165,7 +165,8 @@
                     <span class="metodo-texto"></span>
                 </div>
                 <div class="col-valor"></div>
-                <div class="col-data" style="display:none;"></div> <div class="col-acoes"></div>
+                <div class="col-data" style="display:block;"></div>
+                <div class="col-acoes"></div>
                 <div class="col-avaliacao" style="display:none;"><span class="avaliacao-badge"></span></div>
             </div>
         </template>

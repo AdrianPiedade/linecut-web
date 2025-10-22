@@ -146,30 +146,47 @@ function renderOrders(activeTab) {
                     colNumero.querySelector('.numero-id').textContent = order.id ? `#${order.id}` : '#ERRO'; // ID Completo
                 }
 
+                 // Coluna Status Pagamento (oculta no Histórico pelo template/CSS)
                 const colPagamentoStatus = newRow.querySelector('.col-pagamento-status');
                 if (colPagamentoStatus) {
-                    const pagamentoInfo = PAGAMENTO_MAP[order.status_pagamento] || PAGAMENTO_MAP['pendente'];
-                    colPagamentoStatus.querySelector('.pagamento-dot').className = `pagamento-dot ${pagamentoInfo.dotClass}`;
-                    colPagamentoStatus.querySelector('.pagamento-text-principal').textContent = pagamentoInfo.text;
+                     if (activeTab !== 'historico') { // Só exibe se não for histórico
+                        colPagamentoStatus.style.display = 'flex'; // Garante visibilidade
+                        const pagamentoInfo = PAGAMENTO_MAP[order.status_pagamento] || PAGAMENTO_MAP['pendente'];
+                        colPagamentoStatus.querySelector('.pagamento-dot').className = `pagamento-dot ${pagamentoInfo.dotClass}`;
+                        colPagamentoStatus.querySelector('.pagamento-text-principal').textContent = pagamentoInfo.text;
+                     } else {
+                        colPagamentoStatus.style.display = 'none'; // Esconde no histórico
+                     }
                 }
 
+                // Coluna Método Pagamento
                 const colMetodoPagamento = newRow.querySelector('.col-metodo-pagamento');
                  if (colMetodoPagamento) {
                      const metodoPagamentoTexto = METODO_PAGAMENTO_MAP[order.metodo_pagamento] || order.metodo_pagamento || 'Não info.';
                      colMetodoPagamento.querySelector('.metodo-texto').textContent = metodoPagamentoTexto;
                  }
 
+
                 const colValor = newRow.querySelector('.col-valor');
                 if (colValor) colValor.textContent = `R$ ${parseFloat(order.preco_total || 0).toFixed(2).replace('.', ',')}`;
 
-                // A coluna 'col-data' existe no template mas não será preenchida na aba 'retirada'
+                // Coluna Data (garante visibilidade correta)
                 const colData = newRow.querySelector('.col-data');
-                if (colData && activeTab !== 'retirada') {
-                    colData.style.display = 'block'; // Garante que seja visível se não for 'retirada'
-                    colData.textContent = order.data_criacao_display || '--/--/----';
-                } else if (colData && activeTab === 'retirada') {
-                    colData.style.display = 'none'; // Esconde na aba 'retirada'
+                if (colData) {
+                    if (activeTab !== 'retirada') {
+                        colData.style.display = 'block'; // Garante visibilidade se não for 'retirada'
+                        colData.textContent = order.data_criacao_display || '--/--/----';
+                    } else {
+                        colData.style.display = 'none'; // Esconde na aba 'retirada'
+                    }
                 }
+
+                // Coluna Avaliação (oculta sempre agora pelo template)
+                const colAvaliacao = newRow.querySelector('.col-avaliacao');
+                if (colAvaliacao) {
+                    colAvaliacao.style.display = 'none';
+                }
+
 
                 const acoesCol = newRow.querySelector('.col-acoes');
                 if (acoesCol) {
@@ -194,8 +211,7 @@ function renderOrders(activeTab) {
                             actionsHTML += ` <button class="btn-acao btn-cancelar-pedido" onclick="confirmCancelOrder('${order.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>`;
                         }
                     } else if (activeTab === 'retirada') {
-                            // Coluna de Pagamento Status já é tratada acima
-                            // Coluna de Método Pagamento já é tratada acima
+                            // Colunas já tratadas acima
 
                             actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Ver</button>`;
 
@@ -227,21 +243,7 @@ function renderOrders(activeTab) {
                             actionsHTML += ` <button class="btn-acao btn-cancelar-pedido" onclick="confirmCancelOrder('${order.id}')"><i class="bi bi-x-circle"></i> Cancelar</button>`;
 
                     } else if (activeTab === 'historico') {
-                        const colAvaliacao = newRow.querySelector('.col-avaliacao');
-                         if(colAvaliacao) {
-                            colAvaliacao.style.display = 'block';
-                            const avaliacaoInfo = AVALIACAO_MAP[order.avaliacao_status || 'pendente'];
-                            const badge = colAvaliacao.querySelector('.avaliacao-badge');
-                             if (badge) {
-                                badge.textContent = avaliacaoInfo.text;
-                                badge.className = `avaliacao-badge ${avaliacaoInfo.badgeClass}`;
-                             }
-                         }
-                         // Reativa a coluna Data para o Histórico
-                         if(colData) {
-                             colData.style.display = 'block';
-                             colData.textContent = order.data_criacao_display || '--/--/----';
-                         }
+                        // Ação é apenas ver detalhes
                          actionsHTML = `<button class="btn-acao btn-ver-detalhes" onclick="showOrderDetails('${order.id}')"><i class="bi bi-eye"></i> Detalhes</button>`;
                     }
                     acoesCol.innerHTML = actionsHTML;
@@ -262,6 +264,7 @@ function renderOrders(activeTab) {
          if (possibleEmptyMsg) possibleEmptyMsg.remove();
     }
 }
+
 
 function getEmptyMessageForTab(tabId) {
     switch (tabId) {
@@ -374,8 +377,13 @@ async function showOrderDetails(orderId) {
                  actionsContainer.innerHTML += `<button class="btn-modal btn-cancelar-detalhes" onclick="confirmCancelOrder('${orderId}')"><i class="bi bi-x-lg"></i> Cancelar pedido</button>`;
              }
              if (actionsContainer.innerHTML === '') {
-                 actionsContainer.innerHTML = '<p>Nenhuma ação disponível para este pedido.</p>';
+                 // Adiciona botão neutro para fechar se não houver ações
+                 actionsContainer.innerHTML = `<button class="btn-modal btn-neutro" onclick="closeModal('modal-detalhes-pedido')">Fechar</button>`;
+             } else {
+                 // Adiciona botão neutro para fechar além das outras ações
+                  actionsContainer.innerHTML += `<button class="btn-modal btn-neutro" onclick="closeModal('modal-detalhes-pedido')">Fechar</button>`;
              }
+
 
         } else {
             showErrorToast(data.error || 'Erro ao carregar detalhes.');
