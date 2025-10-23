@@ -27,7 +27,7 @@ def dashboard_index(request):
         'avaliacao_media': 4.7,
         'total_avaliacoes': 360,
     }
-    return render(request, 'dashboard/index.html', context)
+    return render(request, 'dashboard/inicio.html', context)
 
 def check_trial_expiration(request):
     auth_redirect = check_dashboard_auth(request)
