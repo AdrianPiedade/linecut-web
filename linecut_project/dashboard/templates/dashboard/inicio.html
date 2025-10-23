@@ -1,248 +1,131 @@
+{% extends 'dashboard/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LineCut - Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+{% block title %}LineCut - Dashboard Início{% endblock %}
+
+{% block head_extra %}
     <link rel="stylesheet" href="{% static 'dashboard/css/inicio.css' %}">
-    <script>
-        var staticUrl = "{% static '' %}";
-    </script>
-    <script src="{% static 'dashboard/js/inicio.js' %}"></script>
-</head>
-<body>
-    <aside class="menu-lateral">
-        <div class="logo">
-            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+{% endblock %}
+
+{% block content %}
+    <header class="cabecalho">
+        <h1>Bem-vindo!</h1>
+        <p>Olá, {{ request.session.user_profile.nome_lanchonete|default:"Usuário" }}! Aqui está o resumo do seu dia até agora</p>
+    </header>
+
+    <div class="info-cards">
+        <div class="info-card dados-lanchonete">
+            <div class="lanchonete-imagem">
+                <img src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
+            </div>
+            <div class="lanchonete-info">
+                <h2>{{ request.session.user_profile.nome_lanchonete|default:"Nome Lanchonete" }}</h2>
+                <p class="categoria">{{ request.session.user_profile.description|default:"Categoria" }}</p>
+                <p class="endereco">{{ request.session.user_profile.polo|default:"Endereço" }}</p> {# Ajuste conforme o campo correto do endereço/polo #}
+            </div>
+            <div class="editar-icon" onclick="window.location.href='{% url 'dashboard:configuracoes' %}'"> {# Link para configurações #}
+                <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+            </div>
         </div>
-        
-        <div class="restaurant-info">
-            <h3>Meu Restaurante</h3>
-            <div class="status-loja">
-                <div class="status-indicator"></div>
-                <span>Loja Aberta</span>
-            </div>
-        </div>
-        
-        <nav class="menu-nav">
-            <div class="menu-item selected">
-                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
-                <span>Início</span>
-            </div>
-            <a href="{% url 'dashboard:pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'pedidos' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
-                <span>Pedidos</span>
-            </a>
-            <a href="{% url 'dashboard:produtos' %}" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
-                <span>Produtos</span>
-            </a>
-            <a href="{% url 'dashboard:estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'estoque' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
-                <span>Estoque</span>
-            </a>
-            <div class="menu-item">
-                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
-                <span>Dashboard</span>
-                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
-            </div>
-            <div class="menu-item">
-                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
-                <span>Avaliações</span>
-            </div>
-            <div class="menu-item">
-                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
-                <span>Notificações</span>
-            </div>
-            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item {% if request.resolver_match.url_name == 'configuracoes' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
-                <span>Configurações</span>
-            </a>
-        </nav>
-        
-        <div class="menu-sair">
-            <a href="{% url 'dashboard:logout' %}" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
-            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
-            <span>Sair</span>
-        </a>
-</div>
-    </aside>
 
-    <main class="conteudo-principal">
-        <header class="cabecalho">
-            <h1>Bem-vindo!</h1>
-            <p>Olá, Burger Queen! Aqui está o resumo do seu dia até agora</p>
-        </header>
-
-        <div class="info-cards">
-            <div class="info-card dados-lanchonete">
-                <div class="lanchonete-imagem">
-                    <img src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
+        <div class="info-card horario-funcionamento">
+            <h3>Horário de funcionamento</h3>
+            <div class="dias-semana">
+                <div class="dia-item">
+                    <p class="dia-nome">Seg</p>
+                    <div class="horario-box">
+                        <span>18:00 - 23:00</span>
+                    </div>
                 </div>
-                <div class="lanchonete-info">
-                    <h2>Burger Queen</h2>
-                    <p class="categoria">Lanches e Salgados</p>
-                    <p class="endereco">Praça 3 - Senac</p>
+                <div class="dia-item">
+                    <p class="dia-nome">Ter</p>
+                    <div class="horario-box">
+                        <span>18:00 - 23:00</span>
+                    </div>
                 </div>
-                <div class="editar-icon">
-                    <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                <div class="dia-item">
+                    <p class="dia-nome">Qua</p>
+                    <div class="horario-box">
+                        <span>18:00 - 23:00</span>
+                    </div>
                 </div>
-            </div>
-
-            <div class="info-card horario-funcionamento">
-                <h3>Horário de funcionamento</h3>
-                <div class="dias-semana">
-                    <div class="dia-item">
-                        <p class="dia-nome">Seg</p>
-                        <div class="horario-box">
-                            <span>18:00 - 23:00</span>
-                        </div>
+                <div class="dia-item">
+                    <p class="dia-nome">Qui</p>
+                    <div class="horario-box">
+                        <span>18:00 - 23:00</span>
                     </div>
-                    <div class="dia-item">
-                        <p class="dia-nome">Ter</p>
-                        <div class="horario-box">
-                            <span>18:00 - 23:00</span>
-                        </div>
-                    </div>
-                    <div class="dia-item">
-                        <p class="dia-nome">Qua</p>
-                        <div class="horario-box">
-                            <span>18:00 - 23:00</span>
-                        </div>
-                    </div>
-                    <div class="dia-item">
-                        <p class="dia-nome">Qui</p>
-                        <div class="horario-box">
-                            <span>18:00 - 23:00</span>
-                        </div>
-                    </div>
-                    <div class="dia-item">
-                        <p class="dia-nome">Sex</p>
-                        <div class="horario-box">
-                            <span>18:00 - 23:00</span>
-                        </div>
+                </div>
+                <div class="dia-item">
+                    <p class="dia-nome">Sex</p>
+                    <div class="horario-box">
+                        <span>18:00 - 23:00</span>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <section class="desempenho-diario">
-            <h2>Desempenho diário</h2>
-            <div class="metricas-container">
-                <div class="metrica">
-                    <h3>Pedidos recebidos hoje</h3>
-                    <p class="valor">15</p>
+    <section class="desempenho-diario">
+        <h2>Desempenho diário</h2>
+        <div class="metricas-container">
+            <div class="metrica">
+                <h3>Pedidos recebidos hoje</h3>
+                <p class="valor">15</p> {# Exemplo, substituir por dados reais #}
+            </div>
+            <div class="separador"></div>
+            <div class="metrica">
+                <h3>Total em vendas</h3>
+                <p class="valor">R$ 812,50</p> {# Exemplo, substituir por dados reais #}
+            </div>
+            <div class="separador"></div>
+            <div class="metrica">
+                <h3>Avaliação média</h3>
+                <div class="avaliacao-container">
+                    <img src="{% static 'dashboard/images/icone_estrela_hd.png' %}" alt="Avaliação" class="estrela-icon-hd">
+                    <p class="valor">4,7</p> 
+                <p class="total-avaliacoes">(360 avaliações)</p> 
+            </div>
+        </div>
+    </section>
+
+    <section class="ultimos-pedidos">
+        <h2>Últimos pedidos realizados</h2>
+        <div class="tabela-pedidos">
+            <div class="cabecalho-tabela">
+                <span class="col-status">Status</span>
+                <span class="col-numero">Número pedido</span>
+                <span class="col-valor">Valor</span>
+                <span class="col-data">Data</span>
+                <span class="col-acao">Detalhes</span>
+            </div>
+            <div class="linha-pedido">
+                <div class="col-status">
+                    <div class="status-indicator em-andamento"></div>
+                    <span>Em andamento</span>
                 </div>
-                <div class="separador"></div>
-                <div class="metrica">
-                    <h3>Total em vendas</h3>
-                    <p class="valor">R$ 812,50</p>
-                </div>
-                <div class="separador"></div>
-                <div class="metrica">
-                    <h3>Avaliação média</h3>
-                    <div class="avaliacao-container">
-                        <img src="{% static 'dashboard/images/icone_estrela_hd.png' %}" alt="Avaliação" class="estrela-icon-hd">
-                        <p class="valor">4,7</p>
-                    </div>
-                    <p class="total-avaliacoes">(360 avaliações)</p>
+                <div class="col-numero">#1200</div>
+                <div class="col-valor">R$ 20,00</div>
+                <div class="col-data">24/04/2025</div>
+                <div class="col-acao">
+                    <a href="#" class="ver-detalhes">Ver detalhes</a>
                 </div>
             </div>
-        </section>
-
-        <section class="ultimos-pedidos">
-            <h2>Últimos pedidos realizados</h2>
-            <div class="tabela-pedidos">
-                <div class="cabecalho-tabela">
-                    <span class="col-status">Status</span>
-                    <span class="col-numero">Número pedido</span>
-                    <span class="col-valor">Valor</span>
-                    <span class="col-data">Data</span>
-                    <span class="col-acao">Detalhes</span>
+             <div class="linha-pedido">
+                <div class="col-status">
+                    <div class="status-indicator concluido"></div>
+                    <span>Pedido concluído</span>
                 </div>
-                
-                <div class="linha-pedido">
-                    <div class="col-status">
-                        <div class="status-indicator em-andamento"></div>
-                        <span>Em andamento</span>
-                    </div>
-                    <div class="col-numero">#1200</div>
-                    <div class="col-valor">R$ 20,00</div>
-                    <div class="col-data">24/04/2025</div>
-                    <div class="col-acao">
-                        <a href="#" class="ver-detalhes">Ver detalhes</a>
-                    </div>
-                </div>
-                
-                <div class="linha-pedido">
-                    <div class="col-status">
-                        <div class="status-indicator em-andamento"></div>
-                        <span>Em andamento</span>
-                    </div>
-                    <div class="col-numero">#1199</div>
-                    <div class="col-valor">R$ 20,00</div>
-                    <div class="col-data">24/04/2025</div>
-                    <div class="col-acao">
-                        <a href="#" class="ver-detalhes">Ver detalhes</a>
-                    </div>
-                </div>
-                
-                <div class="linha-pedido">
-                    <div class="col-status">
-                        <div class="status-indicator concluido"></div>
-                        <span>Pedido concluído</span>
-                    </div>
-                    <div class="col-numero">#1198</div>
-                    <div class="col-valor">R$ 20,00</div>
-                    <div class="col-data">24/04/2025</div>
-                    <div class="col-acao">
-                        <a href="#" class="ver-detalhes">Ver detalhes</a>
-                    </div>
-                </div>
-                
-                <div class="linha-pedido">
-                    <div class="col-status">
-                        <div class="status-indicator concluido"></div>
-                        <span>Pedido concluído</span>
-                    </div>
-                    <div class="col-numero">#1197</div>
-                    <div class="col-valor">R$ 20,00</div>
-                    <div class="col-data">24/04/2025</div>
-                    <div class="col-acao">
-                        <a href="#" class="ver-detalhes">Ver detalhes</a>
-                    </div>
-                </div>
-                
-                <div class="linha-pedido">
-                    <div class="col-status">
-                        <div class="status-indicator concluido"></div>
-                        <span>Pedido concluído</span>
-                    </div>
-                    <div class="col-numero">#1196</div>
-                    <div class="col-valor">R$ 20,00</div>
-                    <div class="col-data">24/04/2025</div>
-                    <div class="col-acao">
-                        <a href="#" class="ver-detalhes">Ver detalhes</a>
-                    </div>
+                <div class="col-numero">#1198</div>
+                <div class="col-valor">R$ 20,00</div>
+                <div class="col-data">24/04/2025</div>
+                <div class="col-acao">
+                    <a href="#" class="ver-detalhes">Ver detalhes</a>
                 </div>
             </div>
-            
-            <button class="btn-ver-pedidos">Ver Pedidos</button>
-        </section>
-    </main>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-            if (typeof checkTrialExpiration === 'function') {
-                checkTrialExpiration();
-            }
-        }, 2000);
-    });
-    </script>
+        </div>
+
+        <button class="btn-ver-pedidos" onclick="window.location.href='{% url 'dashboard:pedidos' %}'">Ver Pedidos</button>
+    </section>
 
     <div id="planoModal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -264,5 +147,19 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'dashboard/js/inicio.js' %}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            if (typeof checkTrialExpiration === 'function') {
+                checkTrialExpiration();
+            } else {
+                console.error("Função checkTrialExpiration não encontrada em inicio.js");
+            }
+        }, 2000); 
+    });
+    </script>
+{% endblock %}

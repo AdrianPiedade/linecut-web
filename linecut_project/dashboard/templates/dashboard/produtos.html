@@ -1,160 +1,96 @@
+{% extends 'dashboard/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LineCut - Produtos</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+{% block title %}LineCut - Produtos{% endblock %}
+
+{% block head_extra %}
     <link rel="stylesheet" href="{% static 'dashboard/css/produtos.css' %}">
-</head>
-<body>
-    <aside class="menu-lateral">
-        <div class="logo">
-            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+{% endblock %}
+
+{% block content %}
+    <header class="cabecalho-produtos">
+        <div class="titulos">
+            <h1 class="titulo-ativo">Produtos</h1>
+            <h1 class="titulo-inativo btn-cadastrar-texto" onclick="abrirModal()">Cadastrar</h1>
         </div>
-        
-        <div class="restaurant-info">
-            <h3>Meu Restaurante</h3>
-            <div class="status-loja">
-                <div class="status-indicator"></div>
-                <span>Loja Aberta</span>
+    </header>
+
+    <div class="filtros">
+        <div class="filtro-group">
+            <label>Buscar produto</label>
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Digite o nome do produto...">
             </div>
         </div>
-        
-        <nav class="menu-nav">
-            <a href="{% url 'dashboard:index' %}" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
-                <span>Início</span>
-            </a>
-            <a href="{% url 'dashboard:pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'pedidos' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
-                <span>Pedidos</span>
-            </a>
-            <a href="{% url 'dashboard:produtos' %}" class="menu-item selected">
-                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
-                <span>Produtos</span>
-            </a>
-            <a href="{% url 'dashboard:estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'estoque' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
-                <span>Estoque</span>
-            </a>
-            <a href="#" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
-                <span>Dashboard</span>
-                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
-            </a>
-            <a href="#" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
-                <span>Avaliações</span>
-            </a>
-            <a href="#" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
-                <span>Notificações</span>
-            </a>
-            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item {% if request.resolver_match.url_name == 'configuracoes' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
-                <span>Configurações</span>
-            </a>
-        </nav>
-        
-        <div class="menu-sair">
-            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
-            <span>Sair</span>
+        <div class="filtro-group">
+            <label>Categoria</label>
+            <select id="categoria-filter">
+                <option value="">Todas as categorias</option>
+                <option value="Salgados">Salgados</option>
+                <option value="Lanches">Lanches</option>
+                <option value="Bebidas">Bebidas</option>
+                <option value="Sobremesas">Sobremesas</option>
+                <option value="Doces">Doces</option>
+                <option value="Acompanhamentos">Acompanhamentos</option>
+                <option value="Saudáveis">Saudáveis</option>
+                <option value="Laticínios">Laticínios</option>
+                <option value="Ingredientes">Ingredientes</option>
+            </select>
         </div>
-    </aside>
+        <div class="filtro-group">
+            <label>Status</label>
+            <select id="status-filter">
+                <option value="">Todos</option>
+                <option value="disponivel">Disponível</option>
+                <option value="indisponivel">Indisponível</option>
+            </select>
+        </div>
+    </div>
 
-    <main class="conteudo-principal">
-        <header class="cabecalho-produtos">
-            <div class="titulos">
-                <h1 class="titulo-ativo">Produtos</h1>
-                <h1 class="titulo-inativo btn-cadastrar-texto" onclick="abrirModal()">Cadastrar</h1>
-            </div>
-        </header>
+    <div class="tabela-container">
+        <div class="cabecalho-tabela">
+            <span class="col-id">ID</span>
+            <span class="col-nome">Produto</span>
+            <span class="col-descricao">Descrição</span>
+            <span class="col-preco">Preço</span>
+            <span class="col-quantidade">Qtd.</span>
+            <span class="col-status">Status</span>
+            <span class="col-acoes">Ações</span>
+        </div>
 
-        <div class="filtros">
-            <div class="filtro-group">
-                <label>Buscar produto</label>
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="Digite o nome do produto...">
+        <div class="corpo-tabela" id="produtos-lista">
+            {% for product in products %}
+            <div class="linha-produto"
+                data-product-id="{{ product.id|default:'N/A' }}"
+                data-category="{{ product.category }}"
+                data-status="{% if product.is_available %}disponivel{% else %}indisponivel{% endif %}"
+                data-image-url="{{ product.image_url|default_if_none:'' }}"
+                data-ideal-quantity="{{ product.ideal_quantity|default:'' }}"
+                data-critical-quantity="{{ product.critical_quantity|default:'' }}">
+                <div class="col-id">{{ product.id|default:"N/A" }}</div>
+                <div class="col-nome">{{ product.name }}</div>
+                <div class="col-descricao">{{ product.description|truncatewords:10 }}</div>
+                <div class="col-preco">R$ {{ product.price|floatformat:2 }}</div>
+                <div class="col-quantidade">{{ product.quantity|default:0 }}</div>
+                <div class="col-status">
+                    <span class="status-badge {% if product.is_available %}disponivel{% else %}indisponivel{% endif %}">
+                        {% if product.is_available %}Disponível{% else %}Indisponível{% endif %}
+                    </span>
+                </div>
+                <div class="col-acoes">
+                    <button class="btn-editar" onclick="editarProduto('{{ product.id }}')">Editar</button>
+                    <button class="btn-excluir" onclick="excluirProduto('{{ product.id }}', '{{ product.name }}')">Excluir</button>
+                    <button class="btn-status {% if product.is_available %}desativar{% else %}ativar{% endif %}"
+                            onclick="toggleStatus('{{ product.id }}', this, {% if product.is_available %}true{% else %}false{% endif %})">
+                        {% if product.is_available %}Desativar{% else %}Ativar{% endif %}
+                    </button>
                 </div>
             </div>
-            
-            <div class="filtro-group">
-                <label>Categoria</label>
-                <select id="categoria-filter">
-                    <option value="">Todas as categorias</option>
-                    <option value="Salgados">Salgados</option>
-                    <option value="Lanches">Lanches</option>
-                    <option value="Bebidas">Bebidas</option>
-                    <option value="Sobremesas">Sobremesas</option>
-                    <option value="Doces">Doces</option>
-                    <option value="Acompanhamentos">Acompanhamentos</option>
-                    <option value="Saudáveis">Saudáveis</option>
-                    <option value="Laticínios">Laticínios</option>
-                    <option value="Ingredientes">Ingredientes</option>
-                </select>
-            </div>
-            
-            <div class="filtro-group">
-                <label>Status</label>
-                <select id="status-filter">
-                    <option value="">Todos</option>
-                    <option value="disponivel">Disponível</option>
-                    <option value="indisponivel">Indisponível</option>
-                </select>
-            </div>
+            {% empty %}
+             <div class="linha-vazia">Nenhum produto cadastrado. Clique em "Cadastrar" para começar.</div>
+            {% endfor %}
         </div>
-
-        <div class="tabela-container">
-            <div class="cabecalho-tabela">
-                <span class="col-id">ID</span>
-                <span class="col-nome">Produto</span>
-                <span class="col-descricao">Descrição</span>
-                <span class="col-preco">Preço</span>
-                <span class="col-quantidade">Qtd.</span>
-                <span class="col-status">Status</span>
-                <span class="col-acoes">Editar</span>
-            </div>
-            
-            <div class="corpo-tabela" id="produtos-lista">
-                {% for product in products %}
-                <div class="linha-produto"
-                    data-product-id="{{ product.id|default:'N/A' }}" 
-                    data-category="{{ product.category }}" 
-                    data-status="{% if product.is_available %}disponivel{% else %}indisponivel{% endif %}"
-                    data-image-url="{{ product.image_url|default_if_none:'' }}"
-                    data-ideal-quantity="{{ product.ideal_quantity|default:'' }}"
-                    data-critical-quantity="{{ product.critical_quantity|default:'' }}">
-                    <div class="col-id">{{ product.id|default:"N/A" }}</div>
-                    <div class="col-nome">{{ product.name }}</div>
-                    <div class="col-descricao">{{ product.description|truncatewords:10 }}</div>
-                    <div class="col-preco">R$ {{ product.price|floatformat:2 }}</div>
-                    <div class="col-quantidade">{{ product.quantity|default:0 }}</div>
-                    <div class="col-status">
-                        <span class="status-badge {% if product.is_available %}disponivel{% else %}indisponivel{% endif %}">
-                            {% if product.is_available %}Disponível{% else %}Indisponível{% endif %}
-                        </span>
-                    </div>
-                    <div class="col-acoes">
-                        <button class="btn-editar" onclick="editarProduto('{{ product.id }}')">
-                            <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
-                            Editar
-                        </button>
-                        <button class="btn-excluir" onclick="excluirProduto('{{ product.id }}', '{{ product.name }}')">
-                            Excluir
-                        </button>
-                        <button class="btn-status {% if product.is_available %}desativar{% else %}ativar{% endif %}" 
-                                onclick="toggleStatus('{{ product.id }}', this, {% if product.is_available %}true{% else %}false{% endif %})">
-                            {% if product.is_available %}Desativar{% else %}Ativar{% endif %}
-                        </button>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+    </div>
 
     <div id="modal-produto" class="modal">
         <div class="modal-conteudo">
@@ -162,12 +98,12 @@
                 <h2 id="modal-titulo">Adicionar Produto</h2>
                 <span class="fechar-modal" onclick="fecharModal()">&times;</span>
             </div>
-            
+
             <form id="form-produto" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" id="produto-id" name="produto_id">
                 <input type="hidden" id="modo-edicao" name="modo_edicao" value="false">
-                
+
                 <div class="modal-corpo">
                     <div class="coluna-esquerda">
                         <div class="upload-imagem">
@@ -181,18 +117,17 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="coluna-direita">
                         <div class="form-group form-group-full-width">
                             <label for="nome">Nome do Produto *</label>
                             <input type="text" id="nome" name="name" required>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="categoria">Categoria *</label>
                                 <select id="categoria" name="category" required>
-                                    <option value="">Selecione uma categoria</option>
+                                    <option value="">Selecione</option>
                                     <option value="Salgados">Salgados</option>
                                     <option value="Lanches">Lanches</option>
                                     <option value="Bebidas">Bebidas</option>
@@ -204,19 +139,16 @@
                                     <option value="Ingredientes">Ingredientes</option>
                                 </select>
                             </div>
-                            
                             <div class="form-group">
                                 <label for="preco">Preço (R$) *</label>
                                 <input type="number" id="preco" name="price" step="0.01" min="0" required>
                             </div>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="quantidade">Quantidade *</label>
                                 <input type="number" id="quantidade" name="quantity" min="0" required>
                             </div>
-                            
                             <div class="form-group">
                                 <label for="status">Status</label>
                                 <select id="status" name="is_available">
@@ -225,42 +157,32 @@
                                 </select>
                             </div>
                         </div>
-
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="quantidade_ideal" title="Quantidade ideal para manter em estoque. Quando o estoque ficar abaixo deste valor, você receberá um alerta.">
-                                    Qtd. Ideal de Estoque 
-                                    <span style="color: #666; font-size: 12px;">(?)</span>
+                                <label for="quantidade_ideal" title="Quantidade ideal para manter em estoque...">
+                                    Qtd. Ideal Estoque <span class="help-icon">(?)</span>
                                 </label>
-                                <input type="number" id="quantidade_ideal" name="ideal_quantity" min="0" 
-                                    placeholder="Opcional">
+                                <input type="number" id="quantidade_ideal" name="ideal_quantity" min="0" placeholder="Opcional">
                             </div>
-                            
                             <div class="form-group">
-                                <label for="quantidade_critica" title="Quantidade crítica de estoque. Quando o estoque chegar neste nível, você receberá uma notificação urgente para repor o produto.">
-                                    Qtd. Crítica de Estoque 
-                                    <span style="color: #666; font-size: 12px;">(?)</span>
+                                <label for="quantidade_critica" title="Quantidade crítica de estoque...">
+                                    Qtd. Crítica Estoque <span class="help-icon">(?)</span>
                                 </label>
-                                <input type="number" id="quantidade_critica" name="critical_quantity" min="0" 
-                                    placeholder="Opcional">
+                                <input type="number" id="quantidade_critica" name="critical_quantity" min="0" placeholder="Opcional">
                             </div>
                         </div>
-                        
                         <div class="form-group form-group-full-width">
                             <label for="descricao">Descrição</label>
                             <textarea id="descricao" name="description" rows="4" placeholder="Descreva o produto..."></textarea>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="modal-rodape">
                     <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
                     <button type="submit" class="btn-salvar" id="btn-salvar-produto">
                         <span id="btn-text">Salvar Produto</span>
-                        <div id="btn-loading" style="display: none;">
-                            <div class="loading-spinner"></div>
-                            <span id="loading-text">Salvando...</span>
-                        </div>
+                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
                     </button>
                 </div>
             </form>
@@ -273,29 +195,21 @@
                 <h2>Editar Imagem</h2>
                 <span class="fechar-modal" onclick="fecharEditorImagem()">&times;</span>
             </div>
-            
+
             <div class="editor-imagem-corpo">
                 <div class="editor-toolbar">
-                    <button type="button" class="btn-editor" onclick="rotateImage()" title="Rotacionar 90°">
-                        ↻ Rotacionar
-                    </button>
-                    <button type="button" class="btn-editor" onclick="zoomIn()" title="Zoom In">
-                        + Zoom In
-                    </button>
-                    <button type="button" class="btn-editor" onclick="zoomOut()" title="Zoom Out">
-                        - Zoom Out
-                    </button>
-                    <button type="button" class="btn-editor" onclick="resetEditor()" title="Resetar">
-                        ⟲ Resetar
-                    </button>
+                    <button type="button" class="btn-editor" onclick="rotateImage()" title="Rotacionar 90°">↻ Rotacionar</button>
+                    <button type="button" class="btn-editor" onclick="zoomIn()" title="Zoom In">+ Zoom In</button>
+                    <button type="button" class="btn-editor" onclick="zoomOut()" title="Zoom Out">- Zoom Out</button>
+                    <button type="button" class="btn-editor" onclick="resetEditor()" title="Resetar">⟲ Resetar</button>
                 </div>
-                
+
                 <div class="editor-container">
                     <div class="image-crop-container">
                         <img id="editor-image" src="" alt="Imagem para editar">
                     </div>
                 </div>
-                
+
                 <div class="editor-preview">
                     <h4>Preview:</h4>
                     <div class="preview-container">
@@ -303,7 +217,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharEditorImagem()">Cancelar</button>
                 <button type="button" class="btn-salvar" onclick="salvarImagemEditada()">Aplicar Edições</button>
@@ -312,16 +226,22 @@
     </div>
 
     <div id="modal-confirmacao" class="modal">
-        <div class="modal-conteudo confirmacao">
-            <h3 id="confirmacao-titulo">Confirmar exclusão</h3>
-            <p id="confirmacao-mensagem">Tem certeza que deseja excluir este produto?</p>
-            <div class="botoes-confirmacao">
+        <div class="modal-conteudo confirmacao"> 
+            <div class="modal-cabecalho">
+                 <h2 id="confirmacao-titulo">Confirmar exclusão</h2>
+                 <span class="fechar-modal" onclick="fecharConfirmacao()">&times;</span>
+            </div>
+             <div class="modal-corpo">
+                <p id="confirmacao-mensagem">Tem certeza que deseja excluir este produto?</p>
+             </div>
+             <div class="modal-rodape botoes-confirmacao">
                 <button class="btn-cancelar" onclick="fecharConfirmacao()">Cancelar</button>
                 <button class="btn-confirmar" id="btn-confirmar-acao">Confirmar</button>
             </div>
         </div>
     </div>
+{% endblock %}
 
+{% block scripts %}
     <script src="{% static 'dashboard/js/produtos.js' %}"></script>
-</body>
-</html>
+{% endblock %}

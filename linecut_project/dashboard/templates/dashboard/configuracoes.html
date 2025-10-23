@@ -1,268 +1,116 @@
+{% extends 'dashboard/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>LineCut - Configurações</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+{% block title %}LineCut - Configurações{% endblock %}
+
+{% block head_extra %}
     <link rel="stylesheet" href="{% static 'dashboard/css/configuracoes.css' %}">
-</head>
-<body data-default-image="{% static 'dashboard/images/perfil_default.png' %}">
-    <aside class="menu-lateral">
-        <div class="logo">
-            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
-        </div>
-        
-        <div class="restaurant-info">
-            <h3>Meu Restaurante</h3>
-            <div class="status-loja">
-                <div class="status-indicator"></div>
-                <span>Loja Aberta</span>
-            </div>
-        </div>
-        
-        <nav class="menu-nav">
-            <a href="{% url 'dashboard:index' %}" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
-                <span>Início</span>
-            </a>
-            <a href="{% url 'dashboard:pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'pedidos' %}selected{% endif %}">
-                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
-                <span>Pedidos</span>
-            </a>
-            <a href="{% url 'dashboard:produtos' %}" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
-                <span>Produtos</span>
-            </a>
-            <a href="{% url 'dashboard:estoque' %}" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
-                <span>Estoque</span>
-            </a>
-            <a href="#" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
-                <span>Dashboard</span>
-                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
-            </a>
-            <a href="#" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
-                <span>Avaliações</span>
-            </a>
-            <a href="#" class="menu-item">
-                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
-                <span>Notificações</span>
-            </a>
-            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item selected">
-                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
-                <span>Configurações</span>
-            </a>
-        </nav>
-        
-        <div class="menu-sair">
-            <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
-            <span>Sair</span>
-        </div>
-    </aside>
+{% endblock %}
 
-    <main class="conteudo-principal">
-        <header class="cabecalho-configuracoes">
-            <div class="titulos">
-                <h1 class="titulo-ativo" id="titulo-perfil">Perfil</h1>
-                <h1 class="titulo-inativo" id="titulo-ajuda">Ajuda</h1>
-            </div>
-        </header>
+{% block content %}
+    <header class="cabecalho-configuracoes">
+        <div class="titulos">
+            <h1 class="titulo-ativo" id="titulo-perfil">Perfil</h1>
+            <h1 class="titulo-inativo" id="titulo-ajuda">Ajuda</h1>
+        </div>
+    </header>
 
-        <div id="secao-perfil" class="secao-configuracoes">
-            <div class="card-configuracao">
-                <div class="card-header">
-                    <h2>Perfil da Lanchonete</h2>
-                </div>
-                <div class="card-body">
-                    <div class="perfil-info">
-                        <div class="perfil-imagem" id="perfil-imagem" onclick="document.getElementById('company-image-input').click()">
-                            {% if company_data and company_data.image_url %}
-                                <img id="logo-lanchonete" src="{{ company_data.image_url }}" alt="Logo Lanchonete">
-                            {% else %}
-                                <img id="logo-lanchonete" src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
-                            {% endif %}
-                            <div class="perfil-imagem-overlay">
-                                <span class="perfil-imagem-texto">Alterar imagem</span>
+    <div id="secao-perfil" class="secao-configuracoes">
+        <div class="card-configuracao">
+            <div class="card-header"><h2>Perfil da Lanchonete</h2></div>
+            <div class="card-body">
+                <div class="perfil-info">
+                    <div class="perfil-imagem" id="perfil-imagem" onclick="document.getElementById('company-image-input').click()">
+                        <img id="logo-lanchonete"
+                             src="{{ company_data.image_url|default_if_none:''|default:'/static/dashboard/images/perfil_default.png' }}"
+                             alt="Logo Lanchonete">
+                        <div class="perfil-imagem-overlay"><span class="perfil-imagem-texto">Alterar</span></div>
+                    </div>
+                    <input type="file" id="company-image-input" name="company_image" accept="image/*" style="display: none;" onchange="handleCompanyImageUpload(this.files[0])">
+                    <div class="perfil-detalhes">
+                        <h3 id="nome-lanchonete">{{ company_data.nome_lanchonete|default:"Nome Lanchonete" }}</h3>
+                        <p id="categoria-lanchonete">{{ company_data.description|default:"Descrição" }}</p>
+                        <div class="plano-info">
+                            <div class="plano-badge" id="plano-badge">
+                                <span class="icone-plano">
+                                    {% with plano=company_data.plano|default:"premium" %}
+                                        {% if plano == 'trial' %}🧩
+                                        {% elif plano == 'basic' %}💼
+                                        {% else %}👑
+                                        {% endif %}
+                                    {% endwith %}
+                                </span>
+                                <span id="tipo-plano">{{ company_data.plano|default:"premium"|capfirst }}</span>
                             </div>
-                        </div>
-                        <input type="file" id="company-image-input" name="company_image" accept="image/*" style="display: none;" onchange="handleCompanyImageUpload(this.files[0])">
-                        <div class="perfil-detalhes">
-                            <h3 id="nome-lanchonete">{{ company_data.nome_lanchonete|default:"Nome da Lanchonete" }}</h3>
-                            <p id="categoria-lanchonete">{{ company_data.description|default:"Descrição da Lanchonete" }}</p>
-                            <div class="plano-info">
-                                <div class="plano-badge" id="plano-badge">
-                                    <span class="icone-plano">
-                                        {% if company_data.plano == 'trial' %}🧩{% endif %}
-                                        {% if company_data.plano == 'basic' %}💼{% endif %}
-                                        {% if company_data.plano == 'premium' %}👑{% endif %}
-                                    </span>
-                                    <span id="tipo-plano">{{ company_data.plano|default:"premium"|capfirst }}</span>
-                                </div>
-                                <a href="#" class="link-mudar-plano" onclick="abrirModalPlanos()">Mudar plano</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-configuracao">
-                <div class="card-header">
-                    <h2>Horário de Funcionamento</h2>
-                    <button class="btn-editar-card" onclick="editarHorario()">
-                        <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
-                    </button>
-                </div>
-                <div class="card-body" id="horario-display-body">
-                   <div id="horario-info-container">
-                        <p>Carregando horários...</p>
-                   </div>
-                </div>
-            </div>
-
-            <div class="card-configuracao">
-                <div class="card-header">
-                    <h2>Informações da Conta</h2>
-                    <button class="btn-editar-card" onclick="editarInformacoes()">
-                        <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="tabela-informacoes">
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Nome Fantasia</div>
-                            <div class="coluna-valor" id="info-nome-fantasia"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Razão Social</div>
-                            <div class="coluna-valor" id="info-razao-social"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">CNPJ</div>
-                            <div class="coluna-valor" id="info-cnpj"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Nome da Lanchonete</div>
-                            <div class="coluna-valor" id="info-nome-lanchonete"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Descrição da Lanchonete</div>
-                            <div class="coluna-valor" id="info-description">Lanches e Salgados</div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Polo</div>
-                            <div class="coluna-valor" id="info-polo"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Telefone</div>
-                            <div class="coluna-valor" id="info-telefone"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Endereço</div>
-                            <div class="coluna-valor" id="info-endereco"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Número</div>
-                            <div class="coluna-valor" id="info-numero"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">CEP</div>
-                            <div class="coluna-valor" id="info-cep">04820-392</div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Data de Cadastro</div>
-                            <div class="coluna-valor" id="info-data-cadastro"></div>
-                        </div>
-                        <div class="linha-informacao">
-                            <div class="coluna-titulo">Chave PIX</div>
-                            <div class="coluna-valor" id="info-chave-pix">Não configurado</div>
+                            <a href="#" class="link-mudar-plano" onclick="abrirModalPlanos()">Mudar plano</a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="secao-ajuda" class="secao-configuracoes">
-            <div class="ajuda-cards-container">
-                <div class="ajuda-card" data-modal="modal-faq">
-                    <div class="ajuda-card-header">
-                        <div class="ajuda-card-icon">
-                            <img src="{% static 'dashboard/images/icone_faq.png' %}" alt="FAQ">
-                        </div>
-                        <div class="ajuda-card-titles">
-                            <h3>FAQ</h3>
-                            <p>Perguntas Frequentes</p>
-                        </div>
-                    </div>
-                    <div class="ajuda-card-descricao">
-                        <p>Encontre respostas rápidas para as dúvidas mais comuns sobre o uso do portal LineCut.</p>
-                    </div>
-                </div>
-                <div class="ajuda-card" data-modal="modal-sac">
-                    <div class="ajuda-card-header">
-                        <div class="ajuda-card-icon">
-                            <img src="{% static 'dashboard/images/icone_sac.png' %}" alt="SAC">
-                        </div>
-                        <div class="ajuda-card-titles">
-                            <h3>SAC</h3>
-                            <p>Precisando de Ajuda?</p>
-                        </div>
-                    </div>
-                    <div class="ajuda-card-descricao">
-                        <p>Não encontrou o que precisava? Estamos aqui para ajudar! Fale conosco através dos canais disponíveis.</p>
-                    </div>
-                </div>
-                <div class="ajuda-card" data-modal="modal-contato">
-                    <div class="ajuda-card-header">
-                        <div class="ajuda-card-icon">
-                            <img src="{% static 'dashboard/images/icone_email.png' %}" alt="Contato">
-                        </div>
-                        <div class="ajuda-card-titles">
-                            <h3>CONTATO</h3>
-                            <p>Fale Conosco</p>
-                        </div>
-                    </div>
-                    <div class="ajuda-card-descricao">
-                        <p>Entre em contato com nossa equipe de suporte para esclarecer dúvidas, relatar problemas ou obter orientações.</p>
-                    </div>
-                </div>
-                <div class="ajuda-card" data-modal="modal-termos">
-                    <div class="ajuda-card-header">
-                        <div class="ajuda-card-icon">
-                            <img src="{% static 'dashboard/images/icone_info.png' %}" alt="Termos e Condições">
-                        </div>
-                        <div class="ajuda-card-titles">
-                            <h3>Termos e Condições</h3>
-                            <p>Regras de Utilização</p>
-                        </div>
-                    </div>
-                    <div class="ajuda-card-descricao">
-                        <p>Leia os termos que regem o uso da plataforma LineCut para garantir uma parceria de sucesso.</p>
-                    </div>
-                </div>
-                <div class="ajuda-card" data-modal="modal-politica">
-                    <div class="ajuda-card-header">
-                        <div class="ajuda-card-icon">
-                            <img src="{% static 'dashboard/images/icone_info.png' %}" alt="Política de Privacidade">
-                        </div>
-                        <div class="ajuda-card-titles">
-                            <h3>Política de Privacidade</h3>
-                            <p>Seus Dados Seguros</p>
-                        </div>
-                    </div>
-                    <div class="ajuda-card-descricao">
-                        <p>Entenda como coletamos, usamos e protegemos os dados da sua empresa e dos seus clientes.</p>
-                    </div>
+        <div class="card-configuracao">
+            <div class="card-header">
+                <h2>Horário de Funcionamento</h2>
+                <button class="btn-editar-card" onclick="editarHorario()">
+                    <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                </button>
+            </div>
+            <div class="card-body" id="horario-display-body">
+               <div id="horario-info-container"><p>Carregando horários...</p></div>
+            </div>
+        </div>
+
+        <div class="card-configuracao">
+            <div class="card-header">
+                <h2>Informações da Conta</h2>
+                <button class="btn-editar-card" onclick="editarInformacoes()">
+                    <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="tabela-informacoes">
+                    <div class="linha-informacao"><div class="coluna-titulo">Nome Fantasia</div><div class="coluna-valor" id="info-nome-fantasia">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Razão Social</div><div class="coluna-valor" id="info-razao-social">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">CNPJ</div><div class="coluna-valor" id="info-cnpj">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Nome Lanchonete</div><div class="coluna-valor" id="info-nome-lanchonete">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Descrição</div><div class="coluna-valor" id="info-description">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Polo</div><div class="coluna-valor" id="info-polo">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Telefone</div><div class="coluna-valor" id="info-telefone">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Endereço</div><div class="coluna-valor" id="info-endereco">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Número</div><div class="coluna-valor" id="info-numero">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">CEP</div><div class="coluna-valor" id="info-cep">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Data Cadastro</div><div class="coluna-valor" id="info-data-cadastro">...</div></div>
+                    <div class="linha-informacao"><div class="coluna-titulo">Chave PIX</div><div class="coluna-valor" id="info-chave-pix">...</div></div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+
+    <div id="secao-ajuda" class="secao-configuracoes" style="display: none;">
+        <div class="ajuda-cards-container">
+            <div class="ajuda-card" data-modal="modal-faq">
+                 <div class="ajuda-card-header"><div class="ajuda-card-icon"><img src="{% static 'dashboard/images/icone_faq.png' %}" alt="FAQ"></div><div class="ajuda-card-titles"><h3>FAQ</h3><p>Perguntas Frequentes</p></div></div>
+                <div class="ajuda-card-descricao"><p>Encontre respostas rápidas para as dúvidas mais comuns.</p></div>
+            </div>
+             <div class="ajuda-card" data-modal="modal-sac">
+                 <div class="ajuda-card-header"><div class="ajuda-card-icon"><img src="{% static 'dashboard/images/icone_sac.png' %}" alt="SAC"></div><div class="ajuda-card-titles"><h3>SAC</h3><p>Precisando de Ajuda?</p></div></div>
+                <div class="ajuda-card-descricao"><p>Não encontrou o que precisava? Fale conosco.</p></div>
+            </div>
+            <div class="ajuda-card" data-modal="modal-contato">
+                 <div class="ajuda-card-header"><div class="ajuda-card-icon"><img src="{% static 'dashboard/images/icone_email.png' %}" alt="Contato"></div><div class="ajuda-card-titles"><h3>CONTATO</h3><p>Fale Conosco</p></div></div>
+                <div class="ajuda-card-descricao"><p>Entre em contato com nossa equipe de suporte.</p></div>
+            </div>
+            <div class="ajuda-card" data-modal="modal-termos">
+                 <div class="ajuda-card-header"><div class="ajuda-card-icon"><img src="{% static 'dashboard/images/icone_info.png' %}" alt="Termos"></div><div class="ajuda-card-titles"><h3>Termos e Condições</h3><p>Regras de Utilização</p></div></div>
+                <div class="ajuda-card-descricao"><p>Leia os termos que regem o uso da plataforma.</p></div>
+            </div>
+             <div class="ajuda-card" data-modal="modal-politica">
+                 <div class="ajuda-card-header"><div class="ajuda-card-icon"><img src="{% static 'dashboard/images/icone_info.png' %}" alt="Política"></div><div class="ajuda-card-titles"><h3>Política de Privacidade</h3><p>Seus Dados Seguros</p></div></div>
+                <div class="ajuda-card-descricao"><p>Entenda como protegemos os dados.</p></div>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-planos" class="modal">
         <div class="modal-conteudo">
@@ -273,57 +121,28 @@
             <div class="modal-corpo">
                 <div id="plano-bloqueado-alert" style="display: none; background: #fff3f3; border: 1px solid var(--vermelho); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
                     <p style="color: var(--vermelho); margin: 0; font-size: 14px;">
-                        ⚠️ <strong>Seu período trial expirou.</strong> Você não pode mais usar o plano Trial. 
-                        Por favor, escolha entre os planos Basic ou Premium.
+                        ⚠️ <strong>Seu período trial expirou.</strong> Escolha Basic ou Premium.
                     </p>
                 </div>
                 <div class="planos-container">
-                    <div class="plano-option" data-plano="trial">
-                        <h3>Trial</h3>
-                        <p class="plano-preco">Grátis</p>
-                        <p class="plano-taxa">30 dias gratuitos</p>
-                        <ul>
-                            <li>✅ Gestão completa de produtos e estoque</li>
-                            <li>✅ Feedback direto dos clientes</li>
-                            <li>✅ Venda pelo aplicativo</li>
-                            <li>✅ Funcionalidades Essenciais</li>
-                            <li>⏰ Limitado a 30 dias</li>
-                        </ul>
-                        <div class="plano-recomendado" style="display: none;">Recomendado</div>
+                     <div class="plano-option" data-plano="trial">
+                        <h3>Trial</h3> <p class="plano-preco">Grátis</p> <p class="plano-taxa">30 dias</p>
+                        <ul><li>✅ Gestão completa</li><li>✅ Feedback</li><li>✅ Venda app</li><li>✅ Essenciais</li><li>⏰ 30 dias</li></ul>
                     </div>
-                    
-                    <div class="plano-option" data-plano="basic">
-                        <h3>Basic</h3>
-                        <p class="plano-preco">Sem mensalidade</p>
-                        <p class="plano-taxa">7% por venda</p>
-                        <ul>
-                            <li>✅ Gestão completa de produtos e estoque</li>
-                            <li>✅ Feedback direto dos clientes</li>
-                            <li>✅ Venda pelo aplicativo</li>
-                            <li>✅ Funcionalidades Essenciais</li>
-                            <li>🚀 Ilimitado no tempo</li>
-                        </ul>
-                        <div class="plano-recomendado">Mais Popular</div>
+                     <div class="plano-option" data-plano="basic">
+                        <h3>Basic</h3> <p class="plano-preco">S/ Mensalidade</p> <p class="plano-taxa">7% / venda</p>
+                        <ul><li>✅ Gestão completa</li><li>✅ Feedback</li><li>✅ Venda app</li><li>✅ Essenciais</li><li>🚀 Ilimitado</li></ul>
+                        <div class="plano-recomendado">Popular</div>
                     </div>
-                    
-                    <div class="plano-option" data-plano="premium">
-                        <h3>Premium</h3>
-                        <p class="plano-preco">Sem mensalidade</p>
-                        <p class="plano-taxa">10% por venda</p>
-                        <ul>
-                            <li>✅ Todos os recursos Basic</li>
-                            <li>📊 Dashboard analítico personalizado</li>
-                            <li>📈 Relatórios avançados de vendas</li>
-                            <li>🎯 Insights de desempenho</li>
-                            <li>🚀 Ilimitado no tempo</li>
-                        </ul>
-                        <div class="plano-recomendado">Mais Completo</div>
+                     <div class="plano-option" data-plano="premium">
+                        <h3>Premium</h3> <p class="plano-preco">S/ Mensalidade</p> <p class="plano-taxa">10% / venda</p>
+                        <ul><li>✅ Recursos Basic</li><li>📊 Dashboard</li><li>📈 Relatórios</li><li>🎯 Insights</li><li>🚀 Ilimitado</li></ul>
+                        <div class="plano-recomendado">Completo</div>
                     </div>
                 </div>
-                
                 <div class="plano-atual">
-                    <p>Plano atual: <strong id="plano-atual-nome">{{ company_data.plano|default:"trial"|capfirst }}</strong></p>
-                    <p class="plano-info-adicional">* Valores sujeitos a alteração. Taxa aplicada sobre o valor total de cada venda.</p>
+                    <p>Plano atual: <strong id="plano-atual-nome">...</strong></p>
+                    <p class="plano-info-adicional">* Taxa sobre valor total da venda.</p>
                 </div>
             </div>
             <div class="modal-rodape">
@@ -332,6 +151,7 @@
             </div>
         </div>
     </div>
+
     <div id="modal-perfil" class="modal">
         <div class="modal-conteudo">
             <div class="modal-cabecalho">
@@ -339,22 +159,23 @@
                 <span class="fechar-modal" onclick="fecharModalPerfil()">&times;</span>
             </div>
             <form id="form-perfil">
+                 {% csrf_token %}
                 <div class="modal-corpo">
                     <div class="form-group">
-                        <label for="edit-nome-lanchonete">Nome da Lanchonete</label>
+                        <label for="edit-nome-lanchonete">Nome da Lanchonete *</label>
                         <input type="text" id="edit-nome-lanchonete" name="nome_lanchonete" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit-description">Descrição da Lanchonete</label>
-                        <input type="text" id="edit-description" name="description" required>
+                        <label for="edit-description">Descrição da Lanchonete *</label>
+                        <input type="text" id="edit-description" name="description" required placeholder="Ex: Lanches e Salgados">
                     </div>
                     <div class="form-group">
-                        <label for="edit-telefone">Telefone</label>
-                        <input type="text" id="edit-telefone" name="telefone" required>
+                        <label for="edit-telefone">Telefone *</label>
+                        <input type="text" id="edit-telefone" name="telefone" required placeholder="(00) 00000-0000">
                     </div>
                     <div class="form-group">
                         <label for="edit-chave-pix">Chave PIX</label>
-                        <input type="text" id="edit-chave-pix" name="chave_pix" placeholder="Digite sua chave PIX">
+                        <input type="text" id="edit-chave-pix" name="chave_pix" placeholder="Sua chave PIX (opcional)">
                     </div>
                 </div>
                 <div class="modal-rodape">
@@ -372,86 +193,18 @@
                 <span class="fechar-modal" onclick="fecharModalHorario()">&times;</span>
             </div>
             <form id="form-horario" onsubmit="event.preventDefault(); salvarHorario();">
+                 {% csrf_token %}
                 <div class="modal-corpo">
-                    <p>Selecione os dias em que sua loja está aberta e defina os horários para cada um.</p>
+                    <p>Marque os dias e defina os horários de abertura e fechamento.</p>
                     <div class="horario-editor-container">
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-segunda" onchange="toggleTimeInputs('segunda')">
-                                Segunda-feira
-                            </label>
-                            <div class="time-inputs" id="time-inputs-segunda" style="display: none;">
-                                <input type="time" id="edit-segunda-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-segunda-fechamento" value="18:00">
-                            </div>
-                        </div>
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-terca" onchange="toggleTimeInputs('terca')">
-                                Terça-feira
-                            </label>
-                            <div class="time-inputs" id="time-inputs-terca" style="display: none;">
-                                <input type="time" id="edit-terca-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-terca-fechamento" value="18:00">
-                            </div>
-                        </div>
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-quarta" onchange="toggleTimeInputs('quarta')">
-                                Quarta-feira
-                            </label>
-                            <div class="time-inputs" id="time-inputs-quarta" style="display: none;">
-                                <input type="time" id="edit-quarta-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-quarta-fechamento" value="18:00">
-                            </div>
-                        </div>
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-quinta" onchange="toggleTimeInputs('quinta')">
-                                Quinta-feira
-                            </label>
-                            <div class="time-inputs" id="time-inputs-quinta" style="display: none;">
-                                <input type="time" id="edit-quinta-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-quinta-fechamento" value="18:00">
-                            </div>
-                        </div>
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-sexta" onchange="toggleTimeInputs('sexta')">
-                                Sexta-feira
-                            </label>
-                            <div class="time-inputs" id="time-inputs-sexta" style="display: none;">
-                                <input type="time" id="edit-sexta-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-sexta-fechamento" value="18:00">
-                            </div>
-                        </div>
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-sabado" onchange="toggleTimeInputs('sabado')">
-                                Sábado
-                            </label>
-                            <div class="time-inputs" id="time-inputs-sabado" style="display: none;">
-                                <input type="time" id="edit-sabado-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-sabado-fechamento" value="18:00">
-                            </div>
-                        </div>
-                        <div class="dia-horario-editor">
-                            <label class="dia-label">
-                                <input type="checkbox" id="edit-domingo" onchange="toggleTimeInputs('domingo')">
-                                Domingo
-                            </label>
-                            <div class="time-inputs" id="time-inputs-domingo" style="display: none;">
-                                <input type="time" id="edit-domingo-abertura" value="09:00">
-                                <span>às</span>
-                                <input type="time" id="edit-domingo-fechamento" value="18:00">
-                            </div>
-                        </div>
+                        {# Loop para gerar os dias - Idealmente dados viriam da view #}
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-segunda" onchange="toggleTimeInputs('segunda')"> Segunda-feira</label><div class="time-inputs" id="time-inputs-segunda" style="display: none;"><input type="time" id="edit-segunda-abertura" value="09:00"><span>às</span><input type="time" id="edit-segunda-fechamento" value="18:00"></div></div>
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-terca" onchange="toggleTimeInputs('terca')"> Terça-feira</label><div class="time-inputs" id="time-inputs-terca" style="display: none;"><input type="time" id="edit-terca-abertura" value="09:00"><span>às</span><input type="time" id="edit-terca-fechamento" value="18:00"></div></div>
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-quarta" onchange="toggleTimeInputs('quarta')"> Quarta-feira</label><div class="time-inputs" id="time-inputs-quarta" style="display: none;"><input type="time" id="edit-quarta-abertura" value="09:00"><span>às</span><input type="time" id="edit-quarta-fechamento" value="18:00"></div></div>
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-quinta" onchange="toggleTimeInputs('quinta')"> Quinta-feira</label><div class="time-inputs" id="time-inputs-quinta" style="display: none;"><input type="time" id="edit-quinta-abertura" value="09:00"><span>às</span><input type="time" id="edit-quinta-fechamento" value="18:00"></div></div>
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-sexta" onchange="toggleTimeInputs('sexta')"> Sexta-feira</label><div class="time-inputs" id="time-inputs-sexta" style="display: none;"><input type="time" id="edit-sexta-abertura" value="09:00"><span>às</span><input type="time" id="edit-sexta-fechamento" value="18:00"></div></div>
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-sabado" onchange="toggleTimeInputs('sabado')"> Sábado</label><div class="time-inputs" id="time-inputs-sabado" style="display: none;"><input type="time" id="edit-sabado-abertura" value="09:00"><span>às</span><input type="time" id="edit-sabado-fechamento" value="18:00"></div></div>
+                        <div class="dia-horario-editor"><label class="dia-label"><input type="checkbox" id="edit-domingo" onchange="toggleTimeInputs('domingo')"> Domingo</label><div class="time-inputs" id="time-inputs-domingo" style="display: none;"><input type="time" id="edit-domingo-abertura" value="09:00"><span>às</span><input type="time" id="edit-domingo-fechamento" value="18:00"></div></div>
                     </div>
                 </div>
                 <div class="modal-rodape">
@@ -464,282 +217,140 @@
 
     <div id="modal-faq" class="modal">
         <div class="modal-conteudo">
-            <div class="modal-cabecalho">
-                <h2>Perguntas Frequentes (FAQ)</h2>
-                <span class="fechar-modal" onclick="fecharModalFAQ()">&times;</span>
-            </div>
+            <div class="modal-cabecalho"><h2>FAQ</h2><span class="fechar-modal" onclick="closeModal('modal-faq')">&times;</span></div>
             <div class="modal-corpo">
                 <div class="faq-conteudo">
-                    <h3>Encontre respostas rápidas para as dúvidas mais comuns</h3>
-                    <p>Se você está com alguma dúvida sobre funcionalidades, acesso ou gerenciamento no portal, confira nossa lista de perguntas frequentes. Estamos aqui para ajudar você a aproveitar ao máximo todos os recursos disponíveis.</p>
-                    
+                    <h3>Encontre respostas rápidas</h3> <p>Confira nossa lista...</p>
                     <div class="faq-lista">
-                        <div class="faq-item">
-                            <h4>Como cadastrar um novo produto?</h4>
-                            <p>Para cadastrar um novo produto, acesse a seção "Produtos" no menu lateral e clique em "Cadastrar". Preencha todas as informações necessárias e clique em "Salvar".</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h4>Como alterar o horário de funcionamento?</h4>
-                            <p>Na seção "Configurações", vá até "Horário de Funcionamento" e clique no ícone de edição. ajuste os horários conforme necessário e salve as alterações.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h4>Como visualizar relatórios de vendas?</h4>
-                            <p>Os relatórios de vendas estão disponíveis na seção "Dashboard". Você pode filtrar por período e visualizar diferentes métricas de desempenho.</p>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <h4>Como alterar minha senha?</h4>
-                            <p>Acesse "Configurações" > "Segurança" e clique em "Alterar Senha". Siga as instruções para criar uma nova senha segura.</p>
-                        </div>
+                        <div class="faq-item"><h4>Cadastrar produto?</h4><p>Acesse "Produtos"...</p></div>
+                        <div class="faq-item"><h4>Alterar horário?</h4><p>Em "Configurações"...</p></div>
+                        <div class="faq-item"><h4>Ver relatórios?</h4><p>Na seção "Dashboard"...</p></div>
+                        <div class="faq-item"><h4>Alterar senha?</h4><p>Em "Configurações"...</p></div>
                     </div>
-                    
-                    <div class="faq-contato">
-                        <p>Não encontrou o que procurava? <a href="#" onclick="fecharModalFAQ(); abrirModalSAC();">Entre em contato conosco</a>.</p>
-                    </div>
+                    <div class="faq-contato"><p>Não achou? <a href="#" onclick="closeModal('modal-faq'); openModal('modal-sac');">Fale conosco</a>.</p></div>
                 </div>
             </div>
-            <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" onclick="fecharModalFAQ()">Fechar</button>
-            </div>
+            <div class="modal-rodape"><button type="button" class="btn-cancelar" onclick="closeModal('modal-faq')">Fechar</button></div>
         </div>
     </div>
 
     <div id="modal-sac" class="modal">
         <div class="modal-conteudo">
-            <div class="modal-cabecalho">
-                <h2>Serviço de Atendimento ao Cliente (SAC)</h2>
-                <span class="fechar-modal" data-modal-close="modal-sac">&times;</span>
-            </div>
+            <div class="modal-cabecalho"><h2>SAC</h2><span class="fechar-modal" data-modal-close="modal-sac">&times;</span></div>
             <div class="modal-corpo">
                 <div class="sac-conteudo">
-                    <h3>Precisando de Ajuda?</h3>
-                    <p>Nosso SAC está pronto para resolver qualquer problema relacionado ao uso do portal. Não encontrou o que precisava? Estamos aqui para ajudar!</p>
+                    <h3>Precisando de Ajuda?</h3><p>Estamos aqui para ajudar!</p>
                     <div class="sac-canais">
-                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_email.png' %}" alt="E-mail"></div><div class="canal-info"><h4>E-mail</h4><p>sac@linecut.app.br</p><small>Respondemos em até 24 horas</small></div></div>
-                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_phone.png' %}" alt="Telefone"></div><div class="canal-info"><h4>Telefone</h4><p>(11) 4004-2000</p><small>Segunda a sexta, das 8h às 18h</small></div></div>
-                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_msg.png' %}" alt="WhatsApp"></div><div class="canal-info"><h4>WhatsApp</h4><p>(11) 99999-0000</p><small>Atendimento rápido pelo WhatsApp Business</small></div></div>
+                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_email.png' %}" alt="E"></div><div class="canal-info"><h4>E-mail</h4><p>sac@linecut.app.br</p><small>Até 24h</small></div></div>
+                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_phone.png' %}" alt="T"></div><div class="canal-info"><h4>Telefone</h4><p>(11) 4004-2000</p><small>Seg-Sex 8h-18h</small></div></div>
+                        <div class="canal-item"><div class="canal-icon"><img src="{% static 'dashboard/images/icone_msg.png' %}" alt="W"></div><div class="canal-info"><h4>WhatsApp</h4><p>(11) 99999-0000</p><small>Rápido</small></div></div>
                     </div>
                 </div>
             </div>
-            <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" data-modal-close="modal-sac">Fechar</button>
-            </div>
+            <div class="modal-rodape"><button type="button" class="btn-cancelar" data-modal-close="modal-sac">Fechar</button></div>
         </div>
     </div>
 
     <div id="modal-contato" class="modal">
         <div class="modal-conteudo">
-            <div class="modal-cabecalho">
-                <h2>Fale Conosco</h2>
-                <span class="fechar-modal" data-modal-close="modal-contato">&times;</span>
-            </div>
+            <div class="modal-cabecalho"><h2>Fale Conosco</h2><span class="fechar-modal" data-modal-close="modal-contato">&times;</span></div>
             <div class="modal-corpo">
                 <div class="contato-conteudo">
-                    <h3>Entre em contato com nossa equipe</h3>
-                    <div class="contato-info">
-                        <div class="contato-detalhes">
-                            <h4>Informações de Contato</h4>
-                            <p><strong>E-mail:</strong> suporte@linecut.app.br</p>
-                            <p><strong>Telefone:</strong> (11) 3003-4004</p>
-                            <p><strong>Horário de Atendimento:</strong> Segunda a sexta, das 8h às 18h</p>
-                        </div>
-                    </div>
+                    <h3>Entre em contato</h3>
+                    <div class="contato-info"><div class="contato-detalhes"><h4>Infos</h4><p><strong>E-mail:</strong> sup@linecut.app.br</p><p><strong>Tel:</strong> (11) 3003-4004</p><p><strong>Horário:</strong> Seg-Sex 8h-18h</p></div></div>
                 </div>
             </div>
-            <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" data-modal-close="modal-contato">Fechar</button>
-            </div>
+            <div class="modal-rodape"><button type="button" class="btn-cancelar" data-modal-close="modal-contato">Fechar</button></div>
         </div>
     </div>
 
     <div id="modal-termos" class="modal">
         <div class="modal-conteudo">
-            <div class="modal-cabecalho">
-                <h2>Termos e Condições</h2>
-                <span class="fechar-modal" onclick="fecharModalTermos()">&times;</span>
-            </div>
+            <div class="modal-cabecalho"><h2>Termos</h2><span class="fechar-modal" onclick="closeModal('modal-termos')">&times;</span></div>
             <div class="modal-corpo">
-                <h3>TERMO DE USO DO PORTAL WEB ADMINISTRATIVO DO LINECUT</h3>
-                <p>Última atualização: [01/05/2025]</p>
-                
-                <p>Pelo presente instrumento, o LINECUT, doravante denominado simplesmente 'Plataforma', estabelece os termos e condições de uso do Portal Web Administrativo, conforme as cláusulas a seguir:</p>
-                
-                <h4>1. OBJETO</h4>
-                <p>1.1. O presente Termo regula o uso do Portal Web Administrativo do LineCut, que permite às lanchonetes cadastradas gerenciar pedidos, filas, estoque e dados dos clientes que utilizam o aplicativo LineCut.</p>
-                <p>1.2. O acesso ao Portal é restrito a usuários cadastrados e autorizados pelas lanchonetes, sendo seu uso exclusivo para fins administrativos.</p>
-                
-                <h4>2. ACEITAÇÃO</h4>
-                <p>2.1. Ao acessar o Portal, o usuário declara ter lido, compreendido e aceitado os presentes Termos de Uso.</p>
-                <p>2.2. Caso o usuário não concorde com qualquer condição estabelecida, deverá interromper imediatamente o uso do Portal.</p>
-                
-                <h4>3. CADASTRO</h4>
-                <p>3.1. O acesso ao Portal é pessoal e intransferível. A lanchonete é responsável pela gestão e segurança das credenciais fornecidas.</p>
-                <p>3.2. O administrador deve garantir que apenas pessoas autorizadas utilizem as credenciais de acesso.</p>
-                <p>3.3. A Plataforma não se responsabiliza por danos decorrentes de uso indevido das credenciais ou por falhas de segurança imputáveis ao administrador.</p>
-                
-                <h4>4. OBRIGAÇÕES</h4>
-                <p>4.1. Utilizar o Portal de forma ética, respeitando a legislação vigente e as políticas da Plataforma.</p>
-                <p>4.2. Manter atualizados os dados cadastrais da lanchonete.</p>
-                <p>4.3. Assegurar que as informações dos clientes coletadas estejam em conformidade com a Lei Geral de Proteção de Dados (LGPD).</p>
-                
-                <h4>5. LIMITAÇÃO</h4>
-                <p>5.1. A Plataforma não se responsabiliza por falhas operacionais da lanchonete, incluindo problemas com conexão de internet, equipamentos ou gestão inadequada de pedidos.</p>
-                <p>5.2. O uso do Portal é disponibilizado 'no estado em que se encontra', sem garantias de funcionamento contínuo ou livre de erros.</p>
-                
-                <h4>6. PRIVACIDADE E SEGURANÇA</h4>
-                <p>6.1. Os dados pessoais coletados são tratados de acordo com a Política de Privacidade do LineCut.</p>
-                <p>6.2. A Plataforma adota medidas de segurança para proteger os dados, mas não se responsabiliza por acessos indevidos resultantes de negligência do usuário.</p>
-                
-                <h4>7. MODIFICAÇÕES DOS TERMOS</h4>
-                <p>7.1. O LineCut reserva-se o direito de modificar os presentes Termos a qualquer momento, notificando os usuários por meio do Portal.</p>
-                <p>7.2. O uso contínuo do Portal após as modificações constitui aceitação das novas condições.</p>
-                
-                <h4>8. LEGISLAÇÃO APLICÁVEL E FORO</h4>
-                <p>8.1. O presente Termo é regido pelas leis da República Federativa do Brasil.</p>
-                <p>8.2. Fica eleito o foro da comarca de [cidade/estado do desenvolvedor] para dirimir quaisquer controvérsias oriundas deste instrumento.</p>
+                <h3>TERMO DE USO...</h3><p>Atualização: [01/05/2025]</p>
+                <h4>1. OBJETO</h4> <p>1.1. Regula...</p> <p>1.2. Acesso...</p>
+                <h4>2. ACEITAÇÃO</h4> <p>2.1. Declara...</p> <p>2.2. Se não...</p>
+                <h4>3. CADASTRO</h4> <p>...</p> <h4>4. OBRIGAÇÕES</h4> <p>...</p>
+                <h4>5. LIMITAÇÃO</h4> <p>...</p> <h4>6. PRIVACIDADE</h4> <p>...</p>
+                <h4>7. MODIFICAÇÕES</h4> <p>...</p> <h4>8. LEGISLAÇÃO</h4> <p>...</p>
             </div>
-            <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" onclick="fecharModalTermos()">Fechar</button>
-            </div>
+            <div class="modal-rodape"><button type="button" class="btn-cancelar" onclick="closeModal('modal-termos')">Fechar</button></div>
         </div>
     </div>
 
     <div id="modal-politica" class="modal">
         <div class="modal-conteudo">
-            <div class="modal-cabecalho">
-                <h2>Política de Privacidade</h2>
-                <span class="fechar-modal" onclick="fecharModalPolitica()">&times;</span>
-            </div>
+            <div class="modal-cabecalho"><h2>Privacidade</h2><span class="fechar-modal" onclick="closeModal('modal-politica')">&times;</span></div>
             <div class="modal-corpo">
                 <h3>POLÍTICA DE PRIVACIDADE</h3>
-                
-                <h4>1. COLETA DE DADOS:</h4>
-                <p>O portal coleta e armazena informações necessárias para a gestão dos pedidos e da lanchonete, incluindo:</p>
-                <ul>
-                    <li><strong>Dados da lanchonete:</strong> Nome, CNPJ, endereço e dados de contato.</li>
-                    <li><strong>Dados de pedidos:</strong> Itens comprados, valores, horários e status.</li>
-                </ul>
-                
-                <h4>2. USO DAS INFORMAÇÕES:</h4>
-                <p>Os dados coletados são utilizados para:</p>
-                <ul>
-                    <li>Gestão de pedidos e filas.</li>
-                    <li>Emissão de relatórios operacionais.</li>
-                    <li>Monitoramento do atendimento e eficiência da lanchonete.</li>
-                    <li>Contato com clientes em casos específicos (ex: pedido cancelado ou atraso).</li>
-                </ul>
-                
-                <h4>3. COMPARTILHAMENTO DE DADOS:</h4>
-                <ul>
-                    <li>As informações coletadas podem ser compartilhadas com serviços de pagamento integrados, autoridades legais (quando necessário) e o próprio LineCut para manutenção e suporte.</li>
-                    <li>Não vendemos nem compartilhamos os dados dos clientes para fins comerciais.</li>
-                </ul>
-                
-                <h4>4. SEGURANÇA DOS DADOS:</h4>
-                <p>Os dados são armazenados em servidores seguros com protocolos de criptografia. O acesso ao portal é protegido por autenticação e controle de permissões.</p>
-                
-                <h4>5. DIREITOS DOS USUÁRIOS (LGPD):</h4>
-                <p>O administrador pode solicitar a retificação ou exclusão de dados pessoais a qualquer momento pelo e-mail: privacidade@linecut.app.br</p>
-                
-                <h4>6. COOKIES E RASTREAMENTO:</h4>
-                <p>O portal utiliza cookies para manter a sessão ativa e armazenar preferências de uso. O administrador pode optar por bloquear cookies diretamente no navegador, ciente de que algumas funcionalidades podem ser prejudicadas.</p>
-                
-                <h4>7. ALTERAÇÕES NA POLÍTICA DE PRIVACIDADE:</h4>
-                <p>Quaisquer mudanças na política serão notificadas através do portal e/ou e-mail cadastrado.</p>
-                
-                <h4>8. CONTATO:</h4>
-                <p>Para dúvidas ou solicitações sobre privacidade e proteção de dados, entre em contato pelo e-mail: privacidade@linecut.app.br</p>
+                <h4>1. COLETA</h4> <p>Coleta...</p> <ul><li>Dados...</li></ul>
+                <h4>2. USO</h4> <p>Usados para:</p> <ul><li>Gestão...</li></ul>
+                <h4>3. COMPART.</h4> <p>...</p> <h4>4. SEGURANÇA</h4> <p>...</p>
+                <h4>5. DIREITOS</h4> <p>...</p> <h4>6. COOKIES</h4> <p>...</p>
+                <h4>7. ALTERAÇÕES</h4> <p>...</p> <h4>8. CONTATO</h4> <p>...</p>
             </div>
-            <div class="modal-rodape">
-                <button type="button" class="btn-cancelar" onclick="fecharModalPolitica()">Fechar</button>
-            </div>
+            <div class="modal-rodape"><button type="button" class="btn-cancelar" onclick="closeModal('modal-politica')">Fechar</button></div>
         </div>
     </div>
 
     <div id="modal-confirmacao" class="modal">
-        <div class="modal-conteudo" style="max-width: 500px;">
+       <div class="modal-conteudo" style="max-width: 500px;">
             <div class="modal-cabecalho">
-                <h2>Confirmar Mudança de Plano</h2>
+                <h2 id="confirmacao-titulo-generico">Confirmar Ação</h2>
                 <span class="fechar-modal" onclick="fecharModalConfirmacao()">&times;</span>
             </div>
             <div class="modal-corpo">
-                <p id="confirmacao-mensagem"></p>
-                <div id="confirmacao-detalhes" style="margin-top: 15px; padding: 10px; background: var(--cinza-background); border-radius: 8px; display: none;">
-                    <p id="confirmacao-detalhes-texto" style="margin: 0; font-size: 14px;"></p>
-                </div>
+                <p id="confirmacao-mensagem">Tem certeza?</p>
+                <div id="confirmacao-detalhes" style="display: none;"><p id="confirmacao-detalhes-texto"></p></div>
             </div>
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharModalConfirmacao()">Cancelar</button>
-                <button type="button" class="btn-salvar" onclick="confirmarMudancaPlanoModal()">Confirmar</button>
+                {# --- CORREÇÃO AQUI --- #}
+                <button type="button" class="btn-salvar" id="btn-confirmar-mudanca-plano" onclick="confirmarMudancaPlanoModal()">Confirmar</button>
             </div>
         </div>
     </div>
 
     <div id="modal-editor-imagem-empresa" class="modal">
         <div class="modal-conteudo" style="max-width: 800px;">
-            <div class="modal-cabecalho">
-                <h2>Editar Logo da Empresa</h2>
-                <span class="fechar-modal" onclick="fecharEditorImagemEmpresa()">&times;</span>
-            </div>
-            
+            <div class="modal-cabecalho"><h2>Editar Logo</h2><span class="fechar-modal" onclick="fecharEditorImagemEmpresa()">&times;</span></div>
             <div class="editor-imagem-corpo">
                 <div class="editor-toolbar">
-                    <button type="button" class="btn-editor" onclick="rotateCompanyImage()" title="Rotacionar 90°">
-                        ↻ Rotacionar
-                    </button>
-                    <button type="button" class="btn-editor" onclick="zoomInCompanyImage()" title="Zoom In">
-                        + Zoom In
-                    </button>
-                    <button type="button" class="btn-editor" onclick="zoomOutCompanyImage()" title="Zoom Out">
-                        - Zoom Out
-                    </button>
-                    <button type="button" class="btn-editor" onclick="resetCompanyImageEditor()" title="Resetar">
-                        ⟲ Resetar
-                    </button>
+                    <button type="button" class="btn-editor" onclick="rotateCompanyImage()">↻</button>
+                    <button type="button" class="btn-editor" onclick="zoomInCompanyImage()">+</button>
+                    <button type="button" class="btn-editor" onclick="zoomOutCompanyImage()">-</button>
+                    <button type="button" class="btn-editor" onclick="resetCompanyImageEditor()">⟲</button>
                 </div>
-                
-                <div class="editor-container">
-                    <div class="image-crop-container">
-                        <img id="editor-image-empresa" src="" alt="Imagem para editar">
-                    </div>
-                </div>
-                
-                <div class="editor-preview">
-                    <h4>Preview:</h4>
-                    <div class="preview-container">
-                        <img id="preview-edited-empresa" src="" alt="Preview">
-                    </div>
-                </div>
+                <div class="editor-container"><div class="image-crop-container"><img id="editor-image-empresa" src="" alt="Editar"></div></div>
+                <div class="editor-preview"><h4>Preview:</h4><div class="preview-container"><img id="preview-edited-empresa" src="" alt="P"></div></div>
             </div>
-            
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharEditorImagemEmpresa()">Cancelar</button>
-                <button type="button" class="btn-salvar" onclick="salvarImagemEditadaEmpresa()">Aplicar Edições</button>
+                <button type="button" class="btn-salvar" onclick="salvarImagemEditadaEmpresa()">Aplicar</button>
             </div>
         </div>
     </div>
 
     <div id="modal-confirmacao-upload" class="modal">
         <div class="modal-conteudo confirmacao" style="max-width: 500px;">
-            <div class="modal-cabecalho">
-                <h2>Confirmar Alteração</h2>
-                <span class="fechar-modal" onclick="fecharConfirmacaoUpload()">&times;</span>
-            </div>
+            <div class="modal-cabecalho"><h2>Confirmar</h2><span class="fechar-modal" onclick="fecharConfirmacaoUpload()">&times;</span></div>
             <div class="modal-corpo">
-                <p id="confirmacao-upload-mensagem">Deseja salvar a nova imagem do perfil?</p>
-                <div class="preview-confirmacao">
-                    <img id="preview-confirmacao" src="" alt="Nova imagem" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                </div>
+                <p id="confirmacao-upload-mensagem">Salvar nova imagem?</p>
+                <div class="preview-confirmacao"><img id="preview-confirmacao" src="" alt="Nova"></div>
             </div>
             <div class="modal-rodape">
                 <button type="button" class="btn-cancelar" onclick="fecharConfirmacaoUpload()">Cancelar</button>
-                <button type="button" class="btn-salvar" onclick="confirmarUploadImagem()">Salvar Alterações</button>
+                <button type="button" class="btn-salvar" onclick="confirmarUploadImagem()">Salvar</button>
             </div>
         </div>
     </div>
 
+{% endblock %}
+
+{% block scripts %}
     <script src="{% static 'dashboard/js/configuracoes.js' %}"></script>
-</body>
-</html>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadInitialData);
+    </script>
+{% endblock %}

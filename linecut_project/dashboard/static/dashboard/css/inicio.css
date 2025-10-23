@@ -1,234 +1,3 @@
-:root {
-    --vermelho-principal: #9C0202;
-    --vermelho-escuro: #7D0000;
-    --cinza-escuro: #7D7D7D;
-    --cinza-claro: #E4E4E4;
-    --cinza-background: #F4F4F4;
-    --branco: #FFFFFF;
-    --verde: #189F4C;
-    --amarelo: #F2C12E;
-    --sombra-clara: rgba(0, 0, 0, 0.1);
-    --sombra-media: rgba(0, 0, 0, 0.15);
-    --vermelho-hover: #b10303;
-    --cinza-hover: #f0f0f0;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Poppins', sans-serif;
-    background: #F9F9F9;
-    display: flex;
-    min-height: 100vh;
-    color: #333;
-}
-
-.menu-lateral {
-    width: 250px;
-    height: 100vh;
-    background: var(--branco);
-    box-shadow: 
-        2px 0 6px var(--sombra-clara),
-        4px 0 12px var(--sombra-media);
-    border-radius: 0 10.6px 10.6px 0;
-    padding: 20px 15px;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 1000;
-    overflow: hidden;
-}
-
-.menu-lateral a {
-    text-decoration: none;
-}
-
-.logo {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.logo img {
-    width: 100px;
-    height: 100px;
-}
-
-.restaurant-info {
-    text-align: center;
-    margin-bottom: 20px;
-    padding: 0 10px;
-}
-
-.restaurant-info h3 {
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 21px;
-    color: var(--vermelho-principal);
-    margin-bottom: 8px;
-}
-
-.status-loja {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--branco);
-    box-shadow: 
-        1px 1px 2px rgba(0, 0, 0, 0.08),
-        2px 2px 4px rgba(0, 0, 0, 0.12);
-    border-radius: 8px;
-    padding: 4px 8px;
-    width: 140px;
-    height: 26px;
-    margin: 0 auto;
-}
-
-.status-indicator {
-    width: 8px;
-    height: 8px;
-    background: var(--verde);
-    border-radius: 50%;
-    margin-right: 6px;
-}
-
-.status-loja span {
-    font-weight: 400;
-    font-size: 12px;
-    line-height: 18px;
-    color: var(--verde);
-}
-
-.menu-nav {
-    flex-grow: 1;
-    padding: 0 5px;
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    margin: 4px 0;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    border-radius: 6px;
-}
-
-.menu-item:hover {
-    background: var(--cinza-hover);
-    transform: translateX(3px);
-}
-
-.menu-item:hover span:not(.icon) {
-    color: var(--vermelho-hover);
-}
-
-.menu-item:hover .icon {
-    filter: brightness(0.9);
-    transform: scale(1.03);
-}
-
-.menu-item.selected {
-    background: var(--cinza-background);
-    border-left: 2px solid var(--vermelho-principal);
-    transform: translateX(3px);
-}
-
-.menu-item.selected span:not(.icon) {
-    color: var(--vermelho-principal);
-    font-weight: 500;
-}
-
-.menu-item .icon {
-    margin-right: 10px;
-    width: 16px;
-    height: 16px;
-    object-fit: contain;
-    transition: all 0.2s ease;
-}
-
-.menu-item span:not(.icon) {
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 20px;
-    color: var(--cinza-escuro);
-    transition: all 0.2s ease;
-}
-
-.menu-item:nth-child(5):hover {
-    background: var(--cinza-background);
-    cursor: not-allowed;
-    transform: none;
-}
-
-.menu-item:nth-child(5):hover span:not(.icon) {
-    color: var(--cinza-escuro);
-}
-
-.lock-icon {
-    position: absolute;
-    right: 15px;
-    width: 10px;
-    height: 10px;
-    opacity: 0.5;
-    transition: all 0.2s ease;
-}
-
-.menu-item:hover .lock-icon {
-    opacity: 0.7;
-}
-
-.menu-sair {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    cursor: pointer;
-    margin-top: auto;
-    transition: all 0.2s ease;
-    border-radius: 6px;
-}
-
-.menu-sair:hover {
-    background: var(--cinza-hover);
-    transform: translateX(3px);
-}
-
-.menu-sair:hover span {
-    color: var(--vermelho-hover);
-}
-
-.menu-sair:hover .icon {
-    filter: brightness(0.9);
-    transform: scale(1.03);
-}
-
-.menu-sair .icon {
-    margin-right: 10px;
-    width: 16px;
-    height: 16px;
-    transition: all 0.2s ease;
-}
-
-.menu-sair span {
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 20px;
-    color: var(--vermelho-principal);
-    transition: all 0.2s ease;
-}
-
-.conteudo-principal {
-    flex: 1;
-    margin-left: 250px;
-    padding: 30px 40px;
-    background: #F9F9F9;
-}
-
 .cabecalho {
     margin-bottom: 30px;
 }
@@ -256,7 +25,7 @@ body {
 
 .info-card {
     background: var(--branco);
-    box-shadow: 
+    box-shadow:
         2px 2px 4px var(--sombra-clara),
         4px 4px 8px var(--sombra-media);
     border-radius: 13.19px;
@@ -266,22 +35,18 @@ body {
 }
 
 .info-card:hover {
-    box-shadow: 
+    box-shadow:
         3px 3px 6px rgba(0, 0, 0, 0.12),
         6px 6px 12px rgba(0, 0, 0, 0.18);
 }
 
-.desempenho-diario:hover {
-    box-shadow: 
-        3px 3px 6px rgba(0, 0, 0, 0.12),
-        6px 6px 12px rgba(0, 0, 0, 0.18);
-}
-
+.desempenho-diario:hover,
 .ultimos-pedidos:hover {
-    box-shadow: 
+    box-shadow:
         3px 3px 6px rgba(0, 0, 0, 0.12),
         6px 6px 12px rgba(0, 0, 0, 0.18);
 }
+
 
 .dados-lanchonete {
     display: flex;
@@ -296,7 +61,7 @@ body {
     overflow: hidden;
     margin-left: 40px;
     margin-right: 40px;
-    box-shadow: 
+    box-shadow:
         1px 1px 3px var(--sombra-clara),
         2px 2px 6px var(--sombra-media);
 }
@@ -393,7 +158,7 @@ body {
 
 .horario-box {
     background: var(--branco);
-    box-shadow: 
+    box-shadow:
         1px 1px 2px var(--sombra-clara),
         2px 2px 4px var(--sombra-media);
     border-radius: 50px;
@@ -411,7 +176,7 @@ body {
 
 .desempenho-diario {
     background: var(--branco);
-    box-shadow: 
+    box-shadow:
         2px 2px 4px var(--sombra-clara),
         4px 4px 8px var(--sombra-media);
     border-radius: 9.49px;
@@ -481,7 +246,7 @@ body {
 
 .ultimos-pedidos {
     background: var(--branco);
-    box-shadow: 
+    box-shadow:
         2px 2px 4px var(--sombra-clara),
         4px 4px 8px var(--sombra-media);
     border-radius: 11.07px;
@@ -580,7 +345,7 @@ body {
 
 .btn-ver-pedidos {
     background: var(--vermelho-principal);
-    box-shadow: 
+    box-shadow:
         1px 1px 3px rgba(156, 2, 2, 0.3),
         2px 2px 6px rgba(156, 2, 2, 0.4);
     border-radius: 83.25px;
@@ -598,7 +363,7 @@ body {
 }
 
 .btn-ver-pedidos:hover {
-    box-shadow: 
+    box-shadow:
         2px 2px 4px rgba(156, 2, 2, 0.4),
         4px 4px 8px rgba(156, 2, 2, 0.5);
     transform: translateY(-1px);
@@ -606,66 +371,10 @@ body {
 }
 
 .btn-ver-pedidos:active {
-    box-shadow: 
+    box-shadow:
         1px 1px 2px rgba(156, 2, 2, 0.3),
         2px 2px 4px rgba(156, 2, 2, 0.4);
     transform: translateY(0);
-}
-
-.modal {
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease-out;
-}
-
-.modal-content {
-    background-color: var(--branco);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 450px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-}
-
-.modal-header {
-    background: var(--vermelho-principal);
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 500;
-}
-
-.modal-close {
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.modal-close:hover {
-    opacity: 0.7;
-}
-
-.modal-body {
-    padding: 25px 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
 }
 
 .modal-icon img {
@@ -686,21 +395,6 @@ body {
     line-height: 1.5;
 }
 
-.modal-footer {
-    padding: 15px 20px;
-    background: var(--cinza-background);
-    text-align: right;
-}
-
-.modal-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
 .modal-btn.confirm {
     background: var(--vermelho-principal);
     color: white;
@@ -710,26 +404,17 @@ body {
     background: var(--vermelho-escuro);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
 
 @media (max-width: 1200px) {
     .info-cards {
         flex-direction: column;
     }
-    
+
     .metricas-container {
         flex-direction: column;
         gap: 20px;
     }
-    
+
     .separador {
         width: 80px;
         height: 1px;
@@ -739,7 +424,7 @@ body {
         flex-wrap: wrap;
         justify-content: flex-start;
     }
-    
+
     .dia-item {
         flex: 0 0 calc(33.333% - 8px);
         margin-bottom: 12px;
@@ -747,84 +432,26 @@ body {
 }
 
 @media (max-width: 768px) {
-    .menu-lateral {
-        width: 70px;
-        padding: 10px 5px;
-    }
-    
-    .menu-lateral .logo img {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .restaurant-info h3,
-    .menu-item span:not(.icon),
-    .menu-sair span,
-    .status-loja span {
-        display: none;
-    }
-    
-    .status-loja {
-        width: auto;
-        padding: 4px;
-    }
-    
-    .conteudo-principal {
-        margin-left: 70px;
-        padding: 15px;
-    }
-    
     .cabecalho h1 {
         font-size: 20px;
     }
-    
+
     .cabecalho p {
         font-size: 16px;
-    }
-    
-    .menu-item {
-        padding: 8px 10px;
-        justify-content: center;
-    }
-    
-    .menu-item .icon {
-        margin-right: 0;
-    }
-    
-    .menu-item:hover,
-    .menu-item.selected {
-        transform: translateX(2px);
-    }
-    
-    .menu-sair {
-        padding: 8px 10px;
-        justify-content: center;
-    }
-    
-    .menu-sair .icon {
-        margin-right: 0;
-    }
-    
-    .menu-sair:hover {
-        transform: translateX(2px);
-    }
-    
-    .lock-icon {
-        display: none;
     }
 
     .dias-semana {
         gap: 6px;
     }
-    
+
     .dia-item {
         flex: 0 0 calc(50% - 6px);
     }
-    
+
     .dia-nome {
         font-size: 11px;
     }
-    
+
     .horario-box span {
         font-size: 10px;
     }

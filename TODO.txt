@@ -1,4 +1,5 @@
-- Implementar abertura da loja (automatica ou não)
-- Adicionar campo "chave pix" nas configurações e só permitir a abertura da loja se esse campo for preenchido com uma chave válida - ok
+- Fazer refactor para o menu lateral ser separado
+- Implementar abertura da loja apenas se ja existir horario de funcionamento, chave pix e pelo menos um produto
+- Adicionar campo "chave pix" nas configurações - ok
 - levar limitações de escolha para o firebase
-- Implementar o bloqueio o bloqueio do dashboard para contas não premium
+- Implementar bloqueio do dashboard para contas não premium

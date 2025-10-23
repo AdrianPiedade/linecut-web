@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <title>{% block title %}LineCut Dashboard{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'dashboard/css/base_styles.css' %}">
+
+    {% block head_extra %}{% endblock %}
+</head>
+<body data-default-image="{% static 'dashboard/images/perfil_default.png' %}">
+    <aside class="menu-lateral">
+        <div class="logo">
+            <img src="{% static 'dashboard/images/logo_linecut.png' %}" alt="LineCut Logo">
+        </div>
+
+        <div class="restaurant-info">
+            <h3>{{ request.session.user_profile.nome_lanchonete|default:"Meu Restaurante" }}</h3>
+            <div class="status-loja">
+                <div class="status-indicator"></div>
+                <span>Loja Aberta</span>
+            </div>
+        </div>
+
+        <nav class="menu-nav">
+            <a href="{% url 'dashboard:index' %}" class="menu-item {% if request.resolver_match.url_name == 'index' %}selected{% endif %}">
+                <img src="{% static 'dashboard/images/icone_casa.png' %}" alt="Início" class="icon">
+                <span>Início</span>
+            </a>
+            <a href="{% url 'dashboard:pedidos' %}" id="menu-pedidos" class="menu-item {% if request.resolver_match.url_name == 'pedidos' or request.resolver_match.url_name == 'pedidos_view' %}selected{% endif %}">
+                <img src="{% static 'dashboard/images/icone_receita.png' %}" alt="Pedidos" class="icon">
+                <span>Pedidos</span>
+            </a>
+            <a href="{% url 'dashboard:produtos' %}" class="menu-item {% if request.resolver_match.url_name == 'produtos' %}selected{% endif %}">
+                <img src="{% static 'dashboard/images/icone_hamburguer.png' %}" alt="Produtos" class="icon">
+                <span>Produtos</span>
+            </a>
+            <a href="{% url 'dashboard:estoque' %}" class="menu-item {% if request.resolver_match.url_name == 'estoque' %}selected{% endif %}">
+                <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
+                <span>Estoque</span>
+            </a>
+            <a href="#" class="menu-item disabled">
+                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                <span>Dashboard</span>
+                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
+                <span>Avaliações</span>
+            </a>
+            <a href="#" class="menu-item">
+                <img src="{% static 'dashboard/images/icone_sino.png' %}" alt="Notificações" class="icon">
+                <span>Notificações</span>
+            </a>
+            <a href="{% url 'dashboard:configuracoes' %}" class="menu-item {% if request.resolver_match.url_name == 'configuracoes' %}selected{% endif %}">
+                <img src="{% static 'dashboard/images/icone_engrenagem.png' %}" alt="Configurações" class="icon">
+                <span>Configurações</span>
+            </a>
+        </nav>
+
+        <div class="menu-sair">
+             <a href="{% url 'dashboard:logout' %}" style="display: flex; align-items: center; text-decoration: none; color: inherit;">
+                <img src="{% static 'dashboard/images/icone_saida.png' %}" alt="Sair" class="icon">
+                <span>Sair</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="conteudo-principal">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const CSRF_TOKEN = "{{ csrf_token }}";
+        var staticUrl = "{% static '' %}";
+    </script>
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>

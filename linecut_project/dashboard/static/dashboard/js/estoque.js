@@ -6,18 +6,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const quantidadeAtualInput = document.getElementById('quantidade-atual');
     const quantidadeIdealInput = document.getElementById('quantidade-ideal');
     const quantidadeCriticaInput = document.getElementById('quantidade-critica');
-    
+
     if (searchInput) searchInput.addEventListener('input', filtrarEstoque);
     if (categoriaFilter) categoriaFilter.addEventListener('change', filtrarEstoque);
     if (statusEstoqueFilter) statusEstoqueFilter.addEventListener('change', filtrarEstoque);
-    
+
     if (formEstoque) {
         formEstoque.addEventListener('submit', function(e) {
             e.preventDefault();
             salvarEstoque();
         });
     }
-    
+
     if (quantidadeAtualInput && quantidadeIdealInput && quantidadeCriticaInput) {
         quantidadeAtualInput.addEventListener('input', atualizarStatusPreview);
         quantidadeIdealInput.addEventListener('input', atualizarStatusPreview);
@@ -27,11 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', function(e) {
         const modalEstoque = document.getElementById('modal-estoque');
         const modalConfirmacao = document.getElementById('modal-confirmacao');
-        
+
         if (e.target === modalEstoque) fecharModalEstoque();
         if (e.target === modalConfirmacao) fecharConfirmacao();
     });
-    
+
     filtrarEstoque();
 });
 
@@ -83,32 +83,32 @@ function editarEstoque(produtoId) {
     const titulo = document.getElementById('modal-titulo');
     const btnText = document.getElementById('btn-text');
     const loadingText = document.getElementById('loading-text');
-    
+
     titulo.textContent = 'Editar Estoque';
     document.getElementById('produto-id').value = produtoId;
-    btnText.textContent = 'Salvar Alterações';
-    loadingText.textContent = 'Salvando...';
-    
+    if(btnText) btnText.textContent = 'Salvar Alterações';
+
     preencherFormularioEstoque(produtoId);
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function preencherFormularioEstoque(produtoId) {
     const linhaEstoque = encontrarLinhaPorId(produtoId);
-    
+
     if (linhaEstoque) {
         const nome = linhaEstoque.querySelector('.col-nome').textContent;
         const categoria = linhaEstoque.getAttribute('data-category');
         const quantidade = linhaEstoque.getAttribute('data-quantidade');
         const quantidadeIdeal = linhaEstoque.getAttribute('data-quantidade-ideal');
         const quantidadeCritica = linhaEstoque.getAttribute('data-quantidade-critica');
-        
+
         document.getElementById('nome-produto').textContent = nome;
         document.getElementById('categoria-produto').textContent = categoria;
         document.getElementById('quantidade-atual').value = quantidade;
         document.getElementById('quantidade-ideal').value = quantidadeIdeal !== "0" ? quantidadeIdeal : '';
         document.getElementById('quantidade-critica').value = quantidadeCritica !== "0" ? quantidadeCritica : '';
-        
+
         atualizarStatusPreview();
     } else {
         fetch(`/dashboard/estoque/detalhes/${produtoId}/`, {
@@ -126,7 +126,7 @@ function preencherFormularioEstoque(produtoId) {
                 document.getElementById('quantidade-atual').value = produto.quantity || '';
                 document.getElementById('quantidade-ideal').value = produto.ideal_quantity || '';
                 document.getElementById('quantidade-critica').value = produto.critical_quantity || '';
-                
+
                 atualizarStatusPreview();
             } else {
                 showErrorToast('Erro ao carregar produto: ' + data.message);
@@ -142,12 +142,10 @@ function atualizarStatusPreview() {
     const quantidadeAtual = parseInt(document.getElementById('quantidade-atual').value) || 0;
     const quantidadeIdeal = parseInt(document.getElementById('quantidade-ideal').value) || 0;
     const quantidadeCritica = parseInt(document.getElementById('quantidade-critica').value) || 0;
-    
     const statusPreview = document.getElementById('status-preview');
-    
     let status = 'suficiente';
     let textoStatus = 'Suficiente';
-    
+
     if (quantidadeCritica > 0 && quantidadeAtual <= quantidadeCritica) {
         status = 'critico';
         textoStatus = 'Crítico';
@@ -155,7 +153,7 @@ function atualizarStatusPreview() {
         status = 'baixo';
         textoStatus = 'Baixo';
     }
-    
+
     statusPreview.className = 'status-badge ' + status;
     statusPreview.textContent = textoStatus;
 }
@@ -163,22 +161,18 @@ function atualizarStatusPreview() {
 function salvarEstoque() {
     const btnSalvar = document.getElementById('btn-salvar-estoque');
     const produtoId = document.getElementById('produto-id').value;
-    
     setButtonLoading(btnSalvar, true);
-    const loading = showLoading('Atualizando estoque...');
-    
+
     const formData = new FormData();
     formData.append('csrfmiddlewaretoken', getCSRFToken());
     formData.append('produto_id', produtoId);
-    
     const quantidade = parseInt(document.getElementById('quantidade-atual').value) || 0;
     const idealQuantity = parseInt(document.getElementById('quantidade-ideal').value) || 0;
     const criticalQuantity = parseInt(document.getElementById('quantidade-critica').value) || 0;
-    
     formData.append('quantity', quantidade);
     formData.append('ideal_quantity', idealQuantity);
     formData.append('critical_quantity', criticalQuantity);
-    
+
     fetch(`/dashboard/estoque/atualizar/${produtoId}/`, {
         method: 'POST',
         body: formData,
@@ -204,32 +198,24 @@ function salvarEstoque() {
     })
     .finally(() => {
         setButtonLoading(btnSalvar, false);
-        hideLoading();
     });
 }
 
 function fecharModalEstoque() {
     const modal = document.getElementById('modal-estoque');
     modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
 }
 
 function encontrarLinhaPorId(produtoId) {
-    const linhas = document.querySelectorAll('.linha-estoque');
-    for (const linha of linhas) {
-        const idElement = linha.querySelector('.col-id');
-        if (idElement && idElement.textContent.trim() === produtoId) {
-            return linha;
-        }
-        if (linha.getAttribute('data-product-id') === produtoId) {
-            return linha;
-        }
-    }
-    return null;
+    return document.querySelector(`.linha-estoque[data-product-id="${produtoId}"]`);
 }
+
 
 function fecharConfirmacao() {
     const modal = document.getElementById('modal-confirmacao');
     modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
     reativarBotoesConfirmacao();
 }
 
@@ -246,32 +232,25 @@ function showToast(message, type = 'success') {
         container.className = 'toast-container';
         document.body.appendChild(container);
     }
-    
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
     const messageSpan = document.createElement('span');
     messageSpan.textContent = message;
     toast.appendChild(messageSpan);
-    
     const closeButton = document.createElement('button');
     closeButton.className = 'toast-close';
     closeButton.innerHTML = '&times;';
     closeButton.onclick = () => removeToast(toast);
     toast.appendChild(closeButton);
-    
     container.appendChild(toast);
-    
     setTimeout(() => {
-        if (toast.parentNode) {
-            removeToast(toast);
-        }
-    }, 3000);
-    
+        removeToast(toast);
+    }, 5000);
     return toast;
 }
 
 function removeToast(toast) {
+     if (!toast || !toast.parentNode) return;
     toast.style.animation = 'fadeOut 0.5s ease forwards';
     setTimeout(() => {
         if (toast.parentNode) {
@@ -280,79 +259,45 @@ function removeToast(toast) {
     }, 500);
 }
 
-function showSuccessToast(message) {
-    return showToast(message, 'success');
-}
+function showSuccessToast(message) { return showToast(message, 'success'); }
+function showErrorToast(message) { return showToast(message, 'error'); }
+function showWarningToast(message) { return showToast(message, 'warning'); }
+function showInfoToast(message) { return showToast(message, 'info'); }
 
-function showErrorToast(message) {
-    return showToast(message, 'error');
-}
-
-function showWarningToast(message) {
-    return showToast(message, 'warning');
-}
-
-function showInfoToast(message) {
-    return showToast(message, 'info');
-}
-
-function showLoading(message = 'Carregando...') {
-    let overlay = document.getElementById('loading-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'loading-overlay';
-        overlay.className = 'loading-overlay';
-        
-        const spinner = document.createElement('div');
-        spinner.className = 'loading-spinner-full';
-        
-        if (message) {
-            const messageDiv = document.createElement('div');
-            messageDiv.style.color = 'white';
-            messageDiv.style.marginTop = '15px';
-            messageDiv.style.fontFamily = 'Poppins, sans-serif';
-            messageDiv.textContent = message;
-            overlay.appendChild(spinner);
-            overlay.appendChild(messageDiv);
-        } else {
-            overlay.appendChild(spinner);
-        }
-        
-        document.body.appendChild(overlay);
-    }
-    
-    return overlay;
-}
-
-function hideLoading() {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        overlay.remove();
-    }
-}
 
 function setButtonLoading(button, isLoading) {
+    if (!button) return;
+    const spinner = button.querySelector('.spinner-border');
+    const btnText = button.querySelector('#btn-text');
+
     if (isLoading) {
-        button.classList.add('btn-loading');
         button.disabled = true;
+        button.classList.add('btn-loading-state');
+        if (btnText) btnText.style.display = 'none';
+        if (spinner) {
+             spinner.style.display = 'inline-block';
+        } else {
+             const newSpinner = document.createElement('span');
+             newSpinner.className = 'spinner-border spinner-border-sm';
+             newSpinner.setAttribute('role', 'status');
+             newSpinner.setAttribute('aria-hidden', 'true');
+             button.insertBefore(newSpinner, button.firstChild);
+        }
     } else {
-        button.classList.remove('btn-loading');
         button.disabled = false;
+        button.classList.remove('btn-loading-state');
+        if (btnText) btnText.style.display = 'inline';
+        const existingSpinner = button.querySelector('.spinner-border');
+        if (existingSpinner) existingSpinner.style.display = 'none';
     }
 }
+
 
 function reativarBotoesConfirmacao() {
     const btnConfirmar = document.getElementById('btn-confirmar-acao');
-    const botoesContainer = document.querySelector('.botoes-confirmacao');
-    btnConfirmar.classList.remove('loading');
-    btnConfirmar.disabled = false;
-    botoesContainer.classList.remove('loading');
-    btnConfirmar.textContent = 'Sim';
-}
-
-window.onclick = function(event) {
-    const modalEstoque = document.getElementById('modal-estoque');
-    const modalConfirmacao = document.getElementById('modal-confirmacao');
-    if (event.target === modalEstoque) fecharModalEstoque();
-    if (event.target === modalConfirmacao) fecharConfirmacao();
+    if (btnConfirmar) {
+        setButtonLoading(btnConfirmar, false);
+        btnConfirmar.textContent = 'Confirmar';
+        btnConfirmar.disabled = false;
+    }
 }
