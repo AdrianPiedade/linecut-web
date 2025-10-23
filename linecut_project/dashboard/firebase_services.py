@@ -263,6 +263,53 @@ class ProductFirebaseService:
 
 class CompanyFirebaseService:
     @staticmethod
+    def update_company_status(user_id, new_status):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return False
+
+            company_ref = db.reference(f'/empresas/{user_id}')
+            company_ref.update({
+                'status': new_status,
+                'updated_at': datetime.now().isoformat()
+            })
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao atualizar status da empresa {user_id}: {e}")
+            traceback.print_exc()
+            return False
+
+    @staticmethod
+    def check_store_open_prerequisites(user_id):
+        try:
+            if not CompanyFirebaseService._ensure_initialized():
+                return {'can_open': False, 'missing': ['Erro ao conectar ao Firebase.']}
+
+            company_data = CompanyFirebaseService.get_company_data(user_id)
+            products = ProductFirebaseService.get_all_products(user_id)
+
+            missing = []
+
+            horario = company_data.get('horario_funcionamento')
+            if not horario or not isinstance(horario, dict) or not any(dia.get('aberto', False) for dia in horario.values()):
+                missing.append('Configure o horário de funcionamento.')
+
+            chave_pix = company_data.get('chave_pix')
+            if not chave_pix or not str(chave_pix).strip():
+                missing.append('Configure a chave PIX.')
+
+            if not products or len(products) == 0:
+                missing.append('Cadastre pelo menos um produto.')
+
+            can_open = len(missing) == 0
+            return {'can_open': can_open, 'missing': missing}
+
+        except Exception as e:
+            logger.error(f"Erro ao verificar pré-requisitos para {user_id}: {e}")
+            traceback.print_exc()
+            return {'can_open': False, 'missing': ['Erro ao verificar requisitos.']}
+        
+    @staticmethod
     def check_and_update_trial_expiration(user_id):
         try:
             if not CompanyFirebaseService._ensure_initialized():

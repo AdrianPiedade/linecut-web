@@ -29,6 +29,55 @@ def dashboard_index(request):
     }
     return render(request, 'dashboard/inicio.html', context)
 
+@require_POST
+def toggle_store_status(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+
+    try:
+        company_data = company_service.get_company_data(firebase_uid)
+        if not company_data:
+            return JsonResponse({'success': False, 'error': 'Dados da empresa não encontrados'}, status=404)
+
+        current_status = company_data.get('status', 'fechado')
+        new_status = 'aberto' if current_status == 'fechado' else 'fechado'
+        message = ''
+
+        if new_status == 'aberto':
+            prerequisites = company_service.check_store_open_prerequisites(firebase_uid)
+            if not prerequisites['can_open']:
+                missing_str = " ".join(prerequisites['missing'])
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Não é possível abrir a loja. Requisitos pendentes: {missing_str}',
+                    'missing': prerequisites['missing'],
+                    'status': current_status
+                }, status=400)
+            else:
+                 message = 'Loja aberta com sucesso!'
+        else:
+            message = 'Loja fechada com sucesso!'
+
+        success = company_service.update_company_status(firebase_uid, new_status)
+
+        if success:
+            if 'user_profile' in request.session:
+                request.session['user_profile']['status'] = new_status
+                request.session.modified = True
+
+            return JsonResponse({'success': True, 'message': message, 'new_status': new_status})
+        else:
+            return JsonResponse({'success': False, 'error': 'Erro ao atualizar o status da loja no banco de dados.'}, status=500)
+
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor.'}, status=500)
+
 def check_trial_expiration(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:

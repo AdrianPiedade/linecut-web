@@ -424,6 +424,102 @@ body {
 @keyframes spinner-border { to { transform: rotate(360deg); } }
 button > .spinner-border { margin-right: 5px; }
 
+.status-loja-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--branco);
+    border: 1px solid var(--cinza-claro);
+    box-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.08),
+        2px 2px 4px rgba(0, 0, 0, 0.12);
+    border-radius: 20px;
+    padding: 6px 12px;
+    width: 150px;
+    height: 32px; 
+    margin: 0 auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.status-loja-btn:hover {
+    box-shadow:
+        2px 2px 4px rgba(0, 0, 0, 0.1),
+        4px 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.status-loja-btn.aberto {
+    background-color: #e8f5e9;
+    border-color: #a5d6a7; 
+}
+.status-loja-btn.aberto .status-indicator {
+    background: var(--verde);
+    box-shadow: 0 0 5px rgba(24, 159, 76, 0.7); 
+}
+.status-loja-btn.aberto span {
+    color: var(--verde);
+    font-weight: 500;
+}
+.status-loja-btn.aberto:hover {
+    background-color: #c8e6c9;
+}
+.status-loja-btn.aberto .toggle-icon {
+     color: var(--verde);
+}
+
+.status-loja-btn.fechado {
+    background-color: #ffebee;
+    border-color: #ef9a9a;
+}
+.status-loja-btn.fechado .status-indicator {
+    background: var(--vermelho); 
+    box-shadow: 0 0 5px rgba(156, 2, 2, 0.7); 
+}
+.status-loja-btn.fechado span {
+    color: var(--vermelho);
+    font-weight: 500;
+}
+.status-loja-btn.fechado:hover {
+    background-color: #ffcdd2;
+}
+.status-loja-btn.fechado .toggle-icon {
+     color: var(--vermelho);
+}
+
+.status-loja-btn .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-loja-btn span {
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1;
+    transition: color 0.3s ease;
+    flex-grow: 1; 
+    text-align: center;
+    margin-right: 5px; 
+}
+
+.status-loja-btn .toggle-icon {
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.status-loja-btn.loading {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.status-loja-btn.loading .status-indicator {
+    animation: pulse-indicator 1.5s infinite ease-in-out;
+}
+
 @media (max-width: 768px) {
     .menu-lateral {
         width: 70px;
@@ -448,4 +544,18 @@ button > .spinner-border { margin-right: 5px; }
     .modal-corpo { padding: 15px; }
     .modal-rodape { padding: 12px 15px; }
     .btn-cancelar, .btn-salvar, .btn-confirmar, .btn-modal { padding: 8px 15px; font-size: 13px; }
+    .status-loja-btn {
+        width: auto;
+        padding: 5px; 
+        height: 30px;
+    }
+    .status-loja-btn span,
+    .status-loja-btn .toggle-icon {
+        display: none; 
+    }
+    .status-loja-btn .status-indicator {
+        margin-right: 0; 
+        width: 12px;
+        height: 12px;
+    }
 }

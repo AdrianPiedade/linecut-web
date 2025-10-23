@@ -5,6 +5,7 @@ app_name = 'dashboard'
 
 urlpatterns = [
     path('', views.dashboard_index, name='index'),
+    path('toggle-store-status/', views.toggle_store_status, name='toggle_store_status'),
     path('check-trial-expiration/', views.check_trial_expiration, name='check_trial_expiration'),
     path('pedidos/', views.pedidos_view, name='pedidos'),
     path('pedidos/data/', views.get_pedidos_data, name='get_pedidos_data'),

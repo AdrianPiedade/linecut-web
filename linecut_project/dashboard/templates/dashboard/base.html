@@ -25,10 +25,13 @@
 
         <div class="restaurant-info">
             <h3>{{ request.session.user_profile.nome_lanchonete|default:"Meu Restaurante" }}</h3>
-            <div class="status-loja">
+            <button id="store-status-toggle"
+                    class="status-loja-btn {% if request.session.user_profile.status == 'aberto' %}aberto{% else %}fechado{% endif %}"
+                    data-status="{{ request.session.user_profile.status|default:'fechado' }}">
                 <div class="status-indicator"></div>
-                <span>Loja Aberta</span>
-            </div>
+                <span>Loja {% if request.session.user_profile.status == 'aberto' %}Aberta{% else %}Fechada{% endif %}</span>
+                <i class="bi bi-caret-down-fill toggle-icon"></i> 
+            </button>
         </div>
 
         <nav class="menu-nav">
@@ -87,6 +90,7 @@
         var staticUrl = "{% static '' %}";
     </script>
     {% block scripts %}
+        <script src="{% static 'dashboard/js/store_status.js' %}"></script>
     {% endblock %}
 </body>
 </html>
