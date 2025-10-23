@@ -10,6 +10,24 @@ logger = logging.getLogger(__name__)
 
 class ProductFirebaseService:
     @staticmethod
+    def has_products(user_id):
+        try:
+            restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
+            if not restaurant_ref:
+                return False
+
+            products_ref = restaurant_ref.child('products')
+
+            first_product = products_ref.order_by_key().limit_to_first(1).get()
+
+            return bool(first_product)
+
+        except Exception as e:
+            logger.error(f"Erro ao verificar existência de produtos para {user_id}: {e}")
+            traceback.print_exc()
+            return False
+        
+    @staticmethod
     def _ensure_initialized():
         try:
             if not firebase_admin._apps:
@@ -286,7 +304,6 @@ class CompanyFirebaseService:
                 return {'can_open': False, 'missing': ['Erro ao conectar ao Firebase.']}
 
             company_data = CompanyFirebaseService.get_company_data(user_id)
-            products = ProductFirebaseService.get_all_products(user_id)
 
             missing = []
 
@@ -298,7 +315,7 @@ class CompanyFirebaseService:
             if not chave_pix or not str(chave_pix).strip():
                 missing.append('Configure a chave PIX.')
 
-            if not products or len(products) == 0:
+            if not ProductFirebaseService.has_products(user_id):
                 missing.append('Cadastre pelo menos um produto.')
 
             can_open = len(missing) == 0

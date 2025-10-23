@@ -1,0 +1,136 @@
+
+{
+    "termos_condicoes": {
+        "titulo": "Termos e Condições",
+        "ultima_atualizacao": "01/05/2025",
+        "secoes": [
+        {
+            "cabecalho": "1. OBJETO",
+            "paragrafos": [
+            "1.1. O presente Termo regula o uso do Portal Web Administrativo do LineCut, que permite às lanchonetes cadastradas gerenciar pedidos, filas, estoque e dados dos clientes que utilizam o aplicativo LineCut.",
+            "1.2. O acesso ao Portal é restrito a usuários cadastrados e autorizados pelas lanchonetes, sendo seu uso exclusivo para fins administrativos."
+            ]
+        },
+        {
+            "cabecalho": "2. ACEITAÇÃO",
+            "paragrafos": [
+            "2.1. Ao acessar o Portal, o usuário declara ter lido, compreendido e aceitado os presentes Termos de Uso.",
+            "2.2. Caso o usuário não concorde com qualquer condição estabelecida, deverá interromper imediatamente o uso do Portal."
+            ]
+        },
+        {
+            "cabecalho": "3. CADASTRO",
+            "paragrafos": [
+            "3.1. O acesso ao Portal é pessoal e intransferível. A lanchonete é responsável pela gestão e segurança das credenciais fornecidas.",
+            "3.2. O administrador deve garantir que apenas pessoas autorizadas utilizem as credenciais de acesso.",
+            "3.3. A Plataforma não se responsabiliza por danos decorrentes de uso indevido das credenciais ou por falhas de segurança imputáveis ao administrador."
+            ]
+        },
+        {
+            "cabecalho": "4. OBRIGAÇÕES",
+            "paragrafos": [
+            "4.1. Utilizar o Portal de forma ética, respeitando a legislação vigente e as políticas da Plataforma.",
+            "4.2. Manter atualizados os dados cadastrais da lanchonete.",
+            "4.3. Assegurar que as informações dos clientes coletadas estejam em conformidade com a Lei Geral de Proteção de Dados (LGPD)."
+            ]
+        },
+        {
+            "cabecalho": "5. LIMITAÇÃO",
+            "paragrafos": [
+            "5.1. A Plataforma não se responsabiliza por falhas operacionais da lanchonete, incluindo problemas com conexão de internet, equipamentos ou gestão inadequada de pedidos.",
+            "5.2. O uso do Portal é disponibilizado 'no estado em que se encontra', sem garantias de funcionamento contínuo ou livre de erros."
+            ]
+        },
+        {
+            "cabecalho": "6. PRIVACIDADE E SEGURANÇA",
+            "paragrafos": [
+            "6.1. Os dados pessoais coletados são tratados de acordo com a Política de Privacidade do LineCut.",
+            "6.2. A Plataforma adota medidas de segurança para proteger os dados, mas não se responsabiliza por acessos indevidos resultantes de negligência do usuário."
+            ]
+        },
+        {
+            "cabecalho": "7. MODIFICAÇÕES DOS TERMOS",
+            "paragrafos": [
+            "7.1. O LineCut reserva-se o direito de modificar os presentes Termos a qualquer momento, notificando os usuários por meio do Portal.",
+            "7.2. O uso contínuo do Portal após as modificações constitui aceitação das novas condições."
+            ]
+        },
+        {
+            "cabecalho": "8. LEGISLAÇÃO APLICÁVEL E FORO",
+            "paragrafos": [
+            "8.1. O presente Termo é regido pelas leis da República Federativa do Brasil.",
+            "8.2. Fica eleito o foro da comarca de [insira sua cidade/estado aqui] para dirimir quaisquer controvérsias oriundas deste instrumento."
+            ]
+        },
+        {
+            "e_rodape": true,
+            "paragrafos": [
+            "Ao utilizar o Portal Web Administrativo do LineCut, o usuário concorda com todos os termos acima estabelecidos."
+            ]
+        }
+        ]
+    },
+    "politica_privacidade": {
+        "titulo": "Política de Privacidade",
+        "ultima_atualizacao": "01/05/2025",
+        "secoes": [
+        {
+            "cabecalho": "1. COLETA DE DADOS:",
+            "paragrafos": [
+            "O portal coleta e armazena informações necessárias para a gestão dos pedidos e da lanchonete, incluindo:",
+            "<strong>Dados da lanchonete:</strong> Nome, CNPJ, endereço e dados de contato.",
+            "<strong>Dados de pedidos:</strong> Itens comprados, valores, horários e status."
+            ]
+        },
+        {
+            "cabecalho": "2. USO DAS INFORMAÇÕES:",
+            "paragrafos": [
+            "Os dados coletados são utilizados para:"
+            ],
+            "itens_lista": [
+            "Gestão de pedidos e filas.",
+            "Emissão de relatórios operacionais.",
+            "Monitoramento do atendimento e eficiência da lanchonete.",
+            "Contato com clientes em casos específicos (ex: pedido cancelado ou atraso)."
+            ]
+        },
+        {
+            "cabecalho": "3. COMPARTILHAMENTO DE DADOS:",
+            "paragrafos": [
+                "As informações coletadas podem ser compartilhadas com serviços de pagamento integrados, autoridades legais (quando necessário) e o próprio LineCut para manutenção e suporte.",
+                "Não vendemos nem compartilhamos os dados dos clientes para fins comerciais."
+            ]
+        },
+        {
+            "cabecalho": "4. SEGURANÇA DOS DADOS:",
+            "paragrafos": [
+            "Os dados são armazenados em servidores seguros com protocolos de criptografia. O acesso ao portal é protegido por autenticação e controle de permissões."
+            ]
+        },
+        {
+            "cabecalho": "5. DIREITOS DOS USUÁRIOS (LGPD):",
+            "paragrafos": [
+            "O administrador pode solicitar a retificação ou exclusão de dados pessoais a qualquer momento pelo e-mail: privacidade@linecut.app.br"
+            ]
+        },
+        {
+            "cabecalho": "6. COOKIES E RASTREAMENTO:",
+            "paragrafos": [
+            "O portal utiliza cookies para manter a sessão ativa e armazenar preferências de uso. O administrador pode optar por bloquear cookies diretamente no navegador, ciente de que algumas funcionalidades podem ser prejudicadas."
+            ]
+        },
+        {
+            "cabecalho": "7. ALTERAÇÕES NA POLÍTICA DE PRIVACIDADE:",
+            "paragrafos": [
+            "Quaisquer mudanças na política serão notificadas através do portal e/ou e-mail cadastrado."
+            ]
+        },
+        {
+            "cabecalho": "8. CONTATO:",
+            "paragrafos": [
+            "Para dúvidas ou solicitações sobre privacidade e proteção de dados, entre em contato pelo e-mail: privacidade@linecut.app.br"
+            ]
+        }
+        ]
+    }
+}

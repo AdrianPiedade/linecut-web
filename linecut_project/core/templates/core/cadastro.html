@@ -103,10 +103,15 @@
                     <div class="form-group">
                         <label for="polo">Polo</label>
                         <div class="custom-select">
-                            <select id="polo" name="polo">
-                                <option value="senac-praca3" selected>Centro Universitário Senac - Praça 1</option>
-                                <option value="senac-praca3" selected>Centro Universitário Senac - Praça 2</option>
-                                <option value="senac-praca3" selected>Centro Universitário Senac - Praça 3</option>
+                            <select id="polo" name="polo" required>
+                                <option value="" disabled selected>Selecione um polo</option>
+                                {% if polos %}
+                                    {% for chave, nome in polos %}
+                                        <option value="{{ chave }}">{{ nome }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>Erro ao carregar polos</option>
+                                {% endif %}
                             </select>
                             <div class="select-icon">
                                 <i class="bi bi-chevron-down"></i>
@@ -182,46 +187,37 @@
                 </button>
             </div>
             <div class="modal-body" id="termos-content">
-                <h3>TERMO DE USO DO PORTAL WEB ADMINISTRATIVO DO LINECUT</h3>
-                <p>Última atualização: [01/05/2025]</p>
-                
-                <p>Pelo presente instrumento, o LINECUT, doravante denominado simplesmente 'Plataforma', estabelece os termos e condições de uso do Portal Web Administrativo, conforme as cláusulas a seguir:</p>
-                
-                <h4>1. OBJETO</h4>
-                <p>1.1. O presente Termo regula o uso do Portal Web Administrativo do LineCut, que permite às lanchonetes cadastradas gerenciar pedidos, filas, estoque e dados dos clientes que utilizam o aplicativo LineCut.</p>
-                <p>1.2. O acesso ao Portal é restrito a usuários cadastrados e autorizados pelas lanchonetes, sendo seu uso exclusivo para fins administrativos.</p>
-                
-                <h4>2. ACEITAÇÃO</h4>
-                <p>2.1. Ao acessar o Portal, o usuário declara ter lido, compreendido e aceitado os presentes Termos de Uso.</p>
-                <p>2.2. Caso o usuário não concorde com qualquer condição estabelecida, deverá interromper imediatamente o uso do Portal.</p>
-                
-                <h4>3. CADASTRO</h4>
-                <p>3.1. O acesso ao Portal é pessoal e intransferível. A lanchonete é responsável pela gestão e segurança das credenciais fornecidas.</p>
-                <p>3.2. O administrador deve garantir que apenas pessoas autorizadas utilizem as credenciais de acesso.</p>
-                <p>3.3. A Plataforma não se responsabiliza por danos decorrentes de uso indevido das credenciais ou por falhas de segurança imputáveis ao administrador.</p>
-                
-                <h4>4. OBRIGAÇÕES</h4>
-                <p>4.1. Utilizar o Portal de forma ética, respeitando a legislação vigente e as políticas da Plataforma.</p>
-                <p>4.2. Manter atualizados os dados cadastrais da lanchonete.</p>
-                <p>4.3. Assegurar que as informações dos clientes coletadas estejam em conformidade com a Lei Geral de Proteção de Dados (LGPD).</p>
-                
-                <h4>5. LIMITAÇÃO</h4>
-                <p>5.1. A Plataforma não se responsabiliza por falhas operacionais da lanchonete, incluindo problemas com conexão de internet, equipamentos ou gestão inadequada de pedidos.</p>
-                <p>5.2. O uso do Portal é disponibilizado 'no estado em que se encontra', sem garantias de funcionamento contínuo ou livre de erros.</p>
-                
-                <h4>6. PRIVACIDADE E SEGURANÇA</h4>
-                <p>6.1. Os dados pessoais coletados são tratados de acordo com a Política de Privacidade do LineCut.</p>
-                <p>6.2. A Plataforma adota medidas de segurança para proteger os dados, mas não se responsabiliza por acessos indevidos resultantes de negligência do usuário.</p>
-                
-                <h4>7. MODIFICAÇÕES DOS TERMOS</h4>
-                <p>7.1. O LineCut reserva-se o direito de modificar os presentes Termos a qualquer momento, notificando os usuários por meio do Portal.</p>
-                <p>7.2. O uso contínuo do Portal após as modificações constitui aceitação das novas condições.</p>
-                
-                <h4>8. LEGISLAÇÃO APLICÁVEL E FORO</h4>
-                <p>8.1. O presente Termo é regido pelas leis da República Federativa do Brasil.</p>
-                <p>8.2. Fica eleito o foro da comarca de [cidade/estado do desenvolvedor] para dirimir quaisquer controvérsias oriundas deste instrumento.</p>
-                
-                <p class="modal-end">Ao utilizar o Portal Web Administrativo do LineCut, o usuário concorda com todos os termos acima estabelecidos.</p>
+                {% with texto=termos_condicoes %} {# Usa a variável do contexto #}
+                    {% if texto and texto.secoes %}
+                        <h3>{{ texto.titulo|default:"Termos e Condições" }}</h3>
+                        {% if texto.ultima_atualizacao %}
+                            <p>Última atualização: [{{ texto.ultima_atualizacao }}]</p>
+                        {% endif %}
+
+                        {% for secao in texto.secoes %}
+                            {% if secao.cabecalho %}
+                                <h4>{{ secao.cabecalho }}</h4>
+                            {% endif %}
+                            {% if secao.paragrafos %}
+                                {% for paragrafo in secao.paragrafos %}
+                                    <p {% if secao.e_rodape %}class="modal-end"{% endif %}>
+                                        {{ paragrafo|safe }}
+                                    </p>
+                                {% endfor %}
+                            {% endif %}
+                            {% if secao.itens_lista %}
+                                <ul>
+                                    {% for item in secao.itens_lista %}
+                                        <li>{{ item|safe }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <h3>Erro</h3>
+                        <p>Não foi possível carregar os Termos e Condições no momento.</p>
+                    {% endif %}
+                {% endwith %}
             </div>
             <div class="modal-footer">
                 <div class="scroll-indicator" id="indicator-termos">
@@ -242,44 +238,37 @@
                 </button>
             </div>
             <div class="modal-body" id="politica-content">
-                <h3>POLÍTICA DE PRIVACIDADE</h3>
-                
-                <h4>1. COLETA DE DADOS:</h4>
-                <p>O portal coleta e armazena informações necessárias para a gestão dos pedidos e da lanchonete, incluindo:</p>
-                <ul>
-                    <li><strong>Dados da lanchonete:</strong> Nome, CNPJ, endereço e dados de contato.</li>
-                    <li><strong>Dados de pedidos:</strong> Itens comprados, valores, horários e status.</li>
-                </ul>
-                
-                <h4>2. USO DAS INFORMAÇÕES:</h4>
-                <p>Os dados coletados são utilizados para:</p>
-                <ul>
-                    <li>Gestão de pedidos e filas.</li>
-                    <li>Emissão de relatórios operacionais.</li>
-                    <li>Monitoramento do atendimento e eficiência da lanchonete.</li>
-                    <li>Contato com clientes em casos específicos (ex: pedido cancelado ou atraso).</li>
-                </ul>
-                
-                <h4>3. COMPARTILHAMENTO DE DADOS:</h4>
-                <ul>
-                    <li>As informações coletadas podem ser compartilhadas com serviços de pagamento integrados, autoridades legais (quando necessário) e o próprio LineCut para manutenção e suporte.</li>
-                    <li>Não vendemos nem compartilhamos os dados dos clientes para fins comerciais.</li>
-                </ul>
-                
-                <h4>4. SEGURANÇA DOS DADOS:</h4>
-                <p>Os dados são armazenados em servidores seguros com protocolos de criptografia. O acesso ao portal é protegido por autenticação e controle de permissões.</p>
-                
-                <h4>5. DIREITOS DOS USUÁRIOS (LGPD):</h4>
-                <p>O administrador pode solicitar a retificação ou exclusão de dados pessoais a qualquer momento pelo e-mail: privacidade@linecut.app.br</p>
-                
-                <h4>6. COOKIES E RASTREAMENTO:</h4>
-                <p>O portal utiliza cookies para manter a sessão ativa e armazenar preferências de uso. O administrador pode optar por bloquear cookies diretamente no navegador, ciente de que algumas funcionalidades podem ser prejudicadas.</p>
-                
-                <h4>7. ALTERAÇÕES NA POLÍTICA DE PRIVACIDADE:</h4>
-                <p>Quaisquer mudanças na política serão notificadas através do portal e/ou e-mail cadastrado.</p>
-                
-                <h4>8. CONTATO:</h4>
-                <p>Para dúvidas ou solicitações sobre privacidade e proteção de dados, entre em contato pelo e-mail: privacidade@linecut.app.br</p>
+                {% with texto=politica_privacidade %} {# Usa a variável do contexto #}
+                    {% if texto and texto.secoes %}
+                        <h3>{{ texto.titulo|default:"Política de Privacidade" }}</h3>
+                        {% if texto.ultima_atualizacao %}
+                            <p>Última atualização: [{{ texto.ultima_atualizacao }}]</p>
+                        {% endif %}
+
+                        {% for secao in texto.secoes %}
+                            {% if secao.cabecalho %}
+                                <h4>{{ secao.cabecalho }}</h4>
+                            {% endif %}
+                            {% if secao.paragrafos %}
+                                {% for paragrafo in secao.paragrafos %}
+                                    <p {% if secao.e_rodape %}class="modal-end"{% endif %}>
+                                        {{ paragrafo|safe }}
+                                    </p>
+                                {% endfor %}
+                            {% endif %}
+                            {% if secao.itens_lista %}
+                                <ul>
+                                    {% for item in secao.itens_lista %}
+                                        <li>{{ item|safe }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <h3>Erro</h3>
+                        <p>Não foi possível carregar a Política de Privacidade no momento.</p>
+                    {% endif %}
+                {% endwith %}
             </div>
             <div class="modal-footer">
                 <div class="scroll-indicator" id="indicator-politica">

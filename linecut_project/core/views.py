@@ -39,6 +39,19 @@ def como_funciona(request):
     return render(request, 'core/como_funciona.html')
 
 def cadastro(request):
+
+    polos_disponiveis = FirebaseService.obter_polos()
+    opcoes_polo = list(polos_disponiveis.items()) if polos_disponiveis else []
+    termos_condicoes_texto = FirebaseService.obter_texto_legal('termos_condicoes')
+    politica_privacidade_texto = FirebaseService.obter_texto_legal('politica_privacidade')
+
+    context = {
+        'form': CadastroForm(),
+        'polos': opcoes_polo,
+        'termos_condicoes': termos_condicoes_texto,
+        'politica_privacidade': politica_privacidade_texto
+    }
+
     if request.method == 'POST':
         cnpj_raw = request.POST.get('cnpj', '')
         cnpj_limpo = re.sub(r'[^0-9]', '', cnpj_raw)
@@ -56,6 +69,7 @@ def cadastro(request):
             return render(request, 'core/cadastro.html', {'form': form})
 
         form = CadastroForm(request.POST)
+        context['form'] = form
         if form.is_valid():
             try:
                 dados = form.cleaned_data
@@ -117,6 +131,7 @@ def cadastro(request):
                     }, status=500)
                 
                 messages.error(request, f'Erro ao realizar cadastro: {str(e)}')
+                return render(request, 'core/cadastro.html', context)
         else:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -126,10 +141,11 @@ def cadastro(request):
                 }, status=400)
             
             messages.error(request, 'Por favor, corrija os erros abaixo.')
+            return render(request, 'core/cadastro.html', context)
     else:
         form = CadastroForm()
     
-    return render(request, 'core/cadastro.html', {'form': form})
+    return render(request, 'core/cadastro.html', context)
 
 @require_GET
 def verificar_cnpj(request):

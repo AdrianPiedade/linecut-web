@@ -193,3 +193,78 @@ class FirebaseService:
         except Exception as e:
             logger.error(f"Erro ao enviar e-mail de redefinição: {e}")
             return False, str(e)
+        
+    @staticmethod
+    def obter_polos():
+        try:
+            if not FirebaseService._ensure_initialized():
+                logger.error("Firebase não inicializado ao buscar polos.")
+                return None
+
+            polos_ref = db.reference('/polos')
+            polos_data = polos_ref.get()
+
+            if polos_data and isinstance(polos_data, dict):
+                return polos_data
+            else:
+                logger.warning("Nenhum dado de polo encontrado ou formato inválido no Firebase.")
+                return {} 
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar polos no Firebase: {e}")
+            return None
+        
+    @staticmethod
+    def obter_texto_legal(tipo_texto):
+
+        if tipo_texto not in ['termos_condicoes', 'politica_privacidade']:
+            logger.error(f"Tipo de texto legal inválido solicitado: {tipo_texto}")
+            return None
+        try:
+            if not FirebaseService._ensure_initialized():
+                logger.error(f"Firebase não inicializado ao buscar texto legal: {tipo_texto}.")
+                return None
+
+            text_ref = db.reference(f'/textos_legais/{tipo_texto}')
+            text_data = text_ref.get()
+
+            if text_data and isinstance(text_data, dict):
+                return text_data
+            else:
+                logger.warning(f"Nenhum dado encontrado ou formato inválido para o texto legal: {tipo_texto}")
+
+                titulo_padrao = tipo_texto.replace('_', ' ').replace('oe', 'õe').replace('ca', 'ça').title()
+                return {"titulo": titulo_padrao, "secoes": [{"paragrafos": ["Erro ao carregar o texto."]}]}
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar texto legal '{tipo_texto}' no Firebase: {e}")
+
+            titulo_padrao = tipo_texto.replace('_', ' ').replace('oe', 'õe').replace('ca', 'ça').title()
+            return {"titulo": titulo_padrao, "secoes": [{"paragrafos": ["Erro crítico ao carregar o texto."]}]}
+        
+    @staticmethod
+    def obter_categorias_produto():
+        try:
+            if not FirebaseService._ensure_initialized():
+                logger.error("Firebase não inicializado ao buscar categorias de produto.")
+                return None
+
+            categorias_ref = db.reference('/categorias_produto')
+            categorias_data = categorias_ref.get()
+
+            if categorias_data and isinstance(categorias_data, list):
+
+                return sorted(categorias_data)
+            elif isinstance(categorias_data, dict):
+
+                 return sorted(list(categorias_data.values()))
+            else:
+                logger.warning("Nenhuma categoria de produto encontrada ou formato inválido no Firebase.")
+
+                return ["Outros"]
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar categorias de produto no Firebase: {e}")
+
+            return None
+        

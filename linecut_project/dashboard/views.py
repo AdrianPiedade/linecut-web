@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST, require_GET
 from .firebase_storage import storage_service
 from .firebase_services import product_service, company_service, order_service
+from core.firebase_services import FirebaseService as CoreFirebaseService
 
 def check_dashboard_auth(request):
     if not all(key in request.session for key in ['firebase_uid', 'user_email', 'logged_in']):
@@ -152,7 +153,12 @@ def produtos(request):
     firebase_uid = request.session.get('firebase_uid')
     products = product_service.get_all_products(firebase_uid)
 
-    context = {'products': products}
+    categorias = CoreFirebaseService.obter_categorias_produto()
+
+    context = {
+        'products': products,
+        'categorias': categorias
+    }
     return render(request, 'dashboard/produtos.html', context)
 
 def criar_produto(request):
@@ -442,8 +448,13 @@ def configuracoes(request):
 
     company_data = company_service.get_company_data(firebase_uid)
 
+    termos_condicoes_texto = CoreFirebaseService.obter_texto_legal('termos_condicoes')
+    politica_privacidade_texto = CoreFirebaseService.obter_texto_legal('politica_privacidade')
+
     context = {
-        'company_data': company_data
+        'company_data': company_data,
+        'termos_condicoes': termos_condicoes_texto, 
+        'politica_privacidade': politica_privacidade_texto 
     }
     return render(request, 'dashboard/configuracoes.html', context)
 

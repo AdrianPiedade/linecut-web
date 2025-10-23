@@ -268,12 +268,21 @@
         <div class="modal-conteudo">
             <div class="modal-cabecalho"><h2>Termos</h2><span class="fechar-modal" onclick="closeModal('modal-termos')">&times;</span></div>
             <div class="modal-corpo">
-                <h3>TERMO DE USO...</h3><p>Atualização: [01/05/2025]</p>
-                <h4>1. OBJETO</h4> <p>1.1. Regula...</p> <p>1.2. Acesso...</p>
-                <h4>2. ACEITAÇÃO</h4> <p>2.1. Declara...</p> <p>2.2. Se não...</p>
-                <h4>3. CADASTRO</h4> <p>...</p> <h4>4. OBRIGAÇÕES</h4> <p>...</p>
-                <h4>5. LIMITAÇÃO</h4> <p>...</p> <h4>6. PRIVACIDADE</h4> <p>...</p>
-                <h4>7. MODIFICAÇÕES</h4> <p>...</p> <h4>8. LEGISLAÇÃO</h4> <p>...</p>
+                {% with texto=termos_condicoes %}
+                    {% if texto and texto.secoes %}
+                        <h3>{{ texto.titulo|default:"Termos e Condições" }}</h3>
+                        {% if texto.ultima_atualizacao %}
+                            <p>Última atualização: [{{ texto.ultima_atualizacao }}]</p>
+                        {% endif %}
+                        {% for secao in texto.secoes %}
+                            {% if secao.cabecalho %}<h4>{{ secao.cabecalho }}</h4>{% endif %}
+                            {% if secao.paragrafos %}{% for paragrafo in secao.paragrafos %}<p {% if secao.e_rodape %}class="modal-end"{% endif %}>{{ paragrafo|safe }}</p>{% endfor %}{% endif %}
+                            {% if secao.itens_lista %}<ul>{% for item in secao.itens_lista %}<li>{{ item|safe }}</li>{% endfor %}</ul>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <h3>Erro</h3><p>Não foi possível carregar o texto.</p>
+                    {% endif %}
+                {% endwith %}
             </div>
             <div class="modal-rodape"><button type="button" class="btn-cancelar" onclick="closeModal('modal-termos')">Fechar</button></div>
         </div>
@@ -283,12 +292,21 @@
         <div class="modal-conteudo">
             <div class="modal-cabecalho"><h2>Privacidade</h2><span class="fechar-modal" onclick="closeModal('modal-politica')">&times;</span></div>
             <div class="modal-corpo">
-                <h3>POLÍTICA DE PRIVACIDADE</h3>
-                <h4>1. COLETA</h4> <p>Coleta...</p> <ul><li>Dados...</li></ul>
-                <h4>2. USO</h4> <p>Usados para:</p> <ul><li>Gestão...</li></ul>
-                <h4>3. COMPART.</h4> <p>...</p> <h4>4. SEGURANÇA</h4> <p>...</p>
-                <h4>5. DIREITOS</h4> <p>...</p> <h4>6. COOKIES</h4> <p>...</p>
-                <h4>7. ALTERAÇÕES</h4> <p>...</p> <h4>8. CONTATO</h4> <p>...</p>
+                {% with texto=politica_privacidade %}
+                    {% if texto and texto.secoes %}
+                        <h3>{{ texto.titulo|default:"Política de Privacidade" }}</h3>
+                        {% if texto.ultima_atualizacao %}
+                            <p>Última atualização: [{{ texto.ultima_atualizacao }}]</p>
+                        {% endif %}
+                        {% for secao in texto.secoes %}
+                            {% if secao.cabecalho %}<h4>{{ secao.cabecalho }}</h4>{% endif %}
+                            {% if secao.paragrafos %}{% for paragrafo in secao.paragrafos %}<p {% if secao.e_rodape %}class="modal-end"{% endif %}>{{ paragrafo|safe }}</p>{% endfor %}{% endif %}
+                            {% if secao.itens_lista %}<ul>{% for item in secao.itens_lista %}<li>{{ item|safe }}</li>{% endfor %}</ul>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <h3>Erro</h3><p>Não foi possível carregar o texto.</p>
+                    {% endif %}
+                {% endwith %}
             </div>
             <div class="modal-rodape"><button type="button" class="btn-cancelar" onclick="closeModal('modal-politica')">Fechar</button></div>
         </div>

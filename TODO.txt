@@ -1,5 +1,6 @@
 - Fazer refactor para o menu lateral ser separado - ok
 - Adicionar campo "chave pix" nas configurações - ok
-- Implementar abertura da loja apenas se ja existir horario de funcionamento, chave pix e pelo menos um produto
+- Implementar abertura da loja apenas se ja existir horario de funcionamento, chave pix e pelo menos um produto - ok
 - levar limitações de escolha para o firebase
 - Implementar bloqueio do dashboard para contas não premium
+- Verificar lentidão ao abrir página de produtos
