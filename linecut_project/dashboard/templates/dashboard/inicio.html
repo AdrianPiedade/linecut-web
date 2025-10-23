@@ -150,6 +150,7 @@
 {% endblock %}
 
 {% block scripts %}
+    {{ block.super }}
     <script src="{% static 'dashboard/js/inicio.js' %}"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

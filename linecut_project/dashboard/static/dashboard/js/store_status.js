@@ -74,7 +74,7 @@ function getCSRFToken() {
     return cookieValue || '';
 }
 
-function showToast(message, type = 'info', duration = 4000) {
+function showToast(message, type = 'info', duration = 6000) {
     const toastContainer = document.getElementById('toast-container'); 
     if (!toastContainer) {
         console.warn('Toast container not found!');
