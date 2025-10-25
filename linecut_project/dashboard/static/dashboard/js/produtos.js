@@ -244,88 +244,98 @@ function abrirModal(produtoId = null) {
 }
 
 function preencherFormularioEdicao(produtoId) {
-    const linhaProduto = encontrarLinhaPorId(produtoId);
-    if (linhaProduto) {
-        const nome = linhaProduto.querySelector('.col-nome').textContent;
-        const descricao = linhaProduto.querySelector('.col-descricao').textContent;
-        const precoText = linhaProduto.querySelector('.col-preco').textContent;
-        const preco = precoText.replace('R$', '').replace(',', '.').trim();
-        const quantidade = linhaProduto.querySelector('.col-quantidade').textContent;
-        const statusBadge = linhaProduto.querySelector('.status-badge');
-        const status = statusBadge.textContent.trim() === 'Disponível' ? 'true' : 'false';
-        const categoria = linhaProduto.getAttribute('data-category');
-        const imagemUrl = linhaProduto.getAttribute('data-image-url');
-        const quantidadeIdeal = linhaProduto.getAttribute('data-ideal-quantity') || '';
-        const quantidadeCritica = linhaProduto.getAttribute('data-critical-quantity') || '';
-        document.getElementById('nome').value = nome;
-        document.getElementById('descricao').value = descricao;
-        document.getElementById('preco').value = preco;
-        document.getElementById('quantidade').value = quantidade;
-        document.getElementById('status').value = status;
-        document.getElementById('categoria').value = categoria;
-        document.getElementById('quantidade_ideal').value = quantidadeIdeal;
-        document.getElementById('quantidade_critica').value = quantidadeCritica;
-        if (imagemUrl && imagemUrl !== 'null' && imagemUrl !== 'undefined' && imagemUrl !== '') {
-            carregarImagemPreview(imagemUrl);
-        } else {
-            resetarImagemPreview();
+    fetch(`/dashboard/produtos/detalhes/${produtoId}/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken(),
         }
-    } else {
-        fetch(`/dashboard/produtos/detalhes/${produtoId}/`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCSRFToken(),
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const produto = data.produto;
-                document.getElementById('nome').value = produto.name || '';
-                document.getElementById('categoria').value = produto.category || '';
-                document.getElementById('preco').value = produto.price || '';
-                document.getElementById('quantidade').value = produto.quantity || '';
-                document.getElementById('status').value = produto.is_available ? 'true' : 'false';
-                document.getElementById('descricao').value = produto.description || '';
-                document.getElementById('quantidade_ideal').value = produto.ideal_quantity || '';
-                document.getElementById('quantidade_critica').value = produto.critical_quantity || '';
-                if (produto.image_url) {
-                    carregarImagemPreview(produto.image_url);
-                } else {
-                    resetarImagemPreview();
-                }
+    })
+    .then(response => {
+        if (!response.ok) {
+             throw new Error('Erro na resposta do servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            const produto = data.produto;
+            document.getElementById('nome').value = produto.name || '';
+            document.getElementById('categoria').value = produto.category || '';
+            document.getElementById('preco').value = produto.price || '';
+            document.getElementById('quantidade').value = produto.quantity || '';
+            document.getElementById('status').value = produto.is_available ? 'true' : 'false';
+            document.getElementById('descricao').value = produto.description || '';
+            document.getElementById('quantidade_ideal').value = produto.ideal_quantity || '';
+            document.getElementById('quantidade_critica').value = produto.critical_quantity || '';
+            if (produto.image_url) {
+                carregarImagemPreview(produto.image_url);
             } else {
-                showErrorToast('Erro ao carregar produto: ' + data.message);
+                resetarImagemPreview();
             }
-        })
-        .catch(error => {
-            showErrorToast('Erro ao carregar dados do produto.');
-        });
-    }
+        } else {
+            showErrorToast('Erro ao carregar produto: ' + data.message);
+            limparFormulario();
+        }
+    })
+    .catch(error => {
+        showErrorToast('Erro ao carregar dados do produto: ' + error.message);
+        limparFormulario();
+    });
 }
 
 function carregarImagemPreview(imagemUrl) {
+    const previewContainer = document.getElementById('imagem-preview');
     const previewImg = document.getElementById('preview-img');
     const placeholderText = document.getElementById('placeholder-text');
-    if (imagemUrl && imagemUrl !== 'null' && imagemUrl !== 'undefined') {
-        const urlUnica = imagemUrl + (imagemUrl.includes('?') ? '&' : '?') + '_=' + Date.now();
-        previewImg.src = urlUnica;
-        previewImg.style.display = 'block';
+    const spinner = previewContainer.querySelector('.preview-spinner');
+
+    if (!previewContainer || !previewImg || !placeholderText || !spinner) {
+        console.error("Elementos do preview não encontrados.");
+        return;
+    }
+
+    if (imagemUrl && imagemUrl !== 'null' && imagemUrl !== 'undefined' && imagemUrl !== '') {
+        spinner.style.display = 'block';
         placeholderText.style.display = 'none';
-        previewImg.onerror = function() {
-            resetarImagemPreview();
+        previewImg.style.display = 'none';
+        previewImg.src = '';
+
+        const urlUnica = imagemUrl + (imagemUrl.includes('?') ? '&' : '?') + '_=' + Date.now();
+
+        const imgTemp = new Image();
+        imgTemp.onload = function() {
+            previewImg.src = urlUnica;
+            spinner.style.display = 'none';
+            placeholderText.style.display = 'none';
+            previewImg.style.display = 'block';
         };
+        imgTemp.onerror = function() {
+            resetarImagemPreview();
+            showErrorToast('Erro ao carregar imagem do produto.');
+        };
+        imgTemp.src = urlUnica; 
+
     } else {
         resetarImagemPreview();
     }
 }
 
 function resetarImagemPreview() {
+    const previewContainer = document.getElementById('imagem-preview');
     const previewImg = document.getElementById('preview-img');
     const placeholderText = document.getElementById('placeholder-text');
-    previewImg.src = '';
+    const spinner = previewContainer.querySelector('.preview-spinner');
+
+    if (!previewContainer || !previewImg || !placeholderText || !spinner) {
+        console.error("Elementos do preview não encontrados ao resetar.");
+        return;
+    }
+
+    spinner.style.display = 'none';
     previewImg.style.display = 'none';
     placeholderText.style.display = 'block';
+
+    previewImg.src = '';
     document.getElementById('imagem-input').value = '';
 }
 

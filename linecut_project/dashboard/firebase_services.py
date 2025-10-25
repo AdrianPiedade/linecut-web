@@ -5,6 +5,9 @@ import traceback
 import firebase_admin
 from datetime import datetime
 from firebase_admin import db
+from firebase_admin import storage
+from datetime import timedelta
+from urllib.parse import urlparse, unquote
 
 logger = logging.getLogger(__name__)
 
@@ -17,16 +20,13 @@ class ProductFirebaseService:
                 return False
 
             products_ref = restaurant_ref.child('products')
-
             first_product = products_ref.order_by_key().limit_to_first(1).get()
-
             return bool(first_product)
-
         except Exception as e:
             logger.error(f"Erro ao verificar existência de produtos para {user_id}: {e}")
             traceback.print_exc()
             return False
-        
+
     @staticmethod
     def _ensure_initialized():
         try:
@@ -51,12 +51,11 @@ class ProductFirebaseService:
                 return db.reference(f'/restaurants/{restaurant_id}'), restaurant_id
             else:
                 return db.reference(f'/restaurants/{user_id}'), user_id
-
         except Exception as e:
             return None, None
 
     @staticmethod
-    def get_all_products(user_id):
+    def get_all_products_basic(user_id):
         try:
             restaurant_ref, restaurant_id = ProductFirebaseService._get_restaurant_ref(user_id)
             if not restaurant_ref:
@@ -69,19 +68,15 @@ class ProductFirebaseService:
                 products_list = []
                 for product_id, product_data in products_data.items():
                     product_data['id'] = product_id
-
-                    if 'image_url' in product_data:
-                        product_data['image_url'] = ProductFirebaseService._process_image_url(product_data['image_url'])
-
+                    product_data.setdefault('image_url', '')
                     product_data.setdefault('ideal_quantity', None)
                     product_data.setdefault('critical_quantity', None)
-
                     products_list.append(product_data)
-
                 return products_list
-            return None
-
+            return []
         except Exception as e:
+            logger.error(f"Erro em get_all_products_basic para {user_id}: {e}")
+            traceback.print_exc()
             return None
 
     @staticmethod
@@ -96,16 +91,12 @@ class ProductFirebaseService:
 
             if product_data:
                 product_data['id'] = product_id
-
                 if 'image_url' in product_data:
                     product_data['image_url'] = ProductFirebaseService._process_image_url(product_data['image_url'])
-
                 product_data.setdefault('ideal_quantity', None)
                 product_data.setdefault('critical_quantity', None)
-
                 return product_data
             return None
-
         except Exception as e:
             return None
 
@@ -128,9 +119,7 @@ class ProductFirebaseService:
 
             products_ref = restaurant_ref.child('products')
             products_ref.child(product_id).set(cleaned_product_data)
-
             return True, product_id
-
         except Exception as e:
             return False, None
 
@@ -146,15 +135,16 @@ class ProductFirebaseService:
             cleaned_product_data = {}
             for key, value in product_data.items():
                 if value is not None:
-                    cleaned_product_data[key] = value
+                     if key == 'image_url' and isinstance(value, str) and value.startswith('http'):
+                         cleaned_product_data[key] = ProductFirebaseService._extract_storage_path(value)
+                     else:
+                         cleaned_product_data[key] = value
                 else:
                     cleaned_product_data[key] = None
 
             product_ref = restaurant_ref.child('products').child(product_id)
             product_ref.update(cleaned_product_data)
-
             return True
-
         except Exception as e:
             return False
 
@@ -167,9 +157,7 @@ class ProductFirebaseService:
 
             product_ref = restaurant_ref.child('products').child(product_id)
             product_ref.delete()
-
             return True
-
         except Exception as e:
             return False
 
@@ -186,9 +174,7 @@ class ProductFirebaseService:
                 'is_available': new_status,
                 'updated_at': datetime.now().isoformat()
             })
-
             return True
-
         except Exception as e:
             return False
 
@@ -198,19 +184,12 @@ class ProductFirebaseService:
             return ""
 
         try:
-            from firebase_admin import storage
-            from datetime import timedelta
-            from urllib.parse import urlparse, unquote
-
-            if image_path.startswith('http'):
-                parsed_url = urlparse(image_path)
-                path = unquote(parsed_url.path)
-
-                if '/o/' in path:
-                    image_path = path.split('/o/')[1].split('?')[0]
+            storage_path = ProductFirebaseService._extract_storage_path(image_path)
+            if not storage_path:
+                 return ""
 
             bucket = storage.bucket('linecut-3bf2b.firebasestorage.app')
-            blob = bucket.blob(image_path)
+            blob = bucket.blob(storage_path)
 
             if not blob.exists():
                 return ""
@@ -219,16 +198,40 @@ class ProductFirebaseService:
                 expiration=timedelta(days=7),
                 method='GET'
             )
-
             return signed_url
-
         except Exception as e:
-            return ""
+             logger.error(f"Erro ao processar URL da imagem '{image_path}': {e}")
+             traceback.print_exc()
+             return ""
+    @staticmethod
+    def _extract_storage_path(image_path_or_url):
+         if not image_path_or_url:
+             return None
+         if image_path_or_url.startswith('http'):
+             try:
+                 parsed_url = urlparse(image_path_or_url)
+                 path = unquote(parsed_url.path)
+
+                 if '/o/' in path:
+                     storage_path = path.split('/o/', 1)[1].split('?', 1)[0]
+                     return storage_path
+                 else:
+                      bucket_name = 'linecut-3bf2b.firebasestorage.app'
+                      if path.startswith(f'/{bucket_name}/'):
+                           return path[len(f'/{bucket_name}/'):]
+                      elif path.startswith('/'): 
+                           return path[1:]
+                      else: 
+                           return path
+             except Exception:
+                 return None
+         else:
+             return image_path_or_url
 
     @staticmethod
     def check_low_stock_products(user_id):
         try:
-            products = ProductFirebaseService.get_all_products(user_id)
+            products = ProductFirebaseService.get_all_products_basic(user_id)
             if not products:
                 return {}
 
@@ -275,7 +278,6 @@ class ProductFirebaseService:
                     })
 
             return alerts
-
         except Exception as e:
             return {}
 
@@ -325,7 +327,7 @@ class CompanyFirebaseService:
             logger.error(f"Erro ao verificar pré-requisitos para {user_id}: {e}")
             traceback.print_exc()
             return {'can_open': False, 'missing': ['Erro ao verificar requisitos.']}
-        
+
     @staticmethod
     def check_and_update_trial_expiration(user_id):
         try:
@@ -421,7 +423,6 @@ class CompanyFirebaseService:
                     company_data['image_url'] = CompanyFirebaseService._process_image_url(company_data['image_url'])
                 return company_data
             return None
-
         except Exception as e:
             return None
 
@@ -432,17 +433,27 @@ class CompanyFirebaseService:
                 return False
 
             company_ref = db.reference(f'/empresas/{user_id}')
-
             current_data = company_ref.get() or {}
+
+            image_url_processed = company_data.pop('image_url', None)
 
             updated_data = {**current_data, **company_data}
             updated_data['updated_at'] = datetime.now().isoformat()
 
+            if 'image_url' in company_data:
+                storage_path = ProductFirebaseService._extract_storage_path(company_data['image_url'])
+                updated_data['image_url'] = storage_path
+
+            elif image_url_processed:
+                 storage_path = ProductFirebaseService._extract_storage_path(image_url_processed)
+                 updated_data['image_url'] = storage_path
+
             company_ref.update(updated_data)
             return True
-
         except Exception as e:
-            return False
+             traceback.print_exc()
+             return False
+
 
     @staticmethod
     def update_company_plan(user_id, new_plan):
@@ -456,42 +467,12 @@ class CompanyFirebaseService:
                 'updated_at': datetime.now().isoformat()
             })
             return True
-
         except Exception as e:
             return False
 
     @staticmethod
     def _process_image_url(image_path):
-        if not image_path:
-            return ""
-
-        try:
-            from firebase_admin import storage
-            from datetime import timedelta
-            from urllib.parse import urlparse, unquote
-
-            if image_path.startswith('http'):
-                parsed_url = urlparse(image_path)
-                path = unquote(parsed_url.path)
-
-                if '/o/' in path:
-                    image_path = path.split('/o/')[1].split('?')[0]
-
-            bucket = storage.bucket('linecut-3bf2b.firebasestorage.app')
-            blob = bucket.blob(image_path)
-
-            if not blob.exists():
-                return ""
-
-            signed_url = blob.generate_signed_url(
-                expiration=timedelta(days=7),
-                method='GET'
-            )
-
-            return signed_url
-
-        except Exception as e:
-            return ""
+         return ProductFirebaseService._process_image_url(image_path)
 
     @staticmethod
     def check_trial_expiration(user_id):
@@ -515,7 +496,6 @@ class CompanyFirebaseService:
                     return True
 
             return False
-
         except Exception as e:
             return False
 
@@ -531,7 +511,6 @@ class CompanyFirebaseService:
             if company_data and company_data.get('trial_plan_expired'):
                 return True
             return False
-
         except Exception as e:
             return False
 
@@ -548,10 +527,16 @@ class CompanyFirebaseService:
                 'updated_at': datetime.now().isoformat()
             }
 
+            if field_name == 'image_url' and isinstance(field_value, str) and field_value.startswith('http'):
+                 storage_path = ProductFirebaseService._extract_storage_path(field_value)
+                 update_data[field_name] = storage_path
+            elif field_name == 'image_url' and field_value is None:
+                 update_data[field_name] = "" 
             company_ref.update(update_data)
             return True
 
         except Exception as e:
+            traceback.print_exc()
             return False
 
 class OrderFirebaseService:
@@ -693,7 +678,7 @@ class OrderFirebaseService:
             return None
 
     @staticmethod
-    def update_order_status(user_id, order_id, new_status, reason=None): # Adiciona reason=None
+    def update_order_status(user_id, order_id, new_status, reason=None):
         try:
             if not OrderFirebaseService._ensure_initialized():
                 logger.error("Firebase não inicializado ao atualizar status.")
@@ -729,9 +714,9 @@ class OrderFirebaseService:
                     order_ref.child('status_history').push(status_history_entry)
             elif new_status == 'cancelado':
                     updates_main['datahora_cancelamento'] = now_iso
-                    if reason: # Salva o motivo se ele foi fornecido
+                    if reason:
                         updates_main['motivo_cancelamento'] = reason
-                        status_history_entry['reason'] = reason # Opcional: Adicionar ao histórico também
+                        status_history_entry['reason'] = reason
                     order_ref.child('status_history').push(status_history_entry)
             else:
                 order_ref.child('status_history').push(status_history_entry)
@@ -800,21 +785,18 @@ class OrderFirebaseService:
             }
             updates_summary = {'status_pagamento': new_payment_status}
 
-            # Adiciona entrada ao histórico se o status for 'pago'
             if new_payment_status == 'pago':
-                updates_main['datahora_pagamento'] = now_iso # Registra hora do pagamento
+                updates_main['datahora_pagamento'] = now_iso
                 payment_history_entry = {
-                    'status': 'pagamento_confirmado', # Status específico para histórico
+                    'status': 'pagamento_confirmado',
                     'timestamp_iso': now_iso,
                     'timestamp_display': now_local_str
                 }
                 try:
                     order_ref.child('status_history').push(payment_history_entry)
                 except Exception as e:
-                     # Continua mesmo se falhar em adicionar ao histórico
                      pass
 
-            # Realiza as atualizações
             order_ref.update(updates_main)
             order_summary_ref.update(updates_summary)
 
@@ -823,7 +805,6 @@ class OrderFirebaseService:
         except Exception as e:
             traceback.print_exc()
             return False
-
 
 order_service = OrderFirebaseService()
 product_service = ProductFirebaseService()

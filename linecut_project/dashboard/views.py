@@ -6,8 +6,11 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST, require_GET
 from .firebase_storage import storage_service
-from .firebase_services import product_service, company_service, order_service
+from .firebase_services import product_service, company_service, order_service, ProductFirebaseService
 from core.firebase_services import FirebaseService as CoreFirebaseService
+import logging
+
+logger = logging.getLogger(__name__)
 
 def check_dashboard_auth(request):
     if not all(key in request.session for key in ['firebase_uid', 'user_email', 'logged_in']):
@@ -151,12 +154,11 @@ def produtos(request):
         return auth_redirect
 
     firebase_uid = request.session.get('firebase_uid')
-    products = product_service.get_all_products(firebase_uid)
-
+    products_basic = product_service.get_all_products_basic(firebase_uid)
     categorias = CoreFirebaseService.obter_categorias_produto()
 
     context = {
-        'products': products,
+        'products': products_basic if products_basic else [],
         'categorias': categorias
     }
     return render(request, 'dashboard/produtos.html', context)
@@ -217,7 +219,8 @@ def editar_produto(request, product_id):
         try:
             firebase_uid = request.session.get('firebase_uid')
             produto_atual = product_service.get_product(firebase_uid, product_id)
-            imagem_antiga = produto_atual.get('image_url') if produto_atual else None
+            imagem_antiga_path = ProductFirebaseService._extract_storage_path(produto_atual.get('image_url')) if produto_atual else None
+
 
             ideal_quantity = request.POST.get('ideal_quantity')
             critical_quantity = request.POST.get('critical_quantity')
@@ -243,12 +246,17 @@ def editar_produto(request, product_id):
 
             image_file = request.FILES.get('image')
             if image_file:
-                if imagem_antiga:
-                    storage_service.delete_image(imagem_antiga)
+                if imagem_antiga_path:
+                    storage_service.delete_image(imagem_antiga_path)
 
                 image_path = storage_service.upload_image(image_file, firebase_uid, product_id)
                 if image_path:
                     product_data['image_url'] = image_path
+            elif 'image_url' not in request.POST:
+                 if imagem_antiga_path:
+                      product_data['image_url'] = imagem_antiga_path
+                 else:
+                      product_data['image_url'] = None
 
             success = product_service.update_product(firebase_uid, product_id, product_data)
 
@@ -258,6 +266,7 @@ def editar_produto(request, product_id):
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar produto'})
 
         except Exception as e:
+            traceback.print_exc()
             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
 
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
@@ -271,11 +280,14 @@ def excluir_produto(request, product_id):
         try:
             firebase_uid = request.session.get('firebase_uid')
             product = product_service.get_product(firebase_uid, product_id)
-
+            image_path = None
             if product and 'image_url' in product and product['image_url']:
-                storage_service.delete_image(product['image_url'])
+                 image_path = ProductFirebaseService._extract_storage_path(product['image_url'])
 
             success = product_service.delete_product(firebase_uid, product_id)
+
+            if success and image_path:
+                storage_service.delete_image(image_path)
 
             if success:
                 return JsonResponse({'success': True, 'message': 'Produto excluído com sucesso!'})
@@ -338,6 +350,7 @@ def detalhes_produto(request, product_id):
             return JsonResponse({'success': False, 'message': 'Produto não encontrado'})
 
     except Exception as e:
+        traceback.print_exc()
         return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
 
 def estoque(request):
@@ -346,9 +359,10 @@ def estoque(request):
         return auth_redirect
 
     firebase_uid = request.session.get('firebase_uid')
-    products = product_service.get_all_products(firebase_uid)
+    products_basic = product_service.get_all_products_basic(firebase_uid)
+    products_list = products_basic if products_basic else []
 
-    paginator = Paginator(products, 25)
+    paginator = Paginator(products_list, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -453,8 +467,8 @@ def configuracoes(request):
 
     context = {
         'company_data': company_data,
-        'termos_condicoes': termos_condicoes_texto, 
-        'politica_privacidade': politica_privacidade_texto 
+        'termos_condicoes': termos_condicoes_texto,
+        'politica_privacidade': politica_privacidade_texto
     }
     return render(request, 'dashboard/configuracoes.html', context)
 
@@ -480,8 +494,8 @@ def update_company_profile(request):
                 if field in request.POST:
                     company_data[field] = request.POST[field]
 
-            if current_company.get('image_url'):
-                company_data['image_url'] = current_company['image_url']
+            if 'image_url' in current_company and 'image_url' not in company_data :
+                 company_data['image_url'] = ProductFirebaseService._extract_storage_path(current_company['image_url'])
 
             success = company_service.update_company_data(firebase_uid, company_data)
 
@@ -491,7 +505,8 @@ def update_company_profile(request):
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar perfil'})
 
         except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+             traceback.print_exc()
+             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
 
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
@@ -618,44 +633,37 @@ def update_company_image(request):
                 return JsonResponse({'success': False, 'message': 'Nenhuma imagem enviada'})
 
             old_image_url = current_company.get('image_url')
+            old_image_path = None
             if old_image_url:
-                try:
-                    storage_service.delete_image(old_image_url)
-                except Exception as e:
-                    # Log error instead of printing
-                    pass
+                 old_image_path = ProductFirebaseService._extract_storage_path(old_image_url)
+                 if old_image_path:
+                      try:
+                          storage_service.delete_image(old_image_path)
+                      except Exception as e:
+                           logger.warning(f"Não foi possível excluir imagem antiga {old_image_path}: {e}")
+                           pass
 
             image_path = storage_service.upload_image(image_file, firebase_uid, 'company_logo')
             if not image_path:
                 return JsonResponse({'success': False, 'message': 'Erro ao fazer upload da imagem'})
 
-            try:
-                from firebase_admin import storage
-                from datetime import timedelta
-
-                bucket = storage.bucket(settings.FIREBASE_STORAGE_BUCKET)
-                blob = bucket.blob(image_path)
-
-                signed_url = blob.generate_signed_url(
-                    expiration=timedelta(days=7),
-                    method='GET'
-                )
-            except Exception as e:
-                signed_url = image_path
-
             success = company_service.update_company_field(firebase_uid, 'image_url', image_path)
 
             if success:
-                return JsonResponse({
+                 signed_url = company_service._process_image_url(image_path)
+                 return JsonResponse({
                     'success': True,
                     'message': 'Imagem atualizada com sucesso!',
                     'image_url': signed_url
-                })
+                 })
             else:
+                if image_path:
+                    storage_service.delete_image(image_path)
                 return JsonResponse({'success': False, 'message': 'Erro ao atualizar imagem no banco'})
 
         except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
+             traceback.print_exc()
+             return JsonResponse({'success': False, 'message': f'Erro: {str(e)}'})
 
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
@@ -742,8 +750,7 @@ def update_pedido_status(request, order_id):
         new_payment_status = data.get('new_payment_status')
 
         if new_payment_status:
-            # Atualiza apenas o status de pagamento
-            allowed_payment_statuses = ['pago', 'pendente'] # Adicione outros se necessário
+            allowed_payment_statuses = ['pago', 'pendente']
             if new_payment_status not in allowed_payment_statuses:
                 return JsonResponse({'success': False, 'error': 'Status de pagamento inválido'}, status=400)
 
@@ -754,7 +761,6 @@ def update_pedido_status(request, order_id):
                 return JsonResponse({'success': False, 'error': 'Falha ao atualizar status de pagamento'}, status=500)
 
         elif new_status:
-            # Atualiza o status do pedido
             allowed_statuses = ['pendente', 'pago', 'preparando', 'pronto', 'retirado', 'cancelado']
             if new_status not in allowed_statuses:
                 return JsonResponse({'success': False, 'error': 'Status de pedido inválido fornecido'}, status=400)
@@ -786,9 +792,8 @@ def cancel_pedido(request, order_id):
 
     try:
         data = json.loads(request.body)
-        reason = data.get('reason', 'Cancelado pelo restaurante') # Obtém o motivo do corpo da requisição
+        reason = data.get('reason', 'Cancelado pelo restaurante')
 
-        # Passa o motivo para o service
         success = order_service.update_order_status(firebase_uid, order_id, 'cancelado', reason=reason)
 
         if success:

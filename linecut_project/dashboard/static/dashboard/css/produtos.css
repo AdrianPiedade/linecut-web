@@ -470,6 +470,8 @@
     overflow: hidden;
     background: var(--cinza-background);
     cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s ease;
 }
 
 .imagem-preview:hover {
@@ -480,13 +482,18 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: none;
 }
 
 #placeholder-text {
     color: var(--cinza-escuro);
     font-size: 14px;
     text-align: center;
+    padding: 10px;
+    line-height: 1.4;
+    display: block;
 }
+
 
 .btn-upload {
     padding: 8px 16px;
@@ -504,6 +511,46 @@
     background: var(--vermelho-escuro);
     border-color: var(--vermelho-escuro);
     transform: translateY(-1px);
+}
+
+.preview-spinner {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--cinza-claro); 
+    border-top-color: var(--vermelho-principal); 
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.imagem-preview.loading #placeholder-text,
+.imagem-preview.loading img {
+    display: none;
+}
+.imagem-preview.loading .preview-spinner {
+    display: block;
+}
+
+.imagem-preview.has-image #placeholder-text,
+.imagem-preview.has-image .preview-spinner {
+    display: none;
+}
+.imagem-preview.has-image img {
+    display: block;
+}
+
+.imagem-preview.no-image #placeholder-text {
+    display: block;
+}
+.imagem-preview.no-image img,
+.imagem-preview.no-image .preview-spinner {
+    display: none;
 }
 
 .form-group {
