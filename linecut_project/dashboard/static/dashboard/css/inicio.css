@@ -311,21 +311,6 @@
     flex: 1.5;
 }
 
-.status-indicator {
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-.status-indicator.em-andamento {
-    background: var(--amarelo);
-}
-
-.status-indicator.concluido {
-    background: var(--verde);
-}
-
 .col-acao {
     text-align: right;
 }

@@ -463,6 +463,7 @@ button > .spinner-border { margin-right: 5px; }
     background: var(--verde);
     box-shadow: 0 0 5px rgba(24, 159, 76, 0.7); 
 }
+
 .status-loja-btn.aberto span {
     color: var(--verde);
     font-weight: 500;
@@ -479,9 +480,10 @@ button > .spinner-border { margin-right: 5px; }
     border-color: #ef9a9a;
 }
 .status-loja-btn.fechado .status-indicator {
-    background: var(--vermelho); 
+    background: var(--vermelho-principal); 
     box-shadow: 0 0 5px rgba(156, 2, 2, 0.7); 
 }
+
 .status-loja-btn.fechado span {
     color: var(--vermelho);
     font-weight: 500;

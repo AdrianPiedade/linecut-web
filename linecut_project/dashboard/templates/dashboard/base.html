@@ -30,7 +30,6 @@
                     data-status="{{ request.session.user_profile.status|default:'fechado' }}">
                 <div class="status-indicator"></div>
                 <span>Loja {% if request.session.user_profile.status == 'aberto' %}Aberta{% else %}Fechada{% endif %}</span>
-                <i class="bi bi-caret-down-fill toggle-icon"></i> 
             </button>
         </div>
 

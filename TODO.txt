@@ -4,6 +4,6 @@
 - levar limitações de escolha para o firebase - ok
 - Implementar bloqueio do dashboard para contas não premium - ok
 - Verificar lentidão ao abrir página de produtos - ok
-- Retirar seta do botão de abrir/fechar loja, e verificar cor do botao
+- Retirar seta do botão de abrir/fechar loja, e verificar cor do botao - ok
 - Retirar toast duplicado na atualização de perfil
 - Adiciona regra de botão inativo dentro da visualização nos pedidos
