@@ -401,7 +401,17 @@ async function showOrderDetails(orderId) {
                  actionsContainer.innerHTML += `<button class="btn-modal btn-pronto" onclick="confirmUpdateStatus('${orderId}', 'pronto')"><i class="bi bi-check-lg"></i> Marcar como Pronto</button>`;
              }
              if (currentStatus === 'pronto') {
-                  actionsContainer.innerHTML += `<button class="btn-modal btn-retirado" onclick="confirmUpdateStatus('${orderId}', 'retirado')"><i class="bi bi-bag-check"></i> Marcar como Retirado</button>`;
+                  const isPago = currentOrderDetails.status_pagamento === 'pago' || currentOrderDetails.status_pagamento === 'efetuado';
+                  const retiradoDisabled = !isPago;
+                  const retiradoTitle = retiradoDisabled ? 'Pagamento pendente. Confirme o pagamento local antes.' : 'Marcar pedido como Retirado/Entregue';
+
+                  actionsContainer.innerHTML += `<button
+                        class="btn-modal btn-retirado"
+                        onclick="confirmUpdateStatus('${orderId}', 'retirado')"
+                        ${retiradoDisabled ? 'disabled title="' + retiradoTitle + '"' : 'title="' + retiradoTitle + '"'}
+                        >
+                            <i class="bi bi-bag-check"></i> Marcar como Retirado
+                     </button>`;
              }
              if (!['retirado', 'concluido', 'cancelado'].includes(currentStatus)) {
                  actionsContainer.innerHTML += `<button class="btn-modal btn-cancelar-detalhes" onclick="confirmCancelOrder('${orderId}')"><i class="bi bi-x-lg"></i> Cancelar pedido</button>`;

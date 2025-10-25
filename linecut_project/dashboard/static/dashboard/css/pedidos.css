@@ -431,7 +431,38 @@
 .btn-retirado:hover:not(:disabled) { background-color: #148c41; }
 .btn-cancelar-detalhes { background-color: var(--vermelho-erro); color: white; }
 .btn-cancelar-detalhes:hover:not(:disabled) { background-color: #c62828; }
+.btn-modal.btn-retirado:disabled {
+    background-color: var(--cinza-desabilitado-bg) !important; 
+    color: var(--cinza-desabilitado-texto) !important;
+    border: 1px solid var(--cinza-desabilitado-borda) !important; 
+    cursor: not-allowed;
+    opacity: 0.7; 
+    box-shadow: none; 
+    transform: none; 
+}
 
+.btn-modal.btn-retirado:disabled:hover {
+    background-color: var(--cinza-desabilitado-bg) !important;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-modal[disabled]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 1050;
+    display: block;
+}
 .menu-item.has-new-orders {
     background-color: #fff3e0 !important;
     position: relative;
