@@ -51,11 +51,18 @@
                 <img src="{% static 'dashboard/images/icone_estoque.png' %}" alt="Estoque" class="icon">
                 <span>Estoque</span>
             </a>
-            <a href="#" class="menu-item disabled">
-                <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
-                <span>Dashboard</span>
-                <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
-            </a>
+            {% if request.session.user_profile.plano == 'premium' %}
+                <a href="#" class="menu-item">
+                    <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                    <span>Dashboard</span>
+                </a>
+            {% else %}
+                <a class="menu-item disabled" title="Disponível apenas para plano Premium">
+                    <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
+                    <span>Dashboard</span>
+                    <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
+                </a>
+            {% endif %}
             <a href="#" class="menu-item">
                 <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
                 <span>Avaliações</span>
