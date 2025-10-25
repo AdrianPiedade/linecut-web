@@ -8,6 +8,7 @@ let companyStartX, companyStartY;
 let editedCompanyImageBlob = null;
 let isSavingHorario = false;
 let companyDataBackup = null;
+let isSavingProfile = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     initializePage();
@@ -755,27 +756,21 @@ document.getElementById('form-perfil')?.addEventListener('submit', function(e) {
 });
 
 function salvarInformacoes() {
+    if (isSavingProfile) return;
+    isSavingProfile = true;
+
     const formData = new FormData();
     const fields = ['nome_lanchonete', 'description', 'telefone', 'chave_pix'];
 
     fields.forEach(field => {
         const elementId = `edit-${field.replace(/_/g, '-')}`;
         const element = document.getElementById(elementId);
-
         if (element) {
-            const value = element.value;
-            formData.append(field, value);
-        } else {
-            console.warn(`Elemento com ID ${elementId} não encontrado no formulário.`);
+            formData.append(field, element.value);
         }
     });
 
-    console.log("FormData a ser enviado:");
-    for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-    }
-
-    const loadingOverlay = showLoading('Salvando informações...');
+    const loadingOverlay = showLoading('Salvando informações...'); 
 
     fetch('/dashboard/configuracoes/update-profile/', {
         method: 'POST',
@@ -789,15 +784,16 @@ function salvarInformacoes() {
     .then(data => {
         if (data.success) {
             showSuccessToast(data.message || 'Perfil atualizado com sucesso!'); 
-            loadCompanyData();
+            loadCompanyData(); 
             closeModal('modal-perfil');
         } else {
             showErrorToast(data.message || 'Erro ao salvar informações'); 
         }
     })
-    .catch(error => showErrorToast('Erro de comunicação ao salvar informações: ' + error)) 
+    .catch(error => showErrorToast('Erro de comunicação ao salvar informações: ' + error.message))
     .finally(() => {
         hideLoading();
+        isSavingProfile = false;
     });
 }
 
