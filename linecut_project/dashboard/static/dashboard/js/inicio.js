@@ -56,62 +56,26 @@ const modalManager = {
     }
 };
 
-const dadosMockados = {
-    nomeLanchonete: "Museoh",
-    categoria: "Lanches e Salgados",
-    endereco: "Praça 3 - Senac",
-    horarios: {
-        hoje: "18:00 - 23:00",
-        amanha: "18:00 - 23:00"
-    },
-    metricas: {
-        pedidosHoje: 15,
-        totalVendas: "R$ 812,50",
-        avaliacaoMedia: 4.7,
-        totalAvaliacoes: 360
-    },
-    pedidos: [
-        { id: "#1200", status: "em-andamento", valor: "R$ 20,00", data: "24/04/2025" },
-        { id: "#1199", status: "em-andamento", valor: "R$ 20,00", data: "24/04/2025" },
-        { id: "#1198", status: "concluido", valor: "R$ 20,00", data: "24/04/2025" },
-        { id: "#1197", status: "concluido", valor: "R$ 20,00", data: "24/04/2025" },
-        { id: "#1196", status: "concluido", valor: "R$ 20,00", data: "24/04/2025" }
-    ]
-};
-
 document.addEventListener('DOMContentLoaded', function() {
     modalManager.init();
 
     if (!toastManager) {
         toastManager = new ToastManager();
     }
-
-    debugCompanyData().then(() => {
-        if (typeof checkTrialExpiration === 'function') {
-            setTimeout(() => {
-                checkTrialExpiration();
-            }, 1000);
-        }
+    
+    if (typeof checkTrialExpiration === 'function') {
+        checkTrialExpiration();
+    }
+    
+    document.querySelector('.menu-sair')?.addEventListener('click', function() {
     });
 
-    const menuItems = document.querySelectorAll('.menu-item');
-    menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            menuItems.forEach(i => i.classList.remove('selected'));
-            this.classList.add('selected');
-        });
-    });
-
-    document.querySelector('.menu-sair').addEventListener('click', function() {
-    });
-
-    document.querySelector('.btn-ver-pedidos').addEventListener('click', function() {
+    document.querySelector('.btn-ver-pedidos')?.addEventListener('click', function() {
     });
 
     const detalhesLinks = document.querySelectorAll('.ver-detalhes');
     detalhesLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            e.preventDefault();
         });
     });
 });
@@ -145,17 +109,31 @@ class ToastManager {
 
     showToast(type, title, message, duration = 5000) {
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.className = `toast toast-${type}`;
+        
+        let iconHTML = '';
+        if (typeof staticUrl !== 'undefined') {
+             const iconMap = {
+                success: 'sucesso', 
+                error: 'erro', 
+                warning: 'alerta', 
+                info: 'info'
+            };
+            const iconFile = iconMap[type] || 'info';
+            iconHTML = `<img src="${staticUrl}dashboard/images/icone_${iconFile}.png" alt="${type}" class="toast-icon">`;
+        } else {
+            iconHTML = `<i>${type.charAt(0).toUpperCase()}</i>`;
+        }
+
 
         toast.innerHTML = `
-            <img src="${staticUrl}dashboard/images/icone_${type === 'success' ? 'sucesso' : type === 'warning' ? 'alerta' : 'info'}.png" 
-                 alt="${type}" class="toast-icon">
+            ${iconHTML}
             <div class="toast-content">
                 <div class="toast-title">${title}</div>
                 <div class="toast-message">${message}</div>
             </div>
             <button class="toast-close">
-                <img src="${staticUrl}dashboard/images/icone_fechar.png" alt="Fechar" class="toast-close-icon">
+                &times;
             </button>
         `;
 
@@ -208,21 +186,4 @@ async function checkTrialExpiration() {
         }
     } catch (error) {
     }
-}
-
-async function debugCompanyData() {
-    try {
-        const response = await fetch('/dashboard/configuracoes/get-company-data/');
-        const data = await response.json();
-    } catch (error) {
-    }
-}
-
-function testToast() {
-    toastManager.showToast(
-        'info',
-        'Teste Toast',
-        'Este é um teste do sistema de notificação',
-        5000
-    );
 }

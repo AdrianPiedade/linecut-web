@@ -16,14 +16,15 @@
     <div class="info-cards">
         <div class="info-card dados-lanchonete">
             <div class="lanchonete-imagem">
-                <img src="{% static 'dashboard/images/perfil_default.png' %}" alt="Logo Lanchonete">
+                {# Utiliza a URL real da session, com fallback para a imagem default #}
+                <img src="{{ request.session.user_profile.image_url|default:'/static/dashboard/images/perfil_default.png' }}" alt="Logo Lanchonete">
             </div>
             <div class="lanchonete-info">
                 <h2>{{ request.session.user_profile.nome_lanchonete|default:"Nome Lanchonete" }}</h2>
                 <p class="categoria">{{ request.session.user_profile.description|default:"Categoria" }}</p>
-                <p class="endereco">{{ request.session.user_profile.polo|default:"Endereço" }}</p> {# Ajuste conforme o campo correto do endereço/polo #}
+                <p class="endereco">{{ request.session.user_profile.polo|default:"Endereço" }}</p>
             </div>
-            <div class="editar-icon" onclick="window.location.href='{% url 'dashboard:configuracoes' %}'"> {# Link para configurações #}
+            <div class="editar-icon" onclick="window.location.href='{% url 'dashboard:configuracoes' %}'">
                 <img src="{% static 'dashboard/images/icone_edicao.png' %}" alt="Editar">
             </div>
         </div>
@@ -31,36 +32,16 @@
         <div class="info-card horario-funcionamento">
             <h3>Horário de funcionamento</h3>
             <div class="dias-semana">
+                {% for dia in horario_display %}
                 <div class="dia-item">
-                    <p class="dia-nome">Seg</p>
+                    <p class="dia-nome">{{ dia.dia_nome }}</p>
                     <div class="horario-box">
-                        <span>18:00 - 23:00</span>
+                        <span class="{% if dia.fechado %}fechado{% endif %}">{{ dia.horario_str }}</span>
                     </div>
                 </div>
-                <div class="dia-item">
-                    <p class="dia-nome">Ter</p>
-                    <div class="horario-box">
-                        <span>18:00 - 23:00</span>
-                    </div>
-                </div>
-                <div class="dia-item">
-                    <p class="dia-nome">Qua</p>
-                    <div class="horario-box">
-                        <span>18:00 - 23:00</span>
-                    </div>
-                </div>
-                <div class="dia-item">
-                    <p class="dia-nome">Qui</p>
-                    <div class="horario-box">
-                        <span>18:00 - 23:00</span>
-                    </div>
-                </div>
-                <div class="dia-item">
-                    <p class="dia-nome">Sex</p>
-                    <div class="horario-box">
-                        <span>18:00 - 23:00</span>
-                    </div>
-                </div>
+                {% empty %}
+                <div style="flex: 1; text-align: center; color: var(--cinza-escuro); font-size: 14px;">Horário não configurado.</div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -70,20 +51,21 @@
         <div class="metricas-container">
             <div class="metrica">
                 <h3>Pedidos recebidos hoje</h3>
-                <p class="valor">15</p> {# Exemplo, substituir por dados reais #}
+                <p class="valor">{{ pedidos_hoje }}</p>
             </div>
             <div class="separador"></div>
             <div class="metrica">
                 <h3>Total em vendas</h3>
-                <p class="valor">R$ 812,50</p> {# Exemplo, substituir por dados reais #}
+                <p class="valor">{{ total_vendas }}</p>
             </div>
             <div class="separador"></div>
             <div class="metrica">
                 <h3>Avaliação média</h3>
                 <div class="avaliacao-container">
                     <img src="{% static 'dashboard/images/icone_estrela_hd.png' %}" alt="Avaliação" class="estrela-icon-hd">
-                    <p class="valor">4,7</p> 
-                <p class="total-avaliacoes">(360 avaliações)</p> 
+                    <p class="valor">{{ avaliacao_media }}</p>
+                </div>
+                <p class="total-avaliacoes">({{ total_avaliacoes }} avaliações)</p>
             </div>
         </div>
     </section>
@@ -98,33 +80,28 @@
                 <span class="col-data">Data</span>
                 <span class="col-acao">Detalhes</span>
             </div>
+            {% for pedido in ultimos_pedidos %}
             <div class="linha-pedido">
                 <div class="col-status">
-                    <div class="status-indicator em-andamento"></div>
-                    <span>Em andamento</span>
+                    <div class="status-indicator {{ pedido.dot_class }}"></div>
+                    <span>{{ pedido.status_display }}</span>
                 </div>
-                <div class="col-numero">#1200</div>
-                <div class="col-valor">R$ 20,00</div>
-                <div class="col-data">24/04/2025</div>
+                <div class="col-numero">#{{ pedido.id }}</div>
+                <div class="col-valor">R$ {{ pedido.preco_total|floatformat:2|default:'0,00' }}</div>
+                <div class="col-data">{{ pedido.data_criacao_display }}</div>
                 <div class="col-acao">
-                    <a href="#" class="ver-detalhes">Ver detalhes</a>
+                    {# O link 'Ver detalhes' deve levar o usuário para a página de pedidos, sem necessidade de lógica de JS mais complexa aqui #}
+                    <a href="{% url 'dashboard:pedidos' %}" class="ver-detalhes">Ver pedidos</a> 
                 </div>
             </div>
-             <div class="linha-pedido">
-                <div class="col-status">
-                    <div class="status-indicator concluido"></div>
-                    <span>Pedido concluído</span>
-                </div>
-                <div class="col-numero">#1198</div>
-                <div class="col-valor">R$ 20,00</div>
-                <div class="col-data">24/04/2025</div>
-                <div class="col-acao">
-                    <a href="#" class="ver-detalhes">Ver detalhes</a>
-                </div>
+            {% empty %}
+             <div class="linha-pedido" style="text-align: center; justify-content: center; color: var(--cinza-escuro); font-style: italic;">
+                 Nenhum pedido recente.
             </div>
+            {% endfor %}
         </div>
 
-        <button class="btn-ver-pedidos" onclick="window.location.href='{% url 'dashboard:pedidos' %}'">Ver Pedidos</button>
+        <button class="btn-ver-pedidos" onclick="window.location.href='{% url 'dashboard:pedidos' %}'">Ver Todos os Pedidos</button>
     </section>
 
     <div id="planoModal" class="modal" style="display: none;">
@@ -154,13 +131,11 @@
     <script src="{% static 'dashboard/js/inicio.js' %}"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-            if (typeof checkTrialExpiration === 'function') {
-                checkTrialExpiration();
-            } else {
-                console.error("Função checkTrialExpiration não encontrada em inicio.js");
-            }
-        }, 2000); 
+        if (typeof checkTrialExpiration === 'function') {
+            checkTrialExpiration();
+        } else {
+            console.error("Função checkTrialExpiration não encontrada em inicio.js");
+        }
     });
     </script>
 {% endblock %}

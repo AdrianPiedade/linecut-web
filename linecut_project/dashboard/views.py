@@ -1,5 +1,7 @@
+import pytz
 import json
 import traceback
+from datetime import datetime, time
 from django.conf import settings
 from django.http import JsonResponse, Http404
 from django.core.paginator import Paginator
@@ -22,14 +24,58 @@ def dashboard_index(request):
     if auth_redirect:
         return auth_redirect
 
+    firebase_uid = request.session.get('firebase_uid')
+    
+    company_data = request.session.get('user_profile', {})
+    horario_funcionamento = company_data.get('horario_funcionamento', {})
+    
+    dias_semana_map = {
+        'segunda': 'Seg', 'terca': 'Ter', 'quarta': 'Qua', 'quinta': 'Qui',
+        'sexta': 'Sex', 'sabado': 'Sáb', 'domingo': 'Dom'
+    }
+    
+    horario_display = []
+
+    for dia_chave, dia_nome in dias_semana_map.items():
+        horario = horario_funcionamento.get(dia_chave, {})
+        if horario.get('aberto'):
+            horario_str = f"{horario.get('abertura', '')} - {horario.get('fechamento', '')}"
+        else:
+            horario_str = "Fechado"
+            
+        horario_display.append({
+            'dia_nome': dia_nome,
+            'horario_str': horario_str,
+            'fechado': not horario.get('aberto')
+        })
+
+    performance_metrics = order_service.get_daily_performance(firebase_uid)
+    
+    rating_data = AvaliacaoFirebaseService.get_performance_data(firebase_uid)
+    
+    avaliacao_media = 0.0
+    total_avaliacoes = 0
+    if rating_data and rating_data.get('bloco_geral'):
+        avaliacao_media = rating_data['bloco_geral'].get('nota_media_geral', 0.0)
+        total_avaliacoes = rating_data['bloco_geral'].get('total_avaliacoes', 0) 
+
+    ultimos_pedidos = order_service.get_last_orders(firebase_uid, limit=3)
+    
     context = {
-        'nome_restaurante': 'Museoh',
-        'categoria': 'Lanches e Salgados',
-        'endereco': 'Praça 3 - Senac',
-        'pedidos_hoje': 15,
-        'total_vendas': 'R$ 812,50',
-        'avaliacao_media': 4.7,
-        'total_avaliacoes': 360,
+        'nome_restaurante': company_data.get('nome_lanchonete', 'Meu Restaurante'),
+        'categoria': company_data.get('description', 'Categoria'),
+        'endereco': company_data.get('polo', 'Endereço/Polo'), 
+        
+        'horario_display': horario_display,
+        
+        'pedidos_hoje': performance_metrics.get('pedidos_hoje', 0) if performance_metrics else 0,
+
+        'total_vendas': f"R$ {performance_metrics.get('total_vendas_hoje', 0.0):.2f}".replace('.', ',') if performance_metrics else 'R$ 0,00',
+        
+        'avaliacao_media': f"{avaliacao_media:.1f}".replace('.', ','),
+        'total_avaliacoes': total_avaliacoes,
+        
+        'ultimos_pedidos': ultimos_pedidos if ultimos_pedidos else []
     }
     return render(request, 'dashboard/inicio.html', context)
 

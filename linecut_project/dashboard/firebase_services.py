@@ -3,10 +3,9 @@ import pytz
 import logging
 import traceback
 import firebase_admin
-from datetime import datetime
 from firebase_admin import db
 from firebase_admin import storage
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from urllib.parse import urlparse, unquote
 
 logger = logging.getLogger(__name__)
@@ -805,6 +804,150 @@ class OrderFirebaseService:
         except Exception as e:
             traceback.print_exc()
             return False
+        
+    @staticmethod
+    def _get_orders_for_day(lanchonete_id, target_date, limit=None):
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                return None
+            
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            
+            start_of_day = sao_paulo_tz.localize(datetime.combine(target_date, time.min)).astimezone(pytz.utc).isoformat()
+            end_of_day = sao_paulo_tz.localize(datetime.combine(target_date, time.max)).astimezone(pytz.utc).isoformat()
+            
+            orders_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}')
+
+            query = orders_summary_ref.order_by_child('data_criacao').start_at(start_of_day).end_at(end_of_day)
+            
+            orders_summary = query.get()
+            
+            if not orders_summary or not isinstance(orders_summary, dict):
+                return []
+
+            order_list = []
+            
+            for order_id, summary_data in orders_summary.items():
+                if not isinstance(summary_data, dict):
+                    continue
+                    
+                data_criacao_str = summary_data.get('data_criacao')
+                if data_criacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(data_criacao_str.replace('Z', '+00:00'))
+                        dt_local = dt_utc.astimezone(sao_paulo_tz)
+                        summary_data['data_criacao_dt'] = dt_local
+                    except (ValueError, TypeError):
+                         summary_data['data_criacao_dt'] = datetime.min.replace(tzinfo=sao_paulo_tz)
+
+                order_list.append(summary_data)
+            
+            return order_list
+            
+        except Exception as e:
+            logger.error(f"Erro em _get_orders_for_day para {lanchonete_id}: {e}")
+            traceback.print_exc()
+            return None
+
+    @staticmethod
+    def get_daily_performance(lanchonete_id):
+        try:
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            today = datetime.now(sao_paulo_tz).date()
+
+            orders_today = OrderFirebaseService._get_orders_for_day(lanchonete_id, today)
+            if orders_today is None:
+                return None
+
+            pedidos_hoje = 0
+            total_vendas_hoje = 0.0
+
+            for order in orders_today:
+                if order.get('status') != 'cancelado':
+                    pedidos_hoje += 1
+                    total_vendas_hoje += float(order.get('preco_total', 0.0))
+
+            return {
+                'pedidos_hoje': pedidos_hoje,
+                'total_vendas_hoje': total_vendas_hoje
+            }
+
+        except Exception as e:
+            logger.error(f"Erro em get_daily_performance para {lanchonete_id}: {e}")
+            traceback.print_exc()
+            return None
+    
+    @staticmethod
+    def get_last_orders(lanchonete_id, limit=3):
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                return None
+
+            orders_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}')
+            
+            orders_summary = orders_summary_ref.order_by_child('data_criacao').limit_to_last(limit * 2).get() or {}
+            
+            order_list = []
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            
+            for order_id, summary_data in orders_summary.items():
+                if not isinstance(summary_data, dict):
+                    continue
+                    
+                summary_data['id'] = order_id
+                data_criacao_str = summary_data.get('data_criacao')
+
+                if data_criacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(data_criacao_str.replace('Z', '+00:00'))
+                        dt_local = dt_utc.astimezone(sao_paulo_tz)
+                        summary_data['data_criacao_dt'] = dt_local
+                        summary_data['data_criacao_display'] = dt_local.strftime('%d/%m/%Y')
+                    except (ValueError, TypeError):
+                         summary_data['data_criacao_dt'] = datetime.min.replace(tzinfo=sao_paulo_tz)
+
+                order_list.append(summary_data)
+            
+            order_list.sort(key=lambda x: x.get('data_criacao_dt', datetime.min.replace(tzinfo=sao_paulo_tz)), reverse=True)
+            
+            # Mapeamento para exibição
+            STATUS_MAP = {
+                'pendente': 'Pendente',
+                'pago': 'Pago',
+                'preparando': 'Preparando',
+                'pronto': 'Pronto para Retirada',
+                'retirado': 'Retirado/Entregue',
+                'concluido': 'Concluído',
+                'cancelado': 'Cancelado'
+            }
+            
+            orders_for_display = []
+            for order in order_list[:limit]:
+                orders_for_display.append({
+                    'id': order['id'][:8],
+                    'status': order.get('status', 'pendente'),
+                    'status_display': STATUS_MAP.get(order.get('status', 'pendente'), 'Status Desconhecido'),
+                    'preco_total': order.get('preco_total', 0.0),
+                    'data_criacao_display': order.get('data_criacao_display', '--/--/----'),
+                    'dot_class': OrderFirebaseService.get_status_dot_class(order.get('status', 'pendente'))
+                })
+            
+            return orders_for_display
+
+        except Exception as e:
+            logger.error(f"Erro em get_last_orders para {lanchonete_id}: {e}")
+            traceback.print_exc()
+            return None
+
+    @staticmethod
+    def get_status_dot_class(status):
+        if status in ['pendente', 'pago', 'preparando', 'pronto']:
+            return 'em-andamento'
+        elif status in ['retirado', 'concluido']:
+            return 'concluido'
+        elif status == 'cancelado':
+            return 'cancelado'
+        return 'em-andamento'
         
 class AvaliacaoFirebaseService:
     @staticmethod
