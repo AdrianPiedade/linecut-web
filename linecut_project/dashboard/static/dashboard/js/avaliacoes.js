@@ -1,5 +1,3 @@
-// linecut_project/dashboard/static/dashboard/js/avaliacoes.js
-
 document.addEventListener('DOMContentLoaded', function() {
     setupTabs();
     setupFilters();
@@ -12,6 +10,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function calcularMediaPonderada(notas) {
+    const notasArray = Object.entries(notas)
+        .filter(([key]) => key.startsWith('nota_'))
+        .map(([key, value]) => ({ nota: parseInt(key.split('_')[1]), contagem: value }));
+        
+    const totalContagem = notasArray.reduce((sum, item) => sum + item.contagem, 0);
+    const somaPonderada = notasArray.reduce((sum, item) => sum + (item.nota * item.contagem), 0);
+    
+    const media = totalContagem > 0 ? somaPonderada / totalContagem : 0;
+    return media;
+}
 
 function setupTabs() {
     const tabLinks = document.querySelectorAll('.tab-link');
@@ -96,10 +106,8 @@ async function loadAvaliacoesData(tabId) {
 function renderDesempenho(data) {
     const { bloco_geral, bloco_notas_gerais, bloco_detalhes } = data;
     
-    // Bloco Geral (1)
     document.getElementById('total-avaliacoes-30dias').textContent = `${bloco_geral.total_30dias} avaliações nos últimos 30 dias`;
     
-    // Bloco Médias (2) - Média Geral
     document.getElementById('nota-media-geral').textContent = bloco_geral.nota_media_geral.toFixed(1).replace('.', ',');
     
     const estrelasMediaGeral = document.getElementById('estrelas-media-geral');
@@ -107,8 +115,20 @@ function renderDesempenho(data) {
 
     document.getElementById('total-avaliacoes-texto').textContent = `(${bloco_geral.total_avaliacoes} avaliações)`;
 
-    renderDetalhesEstrelas(bloco_notas_gerais, document.getElementById('detalhes-notas-gerais'));
+    const mediaQualidade = calcularMediaPonderada(bloco_detalhes.qualidade);
+    const mediaAtendimento = calcularMediaPonderada(bloco_detalhes.atendimento);
+    const mediaVelocidade = calcularMediaPonderada(bloco_detalhes.velocidade);
+
+    document.getElementById('qualidade-media-nota').textContent = mediaQualidade.toFixed(1).replace('.', ',');
+    document.getElementById('atendimento-media-nota').textContent = mediaAtendimento.toFixed(1).replace('.', ',');
+    document.getElementById('velocidade-media-nota').textContent = mediaVelocidade.toFixed(1).replace('.', ',');
     
+    document.getElementById('qualidade-estrelas-media').innerHTML = gerarEstrelas(mediaQualidade, 16);
+    document.getElementById('atendimento-estrelas-media').innerHTML = gerarEstrelas(mediaAtendimento, 16);
+    document.getElementById('velocidade-estrelas-media').innerHTML = gerarEstrelas(mediaVelocidade, 16);
+    
+    
+    renderDetalhesEstrelas(bloco_notas_gerais, document.getElementById('detalhes-notas-gerais')); 
     renderDetalhesEstrelas(bloco_detalhes.qualidade, document.getElementById('qualidade-detalhes'));
     renderDetalhesEstrelas(bloco_detalhes.atendimento, document.getElementById('atendimento-detalhes'));
     renderDetalhesEstrelas(bloco_detalhes.velocidade, document.getElementById('velocidade-detalhes'));

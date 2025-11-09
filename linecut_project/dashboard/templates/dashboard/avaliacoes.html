@@ -39,17 +39,38 @@
                         <p class="total-avaliacoes-texto" id="total-avaliacoes-texto">...</p>
                     </div>
 
-                    <div class="card-media">
-                        <h3>Detalhes das notas (5 Estrelas)</h3>
-                        <div class="detalhes-estrelas" id="detalhes-notas-gerais">
+                    <div class="card-media card-detalhe-categoria">
+                        <h3>Média por Categoria (30 dias)</h3>
+                        <div class="detalhes-categorias-lista" id="detalhes-medias-categorias">
+                            <div class="media-categoria-linha">
+                                <span class="categoria-nome">Qualidade do Produto</span>
+                                <div class="media-estrelas-wrapper">
+                                    <div class="estrelas-media" id="qualidade-estrelas-media"></div>
+                                    <span class="categoria-nota-media" id="qualidade-media-nota">...</span>
+                                </div>
                             </div>
+                            <div class="media-categoria-linha">
+                                <span class="categoria-nome">Atendimento</span>
+                                <div class="media-estrelas-wrapper">
+                                    <div class="estrelas-media" id="atendimento-estrelas-media"></div>
+                                    <span class="categoria-nota-media" id="atendimento-media-nota">...</span>
+                                </div>
+                            </div>
+                            <div class="media-categoria-linha">
+                                <span class="categoria-nome">Velocidade de Entrega</span>
+                                <div class="media-estrelas-wrapper">
+                                    <div class="estrelas-media" id="velocidade-estrelas-media"></div>
+                                    <span class="categoria-nota-media" id="velocidade-media-nota">...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="bloco-categorias">
                 <div class="bloco-cabecalho">
-                    <h2>Métricas por Categoria</h2>
+                    <h2>Métricas por Categoria (Distribuição de Notas)</h2>
                 </div>
                 <div class="categorias-grid">
                     <div class="categoria-item">
@@ -60,7 +81,7 @@
                         <h3>Atendimento</h3>
                         <div class="detalhes-estrelas" id="atendimento-detalhes"></div>
                     </div>
-                    <div class="categoria-item" style="grid-column: 1 / -1; max-width: 50%; min-width: 300px; margin: 0 auto;">
+                    <div class="categoria-item"> 
                         <h3>Velocidade de Entrega</h3>
                         <div class="detalhes-estrelas" id="velocidade-detalhes"></div>
                     </div>
@@ -96,7 +117,7 @@
                 <div class="cabecalho-tabela-avaliacoes">
                     <span class="col-id">ID Pedido</span>
                     <span class="col-data-pedido">Data Pedido</span>
-                    <span class="col-data-avaliacao">Data Aval.</span>
+                    <span class="col-data-avaliacao">Data Avaliação</span>
                     <span class="col-nota">Nota</span>
                     <span class="col-qualidade">Qualidade</span>
                     <span class="col-atendimento">Atendimento</span>
