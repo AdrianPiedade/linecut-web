@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST, require_GET
 from .firebase_storage import storage_service
-from .firebase_services import product_service, company_service, order_service, ProductFirebaseService
+from .firebase_services import product_service, company_service, order_service, ProductFirebaseService, AvaliacaoFirebaseService
 from core.firebase_services import FirebaseService as CoreFirebaseService
 import logging
 
@@ -807,6 +807,72 @@ def cancel_pedido(request, order_id):
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
 
+def avaliacoes_view(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    return render(request, 'dashboard/avaliacoes.html')
+
+@require_GET
+def get_avaliacoes_data(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+
+    try:
+        active_tab = request.GET.get('tab', 'desempenho')
+
+        if active_tab == 'desempenho':
+            data = AvaliacaoFirebaseService.get_performance_data(firebase_uid)
+            if data is None:
+                 return JsonResponse({'success': False, 'error': 'Falha ao buscar dados de desempenho.'}, status=500)
+            return JsonResponse({'success': True, 'desempenho': data})
+        
+        elif active_tab == 'avaliacoes':
+            search_term = request.GET.get('search', '').lower().replace('#', '')
+            sort_order = request.GET.get('sort', 'desc')
+            
+            avaliacoes = AvaliacaoFirebaseService.get_avaliacoes_for_lanchonete(
+                firebase_uid, 
+                search_term=search_term, 
+                sort_order=sort_order
+            )
+            if avaliacoes is None:
+                 return JsonResponse({'success': False, 'error': 'Falha ao buscar avaliações.'}, status=500)
+            return JsonResponse({'success': True, 'avaliacoes': avaliacoes})
+
+        return JsonResponse({'success': False, 'error': 'Aba inválida'}, status=400)
+
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': f'Erro interno do servidor: {str(e)}'}, status=500)
+
+@require_GET
+def get_avaliacao_details(request, order_id):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+
+    try:
+        details = AvaliacaoFirebaseService.get_avaliacao_details(firebase_uid, order_id)
+        
+        if details:
+            return JsonResponse({'success': True, 'details': details})
+        else:
+            return JsonResponse({'success': False, 'error': 'Detalhes da avaliação não encontrados'}, status=404)
+    except Exception as e:
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+    
 def dashboard_logout(request):
     dashboard_keys = ['firebase_uid', 'user_email', 'logged_in', 'user_profile']
     for key in dashboard_keys:

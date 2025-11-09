@@ -8,3 +8,4 @@
 - Retirar toast duplicado na atualização de perfil - ok
 - Adiciona regra de botão inativo dentro da visualização nos pedidos - ok
 - Melhorar visualização dos links de paginas no menu
+- botao de fechar modais duplicado

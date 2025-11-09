@@ -28,5 +28,8 @@ urlpatterns = [
     path('configuracoes/update-plan/', views.update_company_plan, name='update_company_plan'),
     path('configuracoes/check-trial-plan/', views.check_trial_plan_expired, name='check_trial_plan'),
     path('configuracoes/update-image/', views.update_company_image, name='update_company_image'),
+    path('avaliacoes/', views.avaliacoes_view, name='avaliacoes'),
+    path('avaliacoes/data/', views.get_avaliacoes_data, name='get_avaliacoes_data'),
+    path('avaliacoes/details/<str:order_id>/', views.get_avaliacao_details, name='get_avaliacao_details'),
     path('logout/', views.dashboard_logout, name='logout'),
 ]

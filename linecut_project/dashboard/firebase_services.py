@@ -805,7 +805,208 @@ class OrderFirebaseService:
         except Exception as e:
             traceback.print_exc()
             return False
+        
+class AvaliacaoFirebaseService:
+    @staticmethod
+    def _ensure_initialized():
+        return ProductFirebaseService._ensure_initialized()
+
+    @staticmethod
+    def get_all_lanchonete_orders_with_ratings(user_id):
+        if not AvaliacaoFirebaseService._ensure_initialized():
+            return None
+
+        orders_ref = db.reference(f'/pedidos_por_lanchonete/{user_id}')
+        orders_summary = orders_ref.get()
+
+        if not orders_summary or not isinstance(orders_summary, dict):
+            return []
+        
+        lanchonete_avaliacoes = []
+        sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            
+        for order_id, summary_data in orders_summary.items():
+            if summary_data.get('avaliacao'):
+                avaliacao_data = summary_data['avaliacao']
+                
+                qualidade = avaliacao_data.get('qualidade', 0)
+                atendimento = avaliacao_data.get('atendimento', 0)
+                velocidade = avaliacao_data.get('velocidade', 0)
+                
+                notas = [n for n in [qualidade, atendimento, velocidade] if n > 0]
+                nota_geral = sum(notas) / len(notas) if len(notas) == 3 else 0
+                
+                data_avaliacao_str = avaliacao_data.get('data_avaliacao')
+                data_criacao_str = summary_data.get('data_criacao')
+                
+                data_avaliacao_dt = None
+                if data_avaliacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(data_avaliacao_str.replace('Z', '+00:00'))
+                        data_avaliacao_dt = dt_utc.astimezone(sao_paulo_tz)
+                    except (ValueError, TypeError):
+                        pass
+
+                data_pedido_dt = None
+                if data_criacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(data_criacao_str.replace('Z', '+00:00'))
+                        data_pedido_dt = dt_utc.astimezone(sao_paulo_tz)
+                    except (ValueError, TypeError):
+                        pass
+
+                lanchonete_avaliacoes.append({
+                    'id': order_id,
+                    'data_pedido_dt': data_pedido_dt,
+                    'data_avaliacao_dt': data_avaliacao_dt,
+                    'nota_geral': nota_geral,
+                    'qualidade': qualidade,
+                    'atendimento': atendimento,
+                    'velocidade': velocidade,
+                })
+                
+        return lanchonete_avaliacoes
+        
+    @staticmethod
+    def get_performance_data(user_id):
+        try:
+            avaliacoes = AvaliacaoFirebaseService.get_all_lanchonete_orders_with_ratings(user_id)
+            if avaliacoes is None:
+                return None
+
+            sao_paulo_tz = pytz.timezone('America/Sao_Paulo')
+            now = datetime.now(sao_paulo_tz)
+            trinta_dias_atras = now - timedelta(days=30)
+            
+            avaliacoes_30dias = [
+                a for a in avaliacoes 
+                if a['data_avaliacao_dt'] and a['data_avaliacao_dt'] >= trinta_dias_atras and a['nota_geral'] > 0
+            ]
+            
+            total_avaliacoes = len(avaliacoes_30dias)
+            
+            total_soma_notas = 0
+            bloco_notas_gerais = {'nota_5': 0, 'nota_4': 0, 'nota_3': 0, 'nota_2': 0, 'nota_1': 0}
+            bloco_detalhes = {
+                'qualidade': {'nota_5': 0, 'nota_4': 0, 'nota_3': 0, 'nota_2': 0, 'nota_1': 0},
+                'atendimento': {'nota_5': 0, 'nota_4': 0, 'nota_3': 0, 'nota_2': 0, 'nota_1': 0},
+                'velocidade': {'nota_5': 0, 'nota_4': 0, 'nota_3': 0, 'nota_2': 0, 'nota_1': 0}
+            }
+
+            for avaliacao in avaliacoes_30dias:
+                nota_geral_arredondada = round(avaliacao['nota_geral'])
+                total_soma_notas += avaliacao['nota_geral']
+                
+                if 1 <= nota_geral_arredondada <= 5:
+                    bloco_notas_gerais[f'nota_{nota_geral_arredondada}'] += 1
+
+                for categoria in ['qualidade', 'atendimento', 'velocidade']:
+                    nota_categoria = avaliacao[categoria]
+                    if 1 <= nota_categoria <= 5:
+                        bloco_detalhes[categoria][f'nota_{nota_categoria}'] += 1
+            
+            nota_media_geral = total_soma_notas / total_avaliacoes if total_avaliacoes > 0 else 0
+            
+            return {
+                'bloco_geral': {
+                    'total_30dias': total_avaliacoes,
+                    'nota_media_geral': round(nota_media_geral, 1),
+                    'total_avaliacoes': total_avaliacoes
+                },
+                'bloco_notas_gerais': bloco_notas_gerais,
+                'bloco_detalhes': bloco_detalhes
+            }
+
+        except Exception as e:
+            logger.error(f"Erro em get_performance_data: {e}")
+            traceback.print_exc()
+            return None
+
+    @staticmethod
+    def get_avaliacoes_for_lanchonete(user_id, search_term=None, sort_order='desc'):
+        try:
+            avaliacoes = AvaliacaoFirebaseService.get_all_lanchonete_orders_with_ratings(user_id)
+            if avaliacoes is None:
+                return []
+            
+            avaliacoes_list = []
+            
+            for avaliacao in avaliacoes:
+                if avaliacao['nota_geral'] == 0:
+                    continue 
+
+                data_pedido_display = avaliacao['data_pedido_dt'].strftime('%d/%m/%Y') if avaliacao['data_pedido_dt'] else "--/--/----"
+                data_avaliacao_display = avaliacao['data_avaliacao_dt'].strftime('%d/%m/%Y') if avaliacao['data_avaliacao_dt'] else "--/--/----"
+
+                nota_geral_formatada = round(avaliacao['nota_geral'], 1)
+                
+                avaliacao_status = "avaliado"
+                
+                search_term_lower = search_term.lower() if search_term else ''
+                order_id_short = avaliacao['id'][len(avaliacao['id']) - 8:].lower()
+
+                if search_term and not (search_term_lower in avaliacao['id'].lower() or search_term_lower in order_id_short):
+                     continue
+                
+                avaliacoes_list.append({
+                    'id': avaliacao['id'],
+                    'data_pedido_str': data_pedido_display,
+                    'data_avaliacao_str': data_avaliacao_display,
+                    'nota_geral': nota_geral_formatada,
+                    'qualidade': avaliacao['qualidade'],
+                    'atendimento': avaliacao['atendimento'],
+                    'velocidade': avaliacao['velocidade'],
+                    'status': avaliacao_status,
+                    'data_sort': avaliacao['data_avaliacao_dt'] or avaliacao['data_pedido_dt']
+                })
+
+            try:
+                reverse_sort = sort_order == 'desc'
+                avaliacoes_list.sort(key=lambda x: x.get('data_sort', datetime.min.replace(tzinfo=pytz.utc)), reverse=reverse_sort)
+            except Exception:
+                 pass
+                
+            for item in avaliacoes_list:
+                item.pop('data_sort', None)
+                
+            return avaliacoes_list
+            
+        except Exception as e:
+            logger.error(f"Erro em get_avaliacoes_for_lanchonete: {e}")
+            traceback.print_exc()
+            return None
+            
+    @staticmethod
+    def get_avaliacao_details(user_id, order_id):
+        if not AvaliacaoFirebaseService._ensure_initialized():
+            return None
+
+        avaliacao_summary_ref = db.reference(f'/pedidos_por_lanchonete/{user_id}/{order_id}/avaliacao')
+        avaliacao_data = avaliacao_summary_ref.get()
+
+        if avaliacao_data and isinstance(avaliacao_data, dict):
+            qualidade = avaliacao_data.get('qualidade', 0)
+            atendimento = avaliacao_data.get('atendimento', 0)
+            velocidade = avaliacao_data.get('velocidade', 0)
+
+            notas = [n for n in [qualidade, atendimento, velocidade] if n > 0]
+            nota_geral = sum(notas) / len(notas) if len(notas) == 3 else 0
+
+            return {
+                'order_id': order_id,
+                'nota_geral': round(nota_geral, 1),
+                'qualidade_nota': qualidade,
+                'atendimento_nota': atendimento,
+                'velocidade_nota': velocidade,
+                
+                'qualidade_texto': "",
+                'velocidade_texto': "",
+                'atendimento_texto': ""
+            }
+        
+        return None
 
 order_service = OrderFirebaseService()
 product_service = ProductFirebaseService()
 company_service = CompanyFirebaseService()
+avaliacao_service = AvaliacaoFirebaseService()

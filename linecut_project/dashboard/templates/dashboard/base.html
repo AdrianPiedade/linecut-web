@@ -62,7 +62,7 @@
                     <img src="{% static 'dashboard/images/icone_cadeado.png' %}" alt="Bloqueado" class="lock-icon">
                 </a>
             {% endif %}
-            <a href="#" class="menu-item">
+            <a href="{% url 'dashboard:avaliacoes' %}" class="menu-item {% if request.resolver_match.url_name == 'avaliacoes' %}selected{% endif %}">
                 <img src="{% static 'dashboard/images/icone_estrela.png' %}" alt="Avaliações" class="icon">
                 <span>Avaliações</span>
             </a>

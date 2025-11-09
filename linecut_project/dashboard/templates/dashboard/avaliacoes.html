@@ -1,0 +1,172 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}LineCut - Avaliações{% endblock %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/avaliacoes.css' %}">
+{% endblock %}
+
+{% block content %}
+    <header class="cabecalho-avaliacoes">
+        <nav class="tabs-avaliacoes">
+            <button class="tab-link active" data-tab="desempenho">Desempenho</button>
+            <button class="tab-link" data-tab="avaliacoes">Avaliações</button>
+        </nav>
+    </header>
+
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="spinner"></div> Carregando avaliações...
+    </div>
+
+    <div id="tab-content">
+        <div id="desempenho-content" class="tab-pane active">
+            <div class="bloco-geral-avaliacoes">
+                <div class="bloco-cabecalho">
+                    <h2 id="desempenho-titulo">Resumo do Desempenho</h2>
+                    <div class="card-total-avaliacoes">
+                        <i class="bi bi-star-fill"></i>
+                        <span id="total-avaliacoes-30dias">... avaliações nos últimos 30 dias</span>
+                    </div>
+                </div>
+
+                <div class="bloco-metricas">
+                    <div class="card-media">
+                        <h3>Nota Média Geral</h3>
+                        <p class="nota-geral-valor" id="nota-media-geral">...</p>
+                        <div class="estrelas-media" id="estrelas-media-geral">
+                            </div>
+                        <p class="total-avaliacoes-texto" id="total-avaliacoes-texto">...</p>
+                    </div>
+
+                    <div class="card-media">
+                        <h3>Detalhes das notas (5 Estrelas)</h3>
+                        <div class="detalhes-estrelas" id="detalhes-notas-gerais">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bloco-categorias">
+                <div class="bloco-cabecalho">
+                    <h2>Métricas por Categoria</h2>
+                </div>
+                <div class="categorias-grid">
+                    <div class="categoria-item">
+                        <h3>Qualidade do Produto</h3>
+                        <div class="detalhes-estrelas" id="qualidade-detalhes"></div>
+                    </div>
+                    <div class="categoria-item">
+                        <h3>Atendimento</h3>
+                        <div class="detalhes-estrelas" id="atendimento-detalhes"></div>
+                    </div>
+                    <div class="categoria-item" style="grid-column: 1 / -1; max-width: 50%; min-width: 300px; margin: 0 auto;">
+                        <h3>Velocidade de Entrega</h3>
+                        <div class="detalhes-estrelas" id="velocidade-detalhes"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="avaliacoes-content" class="tab-pane">
+            <div class="filtros filtros-avaliacoes">
+                <div class="filtro-item">
+                    <label for="search-input">Número do Pedido</label>
+                    <input type="text" id="search-input" placeholder="#1234">
+                </div>
+                <div class="filtro-item">
+                    <label for="status-filter">Status</label>
+                    <select id="status-filter">
+                        <option value="">Todos</option>
+                        <option value="avaliado">Avaliado</option>
+                        <option value="pendente">Pendente</option>
+                    </select>
+                </div>
+                <div class="filtro-item">
+                    <label for="sort-order">Ordenar</label>
+                    <select id="sort-order">
+                        <option value="desc" selected>Mais recentes</option>
+                        <option value="asc">Mais antigos</option>
+                    </select>
+                </div>
+                <button class="btn-filtrar" id="apply-filters-btn"><i class="bi bi-funnel-fill"></i> Aplicar Filtros</button>
+            </div>
+
+            <div class="tabela-avaliacoes">
+                <div class="cabecalho-tabela-avaliacoes">
+                    <span class="col-id">ID Pedido</span>
+                    <span class="col-data-pedido">Data Pedido</span>
+                    <span class="col-data-avaliacao">Data Aval.</span>
+                    <span class="col-nota">Nota</span>
+                    <span class="col-qualidade">Qualidade</span>
+                    <span class="col-atendimento">Atendimento</span>
+                    <span class="col-velocidade">Velocidade</span>
+                    <span class="col-status">Status</span>
+                    <span class="col-acoes">Ações</span>
+                </div>
+                <div class="corpo-tabela-avaliacoes" id="avaliacoes-table-body">
+                    <div class="linha-vazia">Nenhuma avaliação encontrada.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <template id="avaliacao-row-template">
+        <div class="linha-avaliacao">
+            <div class="col-id">#</div>
+            <div class="col-data-pedido"></div>
+            <div class="col-data-avaliacao"></div>
+            <div class="col-nota"></div>
+            <div class="col-qualidade"></div>
+            <div class="col-atendimento"></div>
+            <div class="col-velocidade"></div>
+            <div class="col-status">
+                <span class="status-badge"></span>
+            </div>
+            <div class="col-acoes">
+                <button class="btn-ver-detalhes" onclick="showAvaliacaoDetails(this.dataset.orderId)" data-order-id="">Ver detalhes</button>
+            </div>
+        </div>
+    </template>
+
+    <div id="modal-detalhes-avaliacao" class="modal">
+        <div class="modal-conteudo modal-detalhes-avaliacao">
+            <div class="modal-cabecalho">
+                <h2 id="detalhes-titulo">Avaliação do Pedido #</h2>
+                <span class="fechar-modal" onclick="closeModal('modal-detalhes-avaliacao')">&times;</span>
+            </div>
+            <div class="modal-corpo">
+                <h3 id="detalhes-nota-geral">Sua opinião é muito importante para melhorarmos!</h3>
+
+                <div id="detalhes-item-qualidade" class="detalhe-item">
+                    <h4>Qualidade do Produto</h4>
+                    <div class="estrelas-nota" id="nota-qualidade"></div>
+                    <p id="qualidade-texto">Estava bem preparado, saboroso, embalado corretamente.</p>
+                </div>
+                
+                <div id="detalhes-item-atendimento" class="detalhe-item">
+                    <h4>Qualidade do Atendimento</h4>
+                    <div class="estrelas-nota" id="nota-atendimento"></div>
+                    <p id="atendimento-texto">Comunicação, atenção aos detalhes, resolução de dúvidas.</p>
+                </div>
+                
+                <div id="detalhes-item-velocidade" class="detalhe-item">
+                    <h4>Velocidade de Entrega</h4>
+                    <div class="estrelas-nota" id="nota-velocidade"></div>
+                    <p id="velocidade-texto">Tempo de espera, agilidade no preparo.</p>
+                </div>
+
+            </div>
+            <div class="modal-rodape">
+                <button class="btn-cancelar" onclick="closeModal('modal-detalhes-avaliacao')">Fechar</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+    </script>
+    <script src="{% static 'dashboard/js/avaliacoes.js' %}"></script>
+{% endblock %}
