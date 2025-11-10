@@ -1,9 +1,10 @@
 import pytz
 import json
 import traceback
-from datetime import datetime, time
+from collections import defaultdict
+from datetime import datetime, timedelta
 from django.conf import settings
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST, require_GET
@@ -897,6 +898,136 @@ def get_avaliacoes_data(request):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': f'Erro interno do servidor: {str(e)}'}, status=500)
+    
+def _get_period_dates(period):
+    tz = pytz.timezone(settings.TIME_ZONE)
+    now = datetime.now(tz)
+    
+    end_date = now
+    
+    if period == 'daily':
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        prev_start = start_date - timedelta(days=1)
+        prev_end = start_date - timedelta(microseconds=1)
+        
+    elif period == 'weekly':
+        start_date = now - timedelta(days=7)
+
+        prev_start = start_date - timedelta(days=7)
+        prev_end = start_date - timedelta(microseconds=1)
+        
+    elif period == 'monthly':
+        start_date = now - timedelta(days=30)
+        prev_start = start_date - timedelta(days=30)
+        prev_end = start_date - timedelta(microseconds=1)
+        
+    else:
+        start_date = datetime(2000, 1, 1, tzinfo=tz)
+        prev_start = datetime(2000, 1, 1, tzinfo=tz) 
+        prev_end = datetime(2000, 1, 1, tzinfo=tz)
+    
+    return start_date, end_date, prev_start, prev_end
+
+def _process_orders_for_metrics(orders):
+    total_faturamento = 0.0
+    total_pedidos = 0
+    
+    concluido_status = ['concluido', 'entregue'] 
+    
+    filtered_orders = [o for o in orders if o.get('status') in concluido_status]
+    
+    for order in filtered_orders:
+        try:
+            total_faturamento += float(order.get('total_price', 0))
+            total_pedidos += 1
+        except ValueError:
+            logger.warning(f"Pedido com valor inválido ignorado: {order}")
+            continue
+
+    ticket_medio = total_faturamento / total_pedidos if total_pedidos > 0 else 0.0
+
+    return total_faturamento, total_pedidos, ticket_medio
+
+def _process_orders_for_sales_chart(orders, start_date):
+    sales_by_day = defaultdict(int)
+    
+    for order in orders:
+        if order.get('status') in ['concluido', 'entregue']:
+            order_time = order.get('timestamp')
+            if isinstance(order_time, datetime):
+                day_key = order_time.strftime('%Y-%m-%d')
+                sales_by_day[day_key] += 1
+                
+    tz = start_date.tzinfo if start_date.tzinfo else pytz.timezone(settings.TIME_ZONE)
+    end_of_today = datetime.now(tz).replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    current_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    labels = []
+    data_list = []
+
+    max_days = 31 
+
+    while current_date <= end_of_today:
+        if len(labels) >= max_days:
+            break 
+            
+        day_key = current_date.strftime('%Y-%m-%d')
+        
+        if (end_of_today - start_date).days <= 7:
+             labels.append(current_date.strftime('%a'))
+        else:
+             labels.append(current_date.strftime('%d/%m'))
+             
+        data_list.append(sales_by_day.get(day_key, 0))
+        current_date += timedelta(days=1)
+
+    return labels, data_list
+
+def _process_orders_for_top_products(orders, limit=5):
+    product_sales = defaultdict(int)
+    
+    for order in orders:
+        if order.get('status') in ['concluido', 'entregue']:
+            products_in_order = order.get('products', [])
+            for item in products_in_order:
+                name = item.get('product_name')
+                qty = item.get('quantity', 0)
+                try:
+                    product_sales[name] += int(qty)
+                except (ValueError, TypeError):
+                    continue
+
+    top_products = [{'nome': name, 'qtd': qtd} for name, qtd in product_sales.items()]
+    top_products.sort(key=lambda x: x['qtd'], reverse=True)
+    
+    return top_products[:limit]
+
+def _process_ratings_for_distribution(ratings):
+
+    star_counts = defaultdict(int)
+    total_score = 0
+    total_ratings = 0
+
+    for rating in ratings:
+        score = rating.get('score')
+        if score in range(1, 6):
+            star_counts[score] += 1
+            total_score += score
+            total_ratings += 1
+    
+    satisfacao_labels = ['5 Estrelas', '4 Estrelas', '3 Estrelas', '2 Estrelas', '1 Estrela']
+    satisfacao_data = [star_counts[i] for i in range(5, 0, -1)]
+    
+    avaliacao_media = total_score / total_ratings if total_ratings > 0 else 0.0
+
+    return {
+        'avaliacao_media': avaliacao_media,
+        'total_avaliacoes': total_ratings,
+        'satisfacao_labels': satisfacao_labels,
+        'satisfacao_data': satisfacao_data
+    }
 
 @require_GET
 def get_avaliacao_details(request, order_id):
@@ -918,6 +1049,108 @@ def get_avaliacao_details(request, order_id):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+    
+def dashboard_analitico_view(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    
+    if request.session.get('user_profile', {}).get('plano') != 'premium':
+
+        return redirect('dashboard:index')
+
+    return render(request, 'dashboard/dashboard.html')
+
+
+@require_GET
+def get_dashboard_data(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    period = request.GET.get('period', 'weekly')
+
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'UID não encontrado na sessão.'}, status=400)
+
+    try:
+        start_date, end_date, prev_start, prev_end = _get_period_dates(period)
+        
+        current_orders = order_service.get_orders_in_range(firebase_uid, start_date, end_date)
+        prev_orders = order_service.get_orders_in_range(firebase_uid, prev_start, prev_end)
+
+        current_items = order_service.get_order_items_in_range(firebase_uid, start_date, end_date)
+        current_ratings = AvaliacaoFirebaseService.get_ratings_in_range(firebase_uid, start_date, end_date)
+
+        faturamento, pedidos, ticket_medio = _process_orders_for_metrics(current_orders)
+        prev_faturamento, prev_pedidos, prev_ticket_medio = _process_orders_for_metrics(prev_orders)
+        
+        rating_data = _process_ratings_for_distribution(current_ratings)
+        
+        faturamento_diff = (faturamento - prev_faturamento) / prev_faturamento if prev_faturamento else 0
+        pedidos_diff = pedidos - prev_pedidos
+        ticket_diff = (ticket_medio - prev_ticket_medio) / prev_ticket_medio if prev_ticket_medio else 0
+        
+        vendas_labels, vendas_atual = _process_orders_for_sales_chart(current_orders, start_date)
+
+        _, vendas_passada = _process_orders_for_sales_chart(prev_orders, prev_start)
+
+        if len(vendas_passada) < len(vendas_labels):
+             vendas_passada = ([0] * (len(vendas_labels) - len(vendas_passada))) + vendas_passada
+        elif len(vendas_passada) > len(vendas_labels):
+             vendas_passada = vendas_passada[len(vendas_passada) - len(vendas_labels):]
+
+        top_produtos = _process_orders_for_top_products(current_items, limit=5)
+        
+        fluxo_por_hora = defaultdict(int)
+        concluido_status = ['retirado', 'concluido'] 
+        
+        for order in current_orders:
+             if order.get('status') in concluido_status:
+                order_time = order.get('timestamp')
+                if isinstance(order_time, datetime):
+                    fluxo_por_hora[order_time.hour] += 1
+        
+        all_hours = range(24) 
+        fluxo_labels = [f'{h}h' for h in all_hours]
+        fluxo_data = [fluxo_por_hora[h] for h in all_hours]
+        
+        response_data = {
+            'success': True,
+            'metrics': {
+                'faturamento': faturamento,
+                'pedidos_concluidos': pedidos,
+                'ticket_medio': ticket_medio,
+                'avaliacao_media': rating_data['avaliacao_media'],
+                'total_avaliacoes': rating_data['total_avaliacoes'],
+                'comparativos': {
+                    'faturamento_diff': faturamento_diff,
+                    'pedidos_diff': pedidos_diff,
+                    'ticket_diff': ticket_diff
+                }
+            },
+            'charts': {
+                'vendas_labels': vendas_labels,
+                'vendas_atual': vendas_atual,
+                'vendas_passada': vendas_passada,
+                'top_5_produtos_vendidos': top_produtos,
+                'satisfacao_labels': rating_data['satisfacao_labels'],
+                'satisfacao_data': rating_data['satisfacao_data'],
+                'fluxo_labels': fluxo_labels,
+                'fluxo_data': fluxo_data
+            }
+        }
+        
+        return JsonResponse(response_data)
+
+    except Exception as e:
+        traceback.print_exc()
+        logger.error(f"Erro fatal ao carregar dashboard para UID {firebase_uid}: {str(e)}")
+        return JsonResponse({
+            'success': False, 
+            'error': f'Erro ao carregar dados do dashboard. Verifique o console do servidor. Detalhe: {str(e)}'
+        }, status=500)
     
 def dashboard_logout(request):
     dashboard_keys = ['firebase_uid', 'user_email', 'logged_in', 'user_profile']

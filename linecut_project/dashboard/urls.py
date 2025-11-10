@@ -31,5 +31,7 @@ urlpatterns = [
     path('avaliacoes/', views.avaliacoes_view, name='avaliacoes'),
     path('avaliacoes/data/', views.get_avaliacoes_data, name='get_avaliacoes_data'),
     path('avaliacoes/details/<str:order_id>/', views.get_avaliacao_details, name='get_avaliacao_details'),
+    path('analitico/', views.dashboard_analitico_view, name='dashboard'),
+    path('analitico/data/', views.get_dashboard_data, name='get_dashboard_data'),
     path('logout/', views.dashboard_logout, name='logout'),
 ]

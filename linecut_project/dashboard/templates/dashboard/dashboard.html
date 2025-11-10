@@ -1,0 +1,107 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}LineCut - Dashboard Analítico{% endblock %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+    <header class="cabecalho-dashboard">
+        <div class="titulos">
+            <h1 class="titulo-ativo">Dashboard Analítico</h1>
+        </div>
+        <div class="filtro-periodo">
+            <label for="period-selector">Período</label>
+            <select id="period-selector">
+                <option value="daily">Hoje</option>
+                <option value="weekly" selected>Últimos 7 dias</option>
+                <option value="monthly">Últimos 30 dias</option>
+                <option value="all">Total</option>
+            </select>
+        </div>
+    </header>
+
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+        <div class="spinner"></div> Carregando dados...
+    </div>
+
+    <section class="metricas-principais-container">
+        <div class="metrica-card" id="card-faturamento">
+            <div class="icon-wrapper"><i class="bi bi-cash-coin"></i></div>
+            <p class="metrica-titulo">Faturamento</p>
+            <h2 class="metrica-valor" id="faturamento-valor">R$ --,--</h2>
+            <div class="comparativo">
+                <span id="faturamento-comparativo-icone"></span>
+                <span id="faturamento-comparativo-texto">... vs período anterior</span>
+            </div>
+        </div>
+
+        <div class="metrica-card" id="card-pedidos">
+            <div class="icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
+            <p class="metrica-titulo">Pedidos Concluídos</p>
+            <h2 class="metrica-valor" id="pedidos-concluidos-valor">0</h2>
+            <div class="comparativo">
+                <span id="pedidos-concluidos-comparativo-icone"></span>
+                <span id="pedidos-concluidos-comparativo-texto">... vs período anterior</span>
+            </div>
+        </div>
+
+        <div class="metrica-card" id="card-ticket">
+            <div class="icon-wrapper"><i class="bi bi-ticket-perforated"></i></div>
+            <p class="metrica-titulo">Ticket Médio</p>
+            <h2 class="metrica-valor" id="ticket-medio-valor">R$ --,--</h2>
+            <div class="comparativo">
+                <span id="ticket-medio-comparativo-icone"></span>
+                <span id="ticket-medio-comparativo-texto">... vs período anterior</span>
+            </div>
+        </div>
+
+        <div class="metrica-card" id="card-avaliacao">
+            <div class="icon-wrapper"><i class="bi bi-star-fill"></i></div>
+            <p class="metrica-titulo">Avaliação Média</p>
+            <h2 class="metrica-valor" id="avaliacao-media-valor">0.0</h2>
+            <div class="detalhe-avaliacao">
+                <span id="avaliacao-estrelas"></span>
+                <span id="avaliacao-satisfacao">(0 avaliações)</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="graficos-row">
+        <div class="grafico-card vendas-7dias">
+            <h3 class="grafico-titulo">Vendas do Período (Atual vs. Anterior)</h3>
+            <canvas id="vendasChart"></canvas>
+        </div>
+        <div class="grafico-card top-produtos">
+            <h3 class="grafico-titulo">Top 5 Produtos Mais Vendidos</h3>
+            <canvas id="topProdutosChart"></canvas>
+        </div>
+    </section>
+    
+    <section class="graficos-row">
+         <div class="grafico-card satisfacao-cliente">
+            <h3 class="grafico-titulo">Satisfação do Cliente</h3>
+            <div class="satisfacao-conteudo">
+                 <div class="canvas-container-half">
+                    <canvas id="satisfacaoChart"></canvas>
+                 </div>
+                 <div class="legenda-satisfacao" id="satisfacao-legenda">
+                    {# Renderizado pelo JS #}
+                 </div>
+            </div>
+        </div>
+        <div class="grafico-card fluxo-horario">
+            <h3 class="grafico-titulo">Fluxo de Movimento por Horário</h3>
+            <canvas id="fluxoHorarioChart"></canvas>
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
+{% endblock %}

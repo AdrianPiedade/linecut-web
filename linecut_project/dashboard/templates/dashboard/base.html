@@ -51,7 +51,7 @@
                 <span>Estoque</span>
             </a>
             {% if request.session.user_profile.plano == 'premium' %}
-                <a href="#" class="menu-item">
+                <a href="{% url 'dashboard:dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}selected{% endif %}">
                     <img src="{% static 'dashboard/images/icone_dashboard.png' %}" alt="Dashboard" class="icon">
                     <span>Dashboard</span>
                 </a>

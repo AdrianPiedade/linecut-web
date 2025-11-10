@@ -4,6 +4,7 @@ import logging
 import traceback
 import firebase_admin
 from firebase_admin import db
+from django.conf import settings
 from firebase_admin import storage
 from datetime import datetime, time, timedelta
 from urllib.parse import urlparse, unquote
@@ -910,7 +911,6 @@ class OrderFirebaseService:
             
             order_list.sort(key=lambda x: x.get('data_criacao_dt', datetime.min.replace(tzinfo=sao_paulo_tz)), reverse=True)
             
-            # Mapeamento para exibição
             STATUS_MAP = {
                 'pendente': 'Pendente',
                 'pago': 'Pago',
@@ -948,6 +948,83 @@ class OrderFirebaseService:
         elif status == 'cancelado':
             return 'cancelado'
         return 'em-andamento'
+    
+    @staticmethod
+    def get_orders_in_range(user_id, start_date_dt, end_date_dt):
+        try:
+            if not OrderFirebaseService._ensure_initialized():
+                return []
+
+            lanchonete_id = user_id
+            if not lanchonete_id:
+                 return []
+            
+            start_iso = start_date_dt.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z')
+            end_iso = end_date_dt.astimezone(pytz.utc).isoformat().replace('+00:00', 'Z')
+            
+            orders_summary_ref = db.reference(f'/pedidos_por_lanchonete/{lanchonete_id}')
+
+            query = orders_summary_ref.order_by_child('data_criacao').start_at(start_iso).end_at(end_iso)
+            orders_summary = query.get()
+            
+            if not orders_summary or not isinstance(orders_summary, dict):
+                return []
+
+            order_list = []
+            
+            for order_id, summary_data in orders_summary.items():
+                 if not isinstance(summary_data, dict):
+                     continue
+                 
+                 data_criacao_str = summary_data.get('data_criacao')
+                 if data_criacao_str:
+                    try:
+                        dt_utc = datetime.fromisoformat(data_criacao_str.replace('Z', '+00:00'))
+                        summary_data['timestamp'] = dt_utc.astimezone(pytz.timezone(settings.TIME_ZONE))
+                    except (ValueError, TypeError):
+                         summary_data['timestamp'] = datetime.min.replace(tzinfo=pytz.utc)
+
+                 summary_data['total_price'] = summary_data.get('preco_total', 0.0)
+                 summary_data['id'] = order_id
+                 
+                 order_list.append(summary_data)
+            
+            return order_list
+            
+        except Exception as e:
+            logger.error(f"Erro em get_orders_in_range para {user_id}: {e}")
+            traceback.print_exc()
+            return []
+            
+    @staticmethod
+    def get_order_items_in_range(user_id, start_date_dt, end_date_dt):
+        try:
+            summaries = OrderFirebaseService.get_orders_in_range(user_id, start_date_dt, end_date_dt)
+            if not summaries:
+                return []
+
+            order_ids_map = {s['id']: s for s in summaries if s.get('status') not in ['cancelado']}
+            if not order_ids_map:
+                return []
+
+            pedidos_principais_ref = db.reference('/pedidos')
+            items_list = []
+            
+            for order_id, summary in order_ids_map.items():
+                pedido_detalhes = pedidos_principais_ref.child(order_id).get()
+                
+                if pedido_detalhes and 'items' in pedido_detalhes:
+                     for item in pedido_detalhes['items'].values():
+                          item['order_status'] = summary.get('status')
+                          item['timestamp'] = summary.get('timestamp')
+                          items_list.append(item)
+                          
+            return items_list
+
+        except Exception as e:
+            logger.error(f"Erro em get_order_items_in_range para {user_id}: {e}")
+            traceback.print_exc()
+            return []
         
 class AvaliacaoFirebaseService:
     @staticmethod
@@ -1148,6 +1225,30 @@ class AvaliacaoFirebaseService:
             }
         
         return None
+    
+    @staticmethod
+    def get_ratings_in_range(user_id, start_date_dt, end_date_dt):
+        try:
+            avaliacoes_com_dt = AvaliacaoFirebaseService.get_all_lanchonete_orders_with_ratings(user_id)
+            if avaliacoes_com_dt is None:
+                return []
+            
+            filtered_ratings = []
+            
+            for avaliacao in avaliacoes_com_dt:
+                data_avaliacao = avaliacao.get('data_avaliacao_dt')
+                if data_avaliacao and start_date_dt <= data_avaliacao <= end_date_dt and avaliacao.get('nota_geral', 0) > 0:
+                    filtered_ratings.append({
+                         'score': round(avaliacao['nota_geral']),
+                         'timestamp': data_avaliacao 
+                    })
+                    
+            return filtered_ratings
+            
+        except Exception as e:
+            logger.error(f"Erro em get_ratings_in_range para {user_id}: {e}")
+            traceback.print_exc()
+            return []
 
 order_service = OrderFirebaseService()
 product_service = ProductFirebaseService()
