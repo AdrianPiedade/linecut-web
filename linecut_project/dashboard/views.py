@@ -1069,6 +1069,10 @@ def get_dashboard_data(request):
     auth_redirect = check_dashboard_auth(request)
     if auth_redirect:
         return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+    
+    user_plan = request.session.get('user_profile', {}).get('plano')
+    if user_plan != 'premium':
+        return JsonResponse({'success': False, 'error': 'Acesso negado. Funcionalidade exclusiva para o plano Premium.'}, status=403)
 
     firebase_uid = request.session.get('firebase_uid')
     period = request.GET.get('period', 'weekly')
