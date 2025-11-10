@@ -29,8 +29,10 @@
 
     <section class="metricas-principais-container">
         <div class="metrica-card" id="card-faturamento">
-            <div class="icon-wrapper"><i class="bi bi-cash-coin"></i></div>
-            <p class="metrica-titulo">Faturamento</p>
+            <div class="metrica-titulo-wrapper">
+                <div class="icon-wrapper"><i class="bi bi-cash-coin"></i></div>
+                <p class="metrica-titulo">Faturamento</p>
+            </div>
             <h2 class="metrica-valor" id="faturamento-valor">R$ --,--</h2>
             <div class="comparativo">
                 <span id="faturamento-comparativo-icone"></span>
@@ -39,8 +41,10 @@
         </div>
 
         <div class="metrica-card" id="card-pedidos">
-            <div class="icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
-            <p class="metrica-titulo">Pedidos Concluídos</p>
+            <div class="metrica-titulo-wrapper">
+                <div class="icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
+                <p class="metrica-titulo">Pedidos Concluídos</p>
+            </div>
             <h2 class="metrica-valor" id="pedidos-concluidos-valor">0</h2>
             <div class="comparativo">
                 <span id="pedidos-concluidos-comparativo-icone"></span>
@@ -49,8 +53,10 @@
         </div>
 
         <div class="metrica-card" id="card-ticket">
-            <div class="icon-wrapper"><i class="bi bi-ticket-perforated"></i></div>
-            <p class="metrica-titulo">Ticket Médio</p>
+            <div class="metrica-titulo-wrapper">
+                <div class="icon-wrapper"><i class="bi bi-ticket-perforated"></i></div>
+                <p class="metrica-titulo">Ticket Médio</p>
+            </div>
             <h2 class="metrica-valor" id="ticket-medio-valor">R$ --,--</h2>
             <div class="comparativo">
                 <span id="ticket-medio-comparativo-icone"></span>
@@ -59,12 +65,14 @@
         </div>
 
         <div class="metrica-card" id="card-avaliacao">
-            <div class="icon-wrapper"><i class="bi bi-star-fill"></i></div>
-            <p class="metrica-titulo">Avaliação Média</p>
+            <div class="metrica-titulo-wrapper">
+                <div class="icon-wrapper"><i class="bi bi-star-fill"></i></div>
+                <p class="metrica-titulo">Avaliação Média</p>
+            </div>
             <h2 class="metrica-valor" id="avaliacao-media-valor">0.0</h2>
             <div class="detalhe-avaliacao">
                 <span id="avaliacao-estrelas"></span>
-                <span id="avaliacao-satisfacao">(0 avaliações)</span>
+                <span id="avaliacao-satisfacao" class="comparativo-texto">(0 avaliações)</span>
             </div>
         </div>
     </section>

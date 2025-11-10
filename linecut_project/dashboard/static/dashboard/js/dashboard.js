@@ -112,8 +112,8 @@ function renderCharts(charts) {
             {
                 label: 'Período Anterior',
                 data: charts.vendas_passada,
-                borderColor: DASHBOARD_COLORS.primaryLight,
-                backgroundColor: DASHBOARD_COLORS.primaryLight,
+                borderColor: DASHBOARD_COLORS.primaryLighter,
+                backgroundColor: DASHBOARD_COLORS.primaryLighter,
                 borderDash: [5, 5],
                 tension: 0.3,
                 fill: false,

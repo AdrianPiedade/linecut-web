@@ -59,43 +59,120 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     padding: 20px;
     position: relative;
-    border-left: 5px solid var(--vermelho-principal);
+    border-left: none;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
 }
 
 .icon-wrapper {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 24px;
-    color: #f2e0e0;
+    position: static; 
+    top: initial;
+    right: initial;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    color: initial;
+    background: #f2e0e0;
+    margin-right: 12px;
+}
+
+#card-faturamento .icon-wrapper {
+    color: #1976D2;
+    background: #E3F2FD;
+}
+
+
+#card-pedidos .icon-wrapper {
+    color: var(--verde);
+    background: #E8F5E9;
+}
+
+
+#card-ticket .icon-wrapper {
+    color: var(--vermelho-principal);
+    background: #FFEBEB;
+}
+
+#card-ticket .icon-wrapper i {
+    line-height: 1;
+}
+
+#card-avaliacao .icon-wrapper {
+    color: var(--amarelo);
+    background: #FFFBEA;
+}
+
+#card-avaliacao .metrica-valor {
+     font-size: 36px;
+}
+
+#card-avaliacao .comparativo-texto {
+    font-size: 14px; 
+    font-weight: 400;
+    display: block; 
+    color: var(--cinza-escuro);
+    margin-top: 5px;
 }
 
 .metrica-titulo {
-    font-size: 14px;
+    font-size: 16px;
     color: var(--cinza-escuro);
+    margin-bottom: 0;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.metrica-titulo-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 5px;
 }
 
 .metrica-valor {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--vermelho-principal);
-    margin-bottom: 10px;
+    font-size: 34px; 
+    font-weight: 700;
+    color: #333;
+    margin: 0px 0 5px 0;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .comparativo {
-    font-size: 12px;
+    font-size: 14px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    margin-top: 0; 
 }
 
 .comparativo span:last-child {
     color: var(--cinza-escuro);
+    font-weight: 400;
 }
 
-.comparativo-positivo { color: var(--verde); }
-.comparativo-negativo { color: var(--vermelho-erro); }
+.comparativo-positivo, .comparativo-negativo {
+    font-weight: 600; 
+}
+
+.comparativo-positivo { 
+    color: var(--verde);
+    font-weight: 600;
+}
+.comparativo-negativo { 
+    color: var(--vermelho-erro); 
+    font-weight: 600;
+}
 
 .detalhe-avaliacao {
     display: flex;
@@ -103,9 +180,9 @@
     gap: 5px;
 }
 
-.detalhe-avaliacao i {
-    color: var(--amarelo);
-    font-size: 14px;
+.detalhe-avaliacao {
+    display: block;
+    margin-top: 5px;
 }
 
 .graficos-row {
@@ -120,6 +197,9 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     padding: 20px;
     flex: 1;
+    height: 350px;
+    display: flex;
+    flex-direction: column;
 }
 
 .grafico-titulo {
@@ -129,6 +209,12 @@
     margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px dashed var(--cinza-claro);
+}
+
+.grafico-card canvas {
+    flex-grow: 1;
+    min-height: 0;
+    max-height: 100%;
 }
 
 .vendas-7dias { flex: 2; }
@@ -170,6 +256,10 @@
 .canvas-container-half {
     max-width: 200px;
     max-height: 200px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .legenda-satisfacao {

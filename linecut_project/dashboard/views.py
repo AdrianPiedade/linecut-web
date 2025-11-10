@@ -933,7 +933,7 @@ def _process_orders_for_metrics(orders):
     total_faturamento = 0.0
     total_pedidos = 0
     
-    concluido_status = ['concluido', 'entregue'] 
+    concluido_status = ['concluido', 'entregue', 'retirado']
     
     filtered_orders = [o for o in orders if o.get('status') in concluido_status]
     
@@ -951,9 +951,11 @@ def _process_orders_for_metrics(orders):
 
 def _process_orders_for_sales_chart(orders, start_date):
     sales_by_day = defaultdict(int)
+
+    concluido_status = ['concluido', 'entregue', 'retirado']
     
     for order in orders:
-        if order.get('status') in ['concluido', 'entregue']:
+        if order.get('status') in concluido_status:
             order_time = order.get('timestamp')
             if isinstance(order_time, datetime):
                 day_key = order_time.strftime('%Y-%m-%d')
@@ -988,16 +990,16 @@ def _process_orders_for_sales_chart(orders, start_date):
 def _process_orders_for_top_products(orders, limit=5):
     product_sales = defaultdict(int)
     
-    for order in orders:
-        if order.get('status') in ['concluido', 'entregue']:
-            products_in_order = order.get('products', [])
-            for item in products_in_order:
-                name = item.get('product_name')
-                qty = item.get('quantity', 0)
-                try:
-                    product_sales[name] += int(qty)
-                except (ValueError, TypeError):
-                    continue
+    concluido_status = ['concluido', 'entregue', 'retirado']
+
+    for item in orders: 
+        if item.get('order_status') in concluido_status:
+            name = item.get('nome_produto')
+            qty = item.get('quantidade', 0)
+            try:
+                product_sales[name] += int(qty)
+            except (ValueError, TypeError):
+                continue
 
     top_products = [{'nome': name, 'qtd': qtd} for name, qtd in product_sales.items()]
     top_products.sort(key=lambda x: x['qtd'], reverse=True)
