@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     setupTabs();
     setupFilters();
-    loadOrders().then(() => {
-        startOrderPolling();
-    });
+    loadOrders();
 
     window.addEventListener('click', (event) => {
         const modals = document.querySelectorAll('.modal');
@@ -18,7 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuPedidos = document.getElementById('menu-pedidos');
     if (menuPedidos) {
         menuPedidos.addEventListener('click', () => {
-             removeNewOrderIndicator();
+             if (typeof window.clearNewOrderIndicator === 'function') {
+                 window.clearNewOrderIndicator();
+             }
              if (window.location.pathname.includes('/dashboard/pedidos/')) {
                  setTimeout(() => switchTab('preparo'), 50);
              }
@@ -29,10 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentOrdersData = [];
 let currentOrderDetails = null;
 let currentActionInfo = {};
-let pedidoPollingInterval = null;
-const POLLING_INTERVAL_MS = 10000;
-let lastPreparoOrderIds = new Set();
-let hasNewOrders = false;
 
 const STATUS_MAP = {
     pendente: { text: 'Pendente', dotClass: 'pendente', sortOrder: 1 },
@@ -79,13 +75,11 @@ function switchTab(tabId) {
     tabPanes.forEach(pane => pane.classList.toggle('active', pane.id === `${tabId}-content`));
 
     if (tabId === 'preparo') {
-        removeNewOrderIndicator();
-        hasNewOrders = false;
+        if (typeof window.clearNewOrderIndicator === 'function') {
+            window.clearNewOrderIndicator();
+        }
         loadOrders();
     } else {
-        if (hasNewOrders) {
-             addNewOrderIndicator();
-        }
         loadOrders();
     }
 }
@@ -126,21 +120,21 @@ async function loadOrders() {
         const data = await response.json();
         currentOrdersData = data.success ? (data.orders || []) : [];
 
-        if (activeTab === 'preparo') {
-            lastPreparoOrderIds = new Set(currentOrdersData.map(order => order.id));
-            removeNewOrderIndicator();
-            hasNewOrders = false;
-        }
-
     } catch (error) {
         showErrorToast(`Erro ao carregar pedidos: ${error.message}`);
         currentOrdersData = [];
-         if (activeTab === 'preparo') {
-             lastPreparoOrderIds = new Set();
-         }
     } finally {
         renderOrders(activeTab);
         showLoadingIndicator(false);
+
+        if (activeTab === 'preparo') {
+            if (typeof window.markOrdersAsSeen === 'function') {
+                window.markOrdersAsSeen(currentOrdersData);
+            }
+            if (typeof window.clearNewOrderIndicator === 'function') {
+                window.clearNewOrderIndicator();
+            }
+        }
     }
 }
 
@@ -720,75 +714,5 @@ function addButtonStyleOverrides() {
         }
         `;
         document.head.appendChild(styleSheet);
-    }
-}
-
-function startOrderPolling() {
-    if (pedidoPollingInterval) {
-        clearInterval(pedidoPollingInterval);
-    }
-    pedidoPollingInterval = setInterval(checkForNewOrders, POLLING_INTERVAL_MS);
-}
-
-function stopOrderPolling() {
-    if (pedidoPollingInterval) {
-        clearInterval(pedidoPollingInterval);
-        pedidoPollingInterval = null;
-    }
-}
-
-async function checkForNewOrders() {
-    try {
-        const response = await fetch(`/dashboard/pedidos/data/?tab=preparo&sort=desc`);
-        if (!response.ok) {
-            console.error("Erro ao verificar novos pedidos:", response.statusText);
-            return;
-        }
-        const data = await response.json();
-
-        if (data.success && Array.isArray(data.orders)) {
-            const currentPreparoOrders = data.orders;
-            const currentPreparoOrderIds = new Set(currentPreparoOrders.map(order => order.id));
-
-            let newOrdersDetected = false;
-            if (lastPreparoOrderIds.size > 0) {
-                 currentPreparoOrderIds.forEach(id => {
-                     if (!lastPreparoOrderIds.has(id)) {
-                         newOrdersDetected = true;
-                     }
-                 });
-            }
-
-            lastPreparoOrderIds = currentPreparoOrderIds;
-            const activeTab = getActiveTabId();
-
-            if (activeTab === 'preparo') {
-                currentOrdersData = currentPreparoOrders;
-                renderOrders('preparo');
-                removeNewOrderIndicator();
-                hasNewOrders = false;
-            } else {
-                if (newOrdersDetected) {
-                     hasNewOrders = true;
-                     addNewOrderIndicator();
-                }
-            }
-        }
-    } catch (error) {
-        console.error("Erro na função checkForNewOrders:", error);
-    }
-}
-
-function addNewOrderIndicator() {
-    const menuPedidos = document.getElementById('menu-pedidos');
-    if (menuPedidos && !menuPedidos.classList.contains('has-new-orders')) {
-        menuPedidos.classList.add('has-new-orders');
-    }
-}
-
-function removeNewOrderIndicator() {
-    const menuPedidos = document.getElementById('menu-pedidos');
-    if (menuPedidos) {
-        menuPedidos.classList.remove('has-new-orders');
     }
 }

@@ -61,13 +61,22 @@ const firebaseConfig = {
 
   requestPermissionAndGetToken();
 
+  const channel = new BroadcastChannel('fcm-channel');
+
   messaging.onMessage((payload) => {
-    console.log("Mensagem recebida em primeiro plano: ", payload);
+    console.log("Mensagem recebida em PRIMEIRO PLANO: ", payload);
     
-    if (typeof showToast === "function") {
-        showToast(payload.notification.title, 'info');
-    } else {
-        alert(payload.notification.title + "\n" + payload.notification.body);
+    if (payload.data) {
+      channel.postMessage(payload.data);
+    }
+    
+    if (payload.notification) {
+      if (typeof showToast === "function") {
+          showToast(payload.notification.title, 'info');
+      } else {
+          alert(payload.notification.title + "\n" + payload.notification.body);
+      }
     }
   });
+
 });

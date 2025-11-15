@@ -6,9 +6,10 @@ from datetime import datetime
 
 from django.urls import reverse
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, Http404
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET
+from django.contrib.staticfiles import finders
 from dashboard.firebase_services import notification_service
 
 from .forms import CadastroForm
@@ -17,6 +18,14 @@ from .firebase_services import FirebaseService
 
 logger = logging.getLogger(__name__)
 
+
+def firebase_messaging_sw(request):
+    file_path = finders.find('dashboard/js/firebase-messaging-sw.js')
+    if file_path:
+        return FileResponse(open(file_path, 'rb'), content_type='application/javascript')
+    else:
+        logger.error("firebase-messaging-sw.js não encontrado pelo finders.")
+        raise Http404()
 
 def home(request):
     return render(request, 'core/home.html')
