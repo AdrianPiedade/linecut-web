@@ -7,5 +7,8 @@
 - Retirar seta do botão de abrir/fechar loja, e verificar cor do botao - ok
 - Retirar toast duplicado na atualização de perfil - ok
 - Adiciona regra de botão inativo dentro da visualização nos pedidos - ok
-- Melhorar visualização dos links de paginas no menu
-- botao de fechar modais duplicado
+- Melhorar visualização dos links de paginas no menu - ok
+- botao de fechar modais duplicado - ok
+- Melhorar graficos do dashboard analitico
+- alterar bolinha de novos pedidos para todas as paginas
+- Fazer revisao de conta nova ( notificacoes e status )

@@ -67,7 +67,7 @@
                 <i class="bi bi-star icon"></i>
                 <span>Avaliações</span>
             </a>
-            <a href="#" class="menu-item">
+            <a href="{% url 'dashboard:notificacoes' %}" id="menu-notificacoes" class="menu-item {% if request.resolver_match.url_name == 'notificacoes' %}selected{% endif %}">
                 <i class="bi bi-bell icon"></i>
                 <span>Notificações</span>
             </a>
@@ -97,7 +97,11 @@
         var staticUrl = "{% static '' %}";
     </script>
     {% block scripts %}
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+    <script src="{% static 'dashboard/js/notificacoes_fcm.js' %}"></script>
     <script src="{% static 'dashboard/js/store_status.js' %}"></script>
+    <script src="{% static 'dashboard/js/base_notifications.js' %}"></script>
     {% endblock %}
 </body>
 </html>

@@ -3,9 +3,9 @@ import pytz
 import logging
 import traceback
 import firebase_admin
-from firebase_admin import db
 from django.conf import settings
 from firebase_admin import storage
+from firebase_admin import db, messaging
 from datetime import datetime, time, timedelta
 from urllib.parse import urlparse, unquote
 
@@ -382,6 +382,15 @@ class CompanyFirebaseService:
                 days_diff = (datetime.now() - signup_date).days
 
                 if days_diff >= 30:
+                    try:
+                        notification_service.send_and_save_notification(
+                            user_id,
+                            "Seu período Trial terminou",
+                            "Seu plano foi alterado para Basic. A partir de agora, será cobrada uma taxa de 7% por venda.",
+                            icon="bi-calendar-x-fill"
+                        )
+                    except Exception as e:
+                        logger.error(f"Falha ao enviar notificação de expiração de trial: {e}")
                     update_data = {
                         'plano': 'basic',
                         'trial_plan_expired': True,
@@ -1249,7 +1258,198 @@ class AvaliacaoFirebaseService:
             logger.error(f"Erro em get_ratings_in_range para {user_id}: {e}")
             traceback.print_exc()
             return []
+        
+class NotificationService:
+    @staticmethod
+    def _send_fcm_message(user_id, title, body, data=None):
 
+        if not CompanyFirebaseService._ensure_initialized():
+            logger.error("Firebase não inicializado para envio de notificação")
+            return None
+        
+        try:
+            company_data = company_service.get_company_data(user_id)
+            if not company_data or 'fcm_tokens' not in company_data:
+                logger.warning(f"Usuário {user_id} não possui tokens FCM para notificar.")
+                return None
+
+            tokens = company_data.get('fcm_tokens')
+            if not isinstance(tokens, dict) or not tokens:
+                logger.warning(f"Formato de tokens FCM inválido ou vazio para {user_id}.")
+                return None
+            
+            valid_tokens = list(tokens.keys())
+            if not valid_tokens:
+                logger.warning(f"Nenhum token FCM válido encontrado para {user_id}.")
+                return None
+
+            message = messaging.MulticastMessage(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                webpush=messaging.WebpushConfig(
+                    notification=messaging.WebpushNotification(
+                        icon="/static/dashboard/images/logo_linecut_title.png",
+                        badge="/static/dashboard/images/logo_linecut_title.png"
+                    )
+                ),
+                data=data if data else {},
+                tokens=valid_tokens,
+            )
+
+            response = messaging.send_multicast(message)
+            
+            if response.failure_count > 0:
+                logger.warning(f"Falha ao enviar {response.failure_count} notificações para {user_id}.")
+            
+            return response
+
+        except Exception as e:
+            logger.error(f"Erro ao enviar notificação para {user_id}: {e}")
+            traceback.print_exc()
+            return None
+
+    @staticmethod
+    def send_and_save_notification(user_id, title, body, icon="bi-info-circle", data=None):
+
+        if not CompanyFirebaseService._ensure_initialized():
+            return False
+            
+        try:
+            sao_paulo_tz = pytz.timezone(settings.TIME_ZONE)
+            now_utc = datetime.now(pytz.utc)
+            now_local = now_utc.astimezone(sao_paulo_tz)
+            
+            notification_data = {
+                'title': title,
+                'body': body,
+                'icon': icon,
+                'is_read': False,
+                'timestamp_iso': now_utc.isoformat(),
+                'timestamp_display': now_local.strftime('%d/%m/%Y às %H:%M')
+            }
+            
+            notif_ref = db.reference(f'/notifications/{user_id}').push()
+            notif_ref.set(notification_data)
+            
+            count_ref = db.reference(f'/notifications/{user_id}/unread_count')
+            count_ref.transaction(lambda current_count: (current_count or 0) + 1)
+            
+            NotificationService._send_fcm_message(user_id, title, body, data)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao enviar e salvar notificação para {user_id}: {e}")
+            traceback.print_exc()
+            return False
+
+    @staticmethod
+    def broadcast_notification(title, body, icon="bi-megaphone"):
+
+        if not CompanyFirebaseService._ensure_initialized():
+            return False
+        
+        try:
+            empresas_ref = db.reference('/empresas')
+            all_empresas = empresas_ref.get()
+            
+            if not all_empresas:
+                logger.warning("Broadcast: Nenhuma empresa encontrada.")
+                return False
+                
+            user_ids = all_empresas.keys()
+            for user_id in user_ids:
+                NotificationService.send_and_save_notification(user_id, title, body, icon)
+            
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao fazer broadcast de notificação: {e}")
+            return False
+        
+    @staticmethod
+    def get_notifications(user_id):
+
+        if not CompanyFirebaseService._ensure_initialized():
+            return None
+        try:
+            notif_ref = db.reference(f'/notifications/{user_id}')
+            notif_data = notif_ref.order_by_child('timestamp_iso').get()
+            
+            notificacoes = []
+            if notif_data and isinstance(notif_data, dict):
+                for key, notif in notif_data.items():
+                    if isinstance(notif, dict):
+                        notif['id'] = key
+                        notificacoes.append(notif)
+                
+                notificacoes.sort(key=lambda x: x.get('timestamp_iso', ''), reverse=True)
+            
+            return notificacoes
+        except Exception as e:
+            logger.error(f"Erro ao buscar notificações para {user_id}: {e}")
+            return None
+
+    @staticmethod
+    def mark_all_as_read(user_id):
+
+        if not CompanyFirebaseService._ensure_initialized():
+            return False
+        try:
+            count_ref = db.reference(f'/notifications/{user_id}/unread_count')
+            count_ref.set(0)
+
+            notif_ref = db.reference(f'/notifications/{user_id}')
+            unread_notifs = notif_ref.order_by_child('is_read').equal_to(False).get()
+            updates = {}
+            if unread_notifs:
+                for key in unread_notifs.keys():
+                    if key != 'unread_count':
+                        updates[f'{key}/is_read'] = True
+            if updates:
+                notif_ref.update(updates)
+
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao marcar notificações como lidas para {user_id}: {e}")
+            return False
+
+    @staticmethod
+    def get_unread_count(user_id):
+
+        if not CompanyFirebaseService._ensure_initialized():
+            return 0 
+        try:
+            count_ref = db.reference(f'/notifications/{user_id}/unread_count')
+            count = count_ref.get() or 0
+            return int(count)
+        except Exception as e:
+            logger.error(f"Erro ao buscar contagem de não lidas para {user_id}: {e}")
+            return 0
+        
+    @staticmethod
+    def delete_read_notifications(user_id):
+        if not CompanyFirebaseService._ensure_initialized():
+            return False
+        try:
+            notif_ref = db.reference(f'/notifications/{user_id}')
+            read_notifs = notif_ref.order_by_child('is_read').equal_to(True).get()
+            
+            updates_to_delete = {}
+            if read_notifs and isinstance(read_notifs, dict):
+                for key in read_notifs.keys():
+                    updates_to_delete[key] = None
+            
+            if updates_to_delete:
+                notif_ref.update(updates_to_delete)
+
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao excluir notificações lidas para {user_id}: {e}")
+            return False
+
+notification_service = NotificationService()
 order_service = OrderFirebaseService()
 product_service = ProductFirebaseService()
 company_service = CompanyFirebaseService()

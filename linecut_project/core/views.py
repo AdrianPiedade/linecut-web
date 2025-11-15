@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET
+from dashboard.firebase_services import notification_service
 
 from .forms import CadastroForm
 from firebase_admin import auth
@@ -108,6 +109,21 @@ def cadastro(request):
                 }
                 
                 user = FirebaseService.criar_usuario(email, senha, dados_empresa)
+
+                try:
+                    titulo_boas_vindas = "Bem-vindo ao LineCut!"
+                    corpo_boas_vindas = ("Conta criada! Para abrir sua loja, você precisa: "
+                                         "1. Configurar seu Horário de Funcionamento, "
+                                         "2. Adicionar sua Chave PIX, "
+                                         "3. Cadastrar pelo menos um produto.")
+                    notification_service.send_and_save_notification(
+                        user.uid, 
+                        titulo_boas_vindas, 
+                        corpo_boas_vindas, 
+                        icon="bi-check-circle-fill"
+                    )
+                except Exception as notif_error:
+                    logger.error(f"Falha ao enviar notificação de boas-vindas para {user.uid}: {notif_error}")
 
                 success_message = 'Cadastro realizado! Verifique sua caixa de entrada para confirmar seu e-mail.'
                 

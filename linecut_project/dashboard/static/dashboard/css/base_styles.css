@@ -533,10 +533,38 @@ button > .spinner-border { margin-right: 5px; }
     animation: pulse-indicator 1.5s infinite ease-in-out;
 }
 
+.menu-item .notification-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background-color: var(--vermelho-principal);
+    color: var(--branco) !important;
+    font-size: 10px;
+    font-weight: 600;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
 @media (max-width: 768px) {
     .menu-lateral {
         width: 70px;
         padding: 10px 5px;
+    }
+
+    .menu-item .notification-badge {
+        top: 4px;
+        right: 8px;
+        height: 16px;
+        width: 16px;
+        font-size: 9px;
     }
 
     .menu-lateral .logo img { width: 50px; height: 50px; }

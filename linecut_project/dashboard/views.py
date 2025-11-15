@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST, require_GET
 from .firebase_storage import storage_service
-from .firebase_services import product_service, company_service, order_service, ProductFirebaseService, AvaliacaoFirebaseService
+from .firebase_services import product_service, company_service, order_service, ProductFirebaseService, AvaliacaoFirebaseService, notification_service
 from core.firebase_services import FirebaseService as CoreFirebaseService
 import logging
 
@@ -1157,6 +1157,126 @@ def get_dashboard_data(request):
             'success': False, 
             'error': f'Erro ao carregar dados do dashboard. Verifique o console do servidor. Detalhe: {str(e)}'
         }, status=500)
+    
+@require_POST
+def save_fcm_token(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+    
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        token = data.get('fcm_token')
+        
+        if not token:
+            return JsonResponse({'success': False, 'error': 'Token não fornecido'}, status=400)
+
+        
+        
+        
+        success = company_service.update_company_field(firebase_uid, f'fcm_tokens/{token}', True)
+        
+        if success:
+            return JsonResponse({'success': True, 'message': 'Token salvo com sucesso'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Erro ao salvar token'}, status=500)
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+def notificacoes_view(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return auth_redirect
+    return render(request, 'dashboard/notificacoes.html')
+
+@require_GET
+def get_notificacoes_data(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+        
+    try:
+        notificacoes = notification_service.get_notifications(firebase_uid)
+        
+        if notificacoes is not None:
+            return JsonResponse({'success': True, 'notificacoes': notificacoes})
+        else:
+            raise Exception("Falha ao buscar notificações do serviço.")
+        
+    except Exception as e:
+        logger.error(f"Erro na view get_notificacoes_data: {e}")
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+
+@require_POST
+def mark_notificacoes_read(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+        
+    try:
+        success = notification_service.mark_all_as_read(firebase_uid)
+        
+        if success:
+            return JsonResponse({'success': True, 'message': 'Notificações marcadas como lidas.'})
+        else:
+            raise Exception("Falha ao marcar notificações como lidas no serviço.")
+        
+    except Exception as e:
+        logger.error(f"Erro na view mark_notificacoes_read: {e}")
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
+
+@require_GET
+def get_unread_notification_count(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'count': 0}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'count': 0}, status=400)
+        
+    try:
+        count = notification_service.get_unread_count(firebase_uid)
+        return JsonResponse({'success': True, 'count': count})
+        
+    except Exception as e:
+        logger.error(f"Erro na view get_unread_notification_count: {e}")
+        return JsonResponse({'success': False, 'count': 0}, status=500)
+    
+@require_POST
+def delete_read_notificacoes(request):
+    auth_redirect = check_dashboard_auth(request)
+    if auth_redirect:
+        return JsonResponse({'success': False, 'error': 'Autenticação necessária'}, status=401)
+
+    firebase_uid = request.session.get('firebase_uid')
+    if not firebase_uid:
+        return JsonResponse({'success': False, 'error': 'Sessão inválida'}, status=400)
+        
+    try:
+        success = notification_service.delete_read_notifications(firebase_uid)
+        
+        if success:
+            return JsonResponse({'success': True, 'message': 'Notificações lidas foram excluídas.'})
+        else:
+            raise Exception("Falha ao excluir notificações no serviço.")
+        
+    except Exception as e:
+        logger.error(f"Erro na view delete_read_notificacoes: {e}")
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
     
 def dashboard_logout(request):
     dashboard_keys = ['firebase_uid', 'user_email', 'logged_in', 'user_profile']

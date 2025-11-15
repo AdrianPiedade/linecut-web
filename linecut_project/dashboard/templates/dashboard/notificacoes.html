@@ -1,0 +1,50 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}LineCut - Notificações{% endblock %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{% static 'dashboard/css/notificacoes.css' %}">
+{% endblock %}
+
+{% block content %}
+    <header class="cabecalho-notificacoes">
+        <div class="titulos">
+            <h1 class="titulo-ativo">Notificações</h1>
+        </div>
+        
+        <button class="btn-excluir-lidas" id="excluir-lidas">
+            <i class="bi bi-trash-fill"></i> Excluir todas as lidas
+        </button>
+    </header>
+
+    <div class="notificacoes-container">
+        <div class="notificacoes-lista" id="notificacoes-lista">
+            <div class="loading-placeholder" id="loading-placeholder">
+                <div class="spinner"></div>
+                <p>Carregando notificações...</p>
+            </div>
+        </div>
+    </div>
+    <div id="modal-confirmacao-exclusao" class="modal">
+         <div class="modal-conteudo modal-confirmacao">
+             <div class="modal-cabecalho">
+                 <h2>Confirmar Exclusão</h2>
+                 <span class="fechar-modal" onclick="closeModal('modal-confirmacao-exclusao')">&times;</span>
+             </div>
+             <div class="modal-corpo">
+                <p>Tem certeza que deseja excluir TODAS as notificações lidas?</p>
+                <p class="confirmacao-subtexto">Esta ação não pode ser revertida.</p>
+             </div>
+             <div class="modal-rodape">
+                <button class="btn-modal btn-neutro" onclick="closeModal('modal-confirmacao-exclusao')">Voltar</button>
+                <button class="btn-modal btn-cancelar" id="btn-confirma-exclusao">Excluir</button>
+             </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'dashboard/js/notificacoes.js' %}"></script>
+{% endblock %}
