@@ -971,6 +971,11 @@ def _process_orders_for_sales_chart(orders, start_date):
 
     max_days = 31 
 
+    day_map_pt = {
+        'Mon': 'Seg', 'Tue': 'Ter', 'Wed': 'Qua', 'Thu': 'Qui',
+        'Fri': 'Sex', 'Sat': 'Sáb', 'Sun': 'Dom'
+    }
+
     while current_date <= end_of_today:
         if len(labels) >= max_days:
             break 
@@ -978,7 +983,9 @@ def _process_orders_for_sales_chart(orders, start_date):
         day_key = current_date.strftime('%Y-%m-%d')
         
         if (end_of_today - start_date).days <= 7:
-             labels.append(current_date.strftime('%a'))
+             day_en = current_date.strftime('%a')
+             day_pt = day_map_pt.get(day_en, day_en)
+             labels.append(day_pt)
         else:
              labels.append(current_date.strftime('%d/%m'))
              

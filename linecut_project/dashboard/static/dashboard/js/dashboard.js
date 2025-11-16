@@ -1,4 +1,4 @@
-/* linecut_project/dashboard/static/dashboard/js/dashboard.js */
+Chart.register(ChartDataLabels);
 
 let vendasChartInstance = null;
 let topProdutosChartInstance = null;
@@ -123,7 +123,12 @@ function renderCharts(charts) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
+            plugins: { 
+                legend: { position: 'bottom' },
+                datalabels: {
+                    display: false
+                }
+            },
             scales: { y: { beginAtZero: true, title: { display: true, text: 'Qtd. Pedidos', color: DASHBOARD_COLORS.gray } } }
         }
     });
@@ -152,7 +157,12 @@ function renderCharts(charts) {
             responsive: true,
             maintainAspectRatio: false,
             scales: { x: { beginAtZero: true, title: { display: true, text: 'Qtd.', color: DASHBOARD_COLORS.gray } } },
-             plugins: { legend: { display: false } }
+             plugins: { 
+                legend: { display: false },
+                datalabels: {
+                    display: false
+                }
+             }
         }
     });
     
@@ -172,7 +182,32 @@ function renderCharts(charts) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+            plugins: { 
+                legend: { 
+                    display: false 
+                },
+                datalabels: {
+                    display: true,
+                    color: '#FFFFFF',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: (value, context) => {
+                        const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = (value / total) * 100;
+                        
+                        if (percentage < 5) {
+                            return null;
+                        }
+                        
+                        const label = context.chart.data.labels[context.dataIndex];
+                        const star = label.charAt(0);
+                        
+                        return `${star}★\n${percentage.toFixed(0)}%`;
+                    }
+                }
+            }
         }
     });
     
@@ -195,7 +230,12 @@ function renderCharts(charts) {
             responsive: true,
             maintainAspectRatio: false,
             scales: { y: { beginAtZero: true, title: { display: true, text: 'Qtd. Clientes (Simulada)', color: DASHBOARD_COLORS.gray } } },
-            plugins: { legend: { display: false } }
+            plugins: { 
+                legend: { display: false },
+                datalabels: {
+                    display: false
+                }
+            }
         }
     });
 }

@@ -12,3 +12,5 @@
 - alterar bolinha de novos pedidos para todas as paginas - ok
 - Melhorar graficos do dashboard analitico
 - Fazer revisao de conta nova ( notificacoes e status )
+- Mandar todos os dados sigilosos para o secret manager
+- Fazer deploy
